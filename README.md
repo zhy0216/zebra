@@ -1,2 +1,4 @@
 # zebra
-a typescript web framwork
+a typescript web framework
+
+in process...

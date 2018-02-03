@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "description": "a typescript webframework",
   "main": "index.js",
-  "scripts": {
-    
-  },
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zhy0216/zebra.git"
@@ -15,5 +13,13 @@
   "bugs": {
     "url": "https://github.com/zhy0216/zebra/issues"
   },
-  "homepage": "https://github.com/zhy0216/zebra#readme"
+  "homepage": "https://github.com/zhy0216/zebra#readme",
+  "devDependencies": {
+    "@types/node": "^9.4.0",
+    "assert": "^1.4.1",
+    "mocha": "^5.0.0",
+    "mocha-typescript": "^1.1.12",
+    "ts-node": "^4.1.0",
+    "typescript": "^2.7.1"
+  }
 }
