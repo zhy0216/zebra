@@ -16,4 +16,5 @@ class TestUnit {
         assert.deepEqual(getFunctionParameters(func2), ["k", "f", "c"]);
         assert.deepEqual(getFunctionParameters(func3), ["k", "f", "c"]);
     }
+
 }
