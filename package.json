@@ -1,0 +1,19 @@
+{
+  "name": "zebra",
+  "version": "1.0.0",
+  "description": "a typescript webframework",
+  "main": "index.js",
+  "scripts": {
+    
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhy0216/zebra.git"
+  },
+  "author": "Yang",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zhy0216/zebra/issues"
+  },
+  "homepage": "https://github.com/zhy0216/zebra#readme"
+}
