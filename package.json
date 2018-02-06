@@ -20,6 +20,7 @@
     "mocha": "^5.0.0",
     "mocha-typescript": "^1.1.12",
     "ts-node": "^4.1.0",
-    "typescript": "^2.7.1"
+    "typescript": "^2.7.1",
+    "xregexp": "^4.0.0"
   }
 }
