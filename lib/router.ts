@@ -1,4 +1,5 @@
 import XRegExp from 'xregexp';
+import {Runtime} from "inspector";
 
 interface VariableBind{
     [variable: string]: string;
@@ -45,8 +46,28 @@ export class Router{
         this.urlExtractor = new UrlExtractor(urlPattern);
         this.func = func;
     }
+
+    match(url, method): Boolean{
+        return this.urlExtractor.match(url) && this.methods.has(method);
+    }
 }
 
 export class RouterManager{
+    routerList: Array<Router>;
+    constructor(){
+        this.routerList = [];
+    }
 
+    add(router: Router){
+        this.routerList.push(router);
+    }
+
+    get_function(url, method='GET'){
+        for(const router of this.routerList){
+            if(router.match(url, method)){
+                return router.func
+            }
+        }
+        throw new Error(); // a better exception
+    }
 }
