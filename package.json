@@ -22,5 +22,8 @@
     "ts-node": "^4.1.0",
     "typescript": "^2.7.1",
     "xregexp": "^4.0.0"
+  },
+  "dependencies": {
+    "@types/core-js": "^0.9.46"
   }
 }

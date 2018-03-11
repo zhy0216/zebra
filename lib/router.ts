@@ -1,5 +1,4 @@
 import XRegExp from 'xregexp';
-import {Runtime} from "inspector";
 
 interface VariableBind{
     [variable: string]: string;

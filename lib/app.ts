@@ -25,7 +25,8 @@ export class Zebra{
 
     requestHandlers(req: IncomingMessage, res: ServerResponse){
 
-        res.writeHead(200, {'Content-type': 'text/plan'});
+        // application/json
+        res.writeHead(200, {'Content-type': 'text/html'});
         res.write('Hello Node JS Server Response');
         res.end();
     }
