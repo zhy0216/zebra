@@ -1,4 +1,6 @@
-import {RouterManager, Router} from './router'
+import {IncomingMessage, ServerResponse, createServer} from "http";
+import {RouterManager, Router} from './router';
+
 
 export interface RegisteredHandler{
     [variable: string]: Function;
@@ -19,6 +21,17 @@ export class Zebra{
 
     addGet(path: string, handler: Function){
         this.addPathPattern(path, "GET", handler);
+    }
+
+    requestHandlers(req: IncomingMessage, res: ServerResponse){
+
+        res.writeHead(200, {'Content-type': 'text/plan'});
+        res.write('Hello Node JS Server Response');
+        res.end();
+    }
+
+    run(){
+        createServer((req, res) => z.requestHandlers(req, res)).listen(8888);
     }
 
 }
