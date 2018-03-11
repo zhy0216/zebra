@@ -1,39 +1,52 @@
+import XRegExp from 'xregexp';
 
 interface VariableBind{
-    [variable: string]: any;
-}
-
-interface VariableExtractor{
-    [variable: string]: RegExp;
+    [variable: string]: string;
 }
 
 
 
-class UrlExtractor{
-    pattern: RegExp;
-    variableExtractor: VariableExtractor;
-    constructor(){
-        this.pattern = new RegExp("");
-        this.variableExtractor = {};
+
+export class UrlExtractor{
+    pattern: string;
+    metaPattern: XRegExp;
+    // registerVariable: Set<string>;
+    constructor(urlPattern: string) {
+        const self = this;
+        this.pattern = urlPattern;
+        // this.registerVariable = new Set<string>();
+        this.metaPattern = XRegExp(XRegExp.replace(urlPattern, XRegExp('{(?<var>\\w+)}'), function (match) {
+            return `(?<${match.var}>\\w+)`;
+        }, 'all'));
+
     }
 
+
     match(url): boolean {
-        throw new Error();
+        return this.metaPattern.test(url);
     }
 
     extract(url): VariableBind{
-        throw new Error();
+        const r = {};
+        const data = XRegExp.exec(url, this.metaPattern);
+        for(const variable_name of this.metaPattern.xregexp.captureNames){
+            r[variable_name] = data[variable_name];
+        }
+        return r;
     }
 }
 
-class Router{
+export class Router{
     methods: Set<string>;
     urlExtractor: UrlExtractor;
     func: Function;
-    constructor(){
-        this.methods = new Set();
-        this.urlExtractor = new UrlExtractor();
-        this.func = ()=> 1;
+    constructor(methods, urlPattern, func){
+        this.methods = methods;
+        this.urlExtractor = new UrlExtractor(urlPattern);
+        this.func = func;
     }
 }
 
+export class RouterManager{
+
+}
