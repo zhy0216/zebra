@@ -1,6 +1,7 @@
 import {IncomingMessage, ServerResponse, createServer} from "http";
 import {RouterManager, Router} from './router';
-
+import url from 'url';
+import querystring from 'querystring';
 
 export interface RegisteredHandler{
     [variable: string]: Function;
@@ -14,20 +15,25 @@ export class Zebra{
         this.registeredHandler = {};
     }
 
-    addPathPattern(pathPattern: string, method: string, handler: Function){
-        this.routerManager.add(new Router(method, pathPattern, handler))
+    addPathPattern(pathPattern: string, methods: Set<string>, handler: Function){
+        this.routerManager.add(new Router(methods, pathPattern, handler))
     }
 
 
     addGet(path: string, handler: Function){
-        this.addPathPattern(path, "GET", handler);
+        this.addPathPattern(path, new Set(["GET"]), handler);
     }
 
     requestHandlers(req: IncomingMessage, res: ServerResponse){
+        const parsedUrl = url.parse(req.url!);
+        const requestedMethod = req.method!;
+        // parsedUrl.query
+        const handler = this.routerManager.get_function(parsedUrl.pathname, requestedMethod);
+        const content = handler();
 
         // application/json
         res.writeHead(200, {'Content-type': 'text/html'});
-        res.write('Hello Node JS Server Response');
+        res.write(content);
         res.end();
     }
 
