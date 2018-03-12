@@ -29,7 +29,7 @@ export class Zebra{
         const requestedMethod = req.method!;
         // parsedUrl.query
         const handler = this.routerManager.get_function(parsedUrl.pathname, requestedMethod);
-        const content = handler();
+        const content = handler.execute();
 
         // application/json
         res.writeHead(200, {'Content-type': 'text/html'});

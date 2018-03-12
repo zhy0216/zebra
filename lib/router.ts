@@ -1,4 +1,5 @@
 import XRegExp from 'xregexp';
+import {Func} from "./func";
 
 interface VariableBind{
     [variable: string]: string;
@@ -49,6 +50,10 @@ export class Router{
     match(url, method): Boolean{
         return this.urlExtractor.match(url) && this.methods.has(method);
     }
+
+    extract(url){
+        return this.urlExtractor.extract(url)
+    }
 }
 
 export class RouterManager{
@@ -61,10 +66,10 @@ export class RouterManager{
         this.routerList.push(router);
     }
 
-    get_function(url, method='GET'){
+    get_function(url, method='GET'): Func{
         for(const router of this.routerList){
             if(router.match(url, method)){
-                return router.func
+                return new Func(router.func, router.extract(url), null)
             }
         }
         throw new Error(); // a better exception

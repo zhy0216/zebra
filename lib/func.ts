@@ -21,7 +21,7 @@ export class Func{
     parameters: Array<Parameter>;
     static STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
 
-    constructor(func, closure=null, lazyClosure=null){
+    constructor(func, closure:Dict<any>|null=null, lazyClosure:Dict<Func>|null=null){
         this.func = func;
         this.closure = closure || {};
         this.lazyClosure = lazyClosure || {};
@@ -43,6 +43,20 @@ export class Func{
             }
         }
 
+    }
+
+    execute(extraClosure=null, extraLazyClosure=null){
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/apply
+        // use a custom object like { 'length': 2, '0': 'eat', '1': 'bananas' }
+        const closure = Object.assign({}, this.closure, extraClosure);
+        let args = {};
+        args["length"] = this.parameters.length;
+        for(let parameter of this.parameters){
+            let argName = parameter.name;
+            // only search in closure
+            args[parameter.index] = closure[argName];
+        }
+        return this.func.apply(null, args);
     }
 
 }
