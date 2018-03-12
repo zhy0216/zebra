@@ -2,7 +2,7 @@
 import * as assert from 'assert';
 
 import { suite, test, slow, timeout } from "mocha-typescript";
-import {Func, Parameter} from "../lib/func";
+import {Func, Parameter} from "../../lib/func";
 
 @suite
 class TestUnit {

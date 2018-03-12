@@ -3,7 +3,7 @@
 import * as assert from 'assert';
 
 import { suite, test, slow, timeout } from "mocha-typescript";
-import {UrlExtractor} from "../lib/router";
+import {UrlExtractor} from "../../lib/router";
 
 @suite
 class TestUnit {
