@@ -1,6 +1,7 @@
 import {IncomingMessage, ServerResponse, createServer} from "http";
 import {RouterManager, Router} from './router';
 import url from 'url';
+import {Response} from "./response";
 import querystring from 'querystring';
 
 export interface RegisteredHandler{
@@ -29,13 +30,15 @@ export class Zebra{
         const requestedMethod = req.method!;
         // parsedUrl.query
         const handler = this.routerManager.get_function(parsedUrl.pathname, requestedMethod);
-        const content = handler.execute();
+        const content: object | Response = handler.execute();
+        const response = Response.buildFromHandlerResult(content);
 
         // application/json
-        res.writeHead(200, {'Content-type': 'text/html'});
-        res.write(content);
+        res.writeHead(response.statusCode, response.headers);
+        res.write(response.content);
         res.end();
     }
+
 
     run(){
         let port = 8888;
