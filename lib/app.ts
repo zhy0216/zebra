@@ -39,7 +39,7 @@ export class Zebra{
 
     run(){
         let port = 8888;
-        console.log(`running on localhost:${port}`)
+        console.log(`running on localhost:${port}`);
         createServer((req, res) => z.requestHandlers(req, res)).listen(port);
     }
 
