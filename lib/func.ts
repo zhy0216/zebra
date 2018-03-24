@@ -19,10 +19,12 @@ export class Func{
     closure: Dict<any>;
     lazyClosure: Dict<Func>;
     parameters: Array<Parameter>;
+    name: String | null;
     static STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
 
     constructor(func, closure:Dict<any>|null=null, lazyClosure:Dict<Func>|null=null){
         this.func = func;
+        this.name = null;
         this.closure = closure || {};
         this.lazyClosure = lazyClosure || {};
         this.parameters = [];
@@ -30,6 +32,12 @@ export class Func{
     }
 
     _parseFunc(f){
+        //parse name
+        if(f.name != "anonymous" || f.name != ""){
+            this.name = f.name.split(" ").pop()
+        }
+
+        // parse parameter
         const fnStr = f.toString().replace(Func.STRIP_COMMENTS, '');
         const argsStr = fnStr.slice(fnStr.indexOf('(')+1, fnStr.indexOf(')'));
         const argsList = argsStr.replace(/ /g, "").split(",");
