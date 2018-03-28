@@ -1,4 +1,4 @@
-import {IncomingMessage, ServerResponse, createServer} from "http";
+import {IncomingMessage, ServerResponse, createServer, Server} from "http";
 import {RouterManager, Router} from './router';
 import url from 'url';
 import {Response} from "./response";
@@ -11,9 +11,11 @@ export interface RegisteredHandler{
 export class Zebra{
     registeredHandler: RegisteredHandler;
     routerManager: RouterManager;
+    server: Server;
     constructor(){
         this.routerManager = new RouterManager();
         this.registeredHandler = {};
+        this.server = createServer();
     }
 
     addPathPattern(pathPattern: string, methods: Set<string>, handler: Function){
@@ -43,7 +45,13 @@ export class Zebra{
     run(){
         let port = 8888;
         console.log(`running on localhost:${port}`);
-        createServer((req, res) => z.requestHandlers(req, res)).listen(port);
+        this.server.on("request", ((req, res) => z.requestHandlers(req, res)));
+        this.server.listen(port);
+    }
+
+    async stop(){
+        await this.server.close();
+        this.server = createServer();
     }
 
 }

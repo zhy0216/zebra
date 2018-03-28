@@ -58,4 +58,6 @@ typings/
 .env
 .idea
 lib/*.js
-test/*.js
+test/unit/*.js
+test/integral/*.js
+examples/*.js

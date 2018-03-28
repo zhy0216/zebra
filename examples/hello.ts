@@ -1,4 +1,8 @@
 import {z} from "../lib/app";
 
 z.addGet("/hello/{name}", (name: string) => `hello, ${name}`);
-z.run();
+
+
+if (require.main === module) {
+    z.run();
+}

@@ -24,6 +24,7 @@
     "xregexp": "^4.0.0"
   },
   "dependencies": {
-    "@types/core-js": "^0.9.46"
+    "@types/core-js": "^0.9.46",
+    "got": "^8.3.0"
   }
 }
