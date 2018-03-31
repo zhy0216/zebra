@@ -1,10 +1,9 @@
-// import {getFunctionParameters} from '../lib/utils';
-
-import * as assert from 'assert';
+import assert from 'assert';
 
 import { suite, test, slow, timeout } from "mocha-typescript";
 import {UrlExtractor} from "../../lib/router";
 import {z} from "../../lib/app";
+import got from "got";
 
 @suite
 class TestInject {

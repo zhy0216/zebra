@@ -1,6 +1,6 @@
 // import {getFunctionParameters} from '../lib/utils';
 
-import * as assert from 'assert';
+import assert from 'assert';
 
 import { suite, test, slow, timeout } from "mocha-typescript";
 import {UrlExtractor} from "../../lib/router";

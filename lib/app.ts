@@ -5,21 +5,20 @@ import {Response} from "./response";
 import querystring from 'querystring';
 import {isString} from "util";
 import {Func} from "./func";
+import {isAbsolute} from "path";
 const package_json = require("../package.json");
 
-export interface RegisteredHandler{
-    [variable: string]: Function;
-}
-
 export class Zebra{
-    registeredHandler: RegisteredHandler;
+    registeredHandler: Map<string, Function>;
     routerManager: RouterManager;
     server: Server;
     ascii: String = "";
+    lazyEnv: Map<string, Func>;
     constructor(){
         this.routerManager = new RouterManager();
-        this.registeredHandler = {};
+        this.registeredHandler = new Map();
         this.server = createServer();
+        this.lazyEnv = new Map<string, Func>();
     }
 
     addPathPattern(pathPattern: string, methods: Set<string>, handler: Function){
@@ -33,14 +32,10 @@ export class Zebra{
 
     inject(arg1: Function | string, func?: Function): void{
         if(isString(arg1)) {
-
+            this.lazyEnv[arg1] = func;
         }else{
-            this._inject(new Func(arg1));
+            this.lazyEnv[arg1.name] = arg1;
         }
-    }
-
-    _inject(func: Func){
-
     }
 
     requestHandlers(req: IncomingMessage, res: ServerResponse){
@@ -48,7 +43,7 @@ export class Zebra{
         const requestedMethod = req.method!;
         // parsedUrl.query
         const handler = this.routerManager.get_function(parsedUrl.pathname, requestedMethod);
-        const content: object | Response = handler.execute();
+        let content: object | Response = Promise.resolve(handler.execute());
         const response = Response.buildFromHandlerResult(content);
 
         // application/json
@@ -57,11 +52,10 @@ export class Zebra{
         res.end();
     }
 
-
     run(){
         let port = 8888;
         console.log(z.ascii);
-        console.log(`running on localhost:${port}`);
+        console.log(`running on localhost: ${port}`);
         this.server.on("request", ((req, res) => z.requestHandlers(req, res)));
         this.server.listen(port);
     }
@@ -74,7 +68,7 @@ export class Zebra{
 }
 
 
-// TODO: make this singleton
+// TODO: make this singleton?
 export const z = new Zebra();
 z.ascii = `
 ########################################
