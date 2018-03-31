@@ -6,7 +6,7 @@ import { suite, test, slow, timeout } from "mocha-typescript";
 import {UrlExtractor} from "../../lib/router";
 
 @suite
-class TestUnit {
+class TestRouter {
     @test
     testSingleVarExtractor() {
         let extractor = new UrlExtractor("/hello/{name}");

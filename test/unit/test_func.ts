@@ -5,7 +5,7 @@ import { suite, test, slow, timeout } from "mocha-typescript";
 import {Func, Parameter} from "../../lib/func";
 
 @suite
-class TestUnit {
+class TestFunc {
     @test
     testFunctionParameters() {
         function func(a: string, b: number =1, dd: number){}

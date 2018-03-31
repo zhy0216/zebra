@@ -20,7 +20,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const assert = __importStar(require("assert"));
 const mocha_typescript_1 = require("mocha-typescript");
 const router_1 = require("../../lib/router");
-let TestUnit = class TestUnit {
+let TestRouter = class TestRouter {
     testSingleVarExtractor() {
         let extractor = new router_1.UrlExtractor("/hello/{name}");
         assert.deepEqual(extractor.extract("/hello/a"), { "name": "a" });
@@ -35,13 +35,13 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], TestUnit.prototype, "testSingleVarExtractor", null);
+], TestRouter.prototype, "testSingleVarExtractor", null);
 __decorate([
     mocha_typescript_1.test,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], TestUnit.prototype, "testMultiVarExtractor", null);
-TestUnit = __decorate([
+], TestRouter.prototype, "testMultiVarExtractor", null);
+TestRouter = __decorate([
     mocha_typescript_1.suite
-], TestUnit);
+], TestRouter);

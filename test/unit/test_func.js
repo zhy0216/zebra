@@ -19,7 +19,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const assert = __importStar(require("assert"));
 const mocha_typescript_1 = require("mocha-typescript");
 const func_1 = require("../../lib/func");
-let TestUnit = class TestUnit {
+let TestFunc = class TestFunc {
     testFunctionParameters() {
         function func(a, b = 1, dd) { }
         const myFunc = new func_1.Func(func);
@@ -75,19 +75,19 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], TestUnit.prototype, "testFunctionParameters", null);
+], TestFunc.prototype, "testFunctionParameters", null);
 __decorate([
     mocha_typescript_1.test,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], TestUnit.prototype, "testLambdaParameters", null);
+], TestFunc.prototype, "testLambdaParameters", null);
 __decorate([
     mocha_typescript_1.test,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], TestUnit.prototype, "testLambdaParameters2", null);
-TestUnit = __decorate([
+], TestFunc.prototype, "testLambdaParameters2", null);
+TestFunc = __decorate([
     mocha_typescript_1.suite
-], TestUnit);
+], TestFunc);
