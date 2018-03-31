@@ -38,13 +38,13 @@ export class Zebra{
         }
     }
 
-    requestHandlers(req: IncomingMessage, res: ServerResponse){
+    async requestHandlers(req: IncomingMessage, res: ServerResponse){
         const parsedUrl = url.parse(req.url!);
         const requestedMethod = req.method!;
         // parsedUrl.query
         const handler = this.routerManager.get_function(parsedUrl.pathname, requestedMethod);
-        let content: object | Response = Promise.resolve(handler.execute());
-        const response = Response.buildFromHandlerResult(content);
+        let handlerPromise: Promise<object | Response> = Promise.resolve(handler.execute());
+        const response = Response.buildFromHandlerResult(await handlerPromise);
 
         // application/json
         res.writeHead(response.statusCode, response.headers);
@@ -56,7 +56,7 @@ export class Zebra{
         let port = 8888;
         console.log(z.ascii);
         console.log(`running on localhost: ${port}`);
-        this.server.on("request", ((req, res) => z.requestHandlers(req, res)));
+        this.server.on("request", (async (req, res) => await z.requestHandlers(req, res)));
         this.server.listen(port);
     }
 
