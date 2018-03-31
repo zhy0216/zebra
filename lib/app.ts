@@ -5,7 +5,7 @@ import {Response} from "./response";
 import querystring from 'querystring';
 import {isString} from "util";
 import {Func} from "./func";
-import {version} from '../package.json';
+const package_json = require("../package.json");
 
 export interface RegisteredHandler{
     [variable: string]: Function;
@@ -85,7 +85,7 @@ z.ascii = `
 ███████╗███████╗██████╔╝██║  ██║██║  ██║
 ╚══════╝╚══════╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
     WEB FRAMEWORK FOR LAZY PEOPLE
-       VERSION: ${version}
+       VERSION: ${package_json.version}
 ########################################       
        
 Copyright (C) 2018 Yang
