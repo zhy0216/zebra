@@ -3,6 +3,9 @@ import {RouterManager, Router} from './router';
 import url from 'url';
 import {Response} from "./response";
 import querystring from 'querystring';
+import {isString} from "util";
+import {Func} from "./func";
+import {version} from '../package.json';
 
 export interface RegisteredHandler{
     [variable: string]: Function;
@@ -12,6 +15,7 @@ export class Zebra{
     registeredHandler: RegisteredHandler;
     routerManager: RouterManager;
     server: Server;
+    ascii: String = "";
     constructor(){
         this.routerManager = new RouterManager();
         this.registeredHandler = {};
@@ -25,6 +29,18 @@ export class Zebra{
 
     addGet(path: string, handler: Function){
         this.addPathPattern(path, new Set(["GET"]), handler);
+    }
+
+    inject(arg1: Function | string, func?: Function): void{
+        if(isString(arg1)) {
+
+        }else{
+            this._inject(new Func(arg1));
+        }
+    }
+
+    _inject(func: Func){
+
     }
 
     requestHandlers(req: IncomingMessage, res: ServerResponse){
@@ -44,6 +60,7 @@ export class Zebra{
 
     run(){
         let port = 8888;
+        console.log(z.ascii);
         console.log(`running on localhost:${port}`);
         this.server.on("request", ((req, res) => z.requestHandlers(req, res)));
         this.server.listen(port);
@@ -59,3 +76,18 @@ export class Zebra{
 
 // TODO: make this singleton
 export const z = new Zebra();
+z.ascii = `
+########################################
+███████╗███████╗██████╗ ██████╗  █████╗ 
+╚══███╔╝██╔════╝██╔══██╗██╔══██╗██╔══██╗
+  ███╔╝ █████╗  ██████╔╝██████╔╝███████║
+ ███╔╝  ██╔══╝  ██╔══██╗██╔══██╗██╔══██║
+███████╗███████╗██████╔╝██║  ██║██║  ██║
+╚══════╝╚══════╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
+    WEB FRAMEWORK FOR LAZY PEOPLE
+       VERSION: ${version}
+########################################       
+       
+Copyright (C) 2018 Yang
+Under the MIT License
+`;
