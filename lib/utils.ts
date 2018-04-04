@@ -1,7 +1,7 @@
 
 
 
-function union<T>(set1: Set<T>, set2: Set<T>){
+export function union<T>(set1: Set<T>, set2: Set<T>){
     const unionSet = new Set(set1);
     for (const elem of set2) {
         unionSet.add(elem);
@@ -10,15 +10,15 @@ function union<T>(set1: Set<T>, set2: Set<T>){
 }
 
 
-function difference<T>(set1: Set<T>, set2: Set<T>): Set<T>{
-    const difference = new Set(set1);
+export function difference<T>(set1: Set<T>, set2: Set<T>): Set<T>{
+    const differenceSet = new Set(set1);
     for (const elem of set2) {
-        difference.delete(elem);
+        differenceSet.delete(elem);
     }
-    return difference;
+    return differenceSet;
 }
 
-function toposort<T>(graph: Map<T, Set<T>>, flattern=false): Array<Array<T>> | Array<T>{
+export function toposort<T>(graph: Map<T, Set<T>>, flattern=false): Array<Array<T>> | Array<T>{
     const r: Array<Array<T>> = [];
     const freeNodeSet = new Set();
     graph = new Map<T, Set<T>>(graph); // make sure the original graph does not change
