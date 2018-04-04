@@ -18,7 +18,7 @@ export function difference<T>(set1: Set<T>, set2: Set<T>): Set<T>{
     return differenceSet;
 }
 
-export function toposort<T>(graph: Map<T, Set<T>>, flattern=false): Array<Array<T>> | Array<T>{
+export function toposort<T>(graph: Map<T, Set<T>>, flatten=false): Array<Array<T>> | Array<T>{
     const r: Array<Array<T>> = [];
     const freeNodeSet = new Set();
     graph = new Map<T, Set<T>>(graph); // make sure the original graph does not change
@@ -47,7 +47,7 @@ export function toposort<T>(graph: Map<T, Set<T>>, flattern=false): Array<Array<
         throw Error
     }
 
-    if(flattern){
+    if(flatten){
         r.reduce((acc, val) => acc.concat(val), []);
         return r;
     }
