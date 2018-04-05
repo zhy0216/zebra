@@ -43,7 +43,15 @@ export class Zebra{
         const requestedMethod = req.method!;
         // parsedUrl.query
         const handler = this.routerManager.get_function(parsedUrl.pathname, requestedMethod);
-        let handlerPromise: Promise<object | Response> = Promise.resolve(handler.execute());
+        const queryMap = querystring.parse(parsedUrl.query || "") || {};
+        const extraClosure = Object.assign({
+            "req": req,
+            "res": res,
+        }, queryMap);
+
+
+
+        let handlerPromise: Promise<object | Response> = Promise.resolve(handler.execute(extraClosure, this.lazyEnv));
         const response = Response.buildFromHandlerResult(await handlerPromise);
 
         // application/json

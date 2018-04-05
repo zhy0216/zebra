@@ -53,7 +53,7 @@ export class Func{
 
     }
 
-    execute(extraClosure=null, extraLazyClosure=null){
+    execute(extraClosure: Object|null=null, extraLazyClosure: Map<string, Func>|null=null){
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/apply
         // use a custom object like { 'length': 2, '0': 'eat', '1': 'bananas' }
         const closure = Object.assign({}, this.closure, extraClosure);

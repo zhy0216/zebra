@@ -3,20 +3,21 @@ import assert from 'assert';
 import { suite, test, slow, timeout } from "mocha-typescript";
 import {UrlExtractor} from "../../lib/router";
 import {z} from "../../lib/app";
+import {Func} from "../../lib/func";
 import got from "got";
 
 @suite
 class TestInject {
     @test
-    async testSimpleInjector() {
-        z.addGet("/test-simple-inject", (name: string) => `hello, ${name}`);
-        z.inject(function name(){return "it"});
-        z.run();
-        const response = await got.get("http://localhost:8888/test-simple-inject");
-        assert.equal(JSON.parse(response.body), "hello, it");
-        await z.stop();
+    async testSimpleInjector1() {
+        const func = new Func((name: string) => `hello, ${name}`, {"name": "it"});
+        assert.equal(func.execute(), "hello, it");
     }
 
-
+    @test
+    async testSimpleInjector2() {
+        const func = new Func((name: string) => `hello, ${name}`);
+        assert.equal(func.execute({"name": "it"}), "hello, it");
+    }
 
 }
