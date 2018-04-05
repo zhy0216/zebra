@@ -8,16 +8,24 @@ import got from "got";
 
 @suite
 class TestInject {
+
     @test
     async testSimpleInjector1() {
-        const func = new Func((name: string) => `hello, ${name}`, {"name": "it"});
+        const data = new Map([
+            ["name", "it"]
+        ]);
+
+        const func = new Func((name: string) => `hello, ${name}`, data);
         assert.equal(func.execute(), "hello, it");
     }
 
     @test
     async testSimpleInjector2() {
+        const data = new Map([
+            ["name", "it"]
+        ]);
         const func = new Func((name: string) => `hello, ${name}`);
-        assert.equal(func.execute({"name": "it"}), "hello, it");
+        assert.equal(func.execute(data), "hello, it");
     }
 
 }

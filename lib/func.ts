@@ -1,5 +1,5 @@
+import {chain} from './utils';
 
-export const NONE = Symbol();
 
 export class Parameter{
     name: string;
@@ -16,17 +16,17 @@ export class Parameter{
 
 export class Func{
     func: Function;
-    closure: Dict<any>;
-    lazyClosure: Dict<Func>;
+    closure: Map<string,any>;
+    lazyClosure: Map<string, Func>;
     parameters: Array<Parameter>;
-    name: String | null;
+    name: string | null;
     static STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
 
-    constructor(func, closure:Dict<any>|null=null, lazyClosure:Dict<Func>|null=null){
+    constructor(func, closure?: Map<string,any>, lazyClosure?:Map<string, Func>){
         this.func = func;
         this.name = null;
-        this.closure = closure || {};
-        this.lazyClosure = lazyClosure || {};
+        this.closure = closure || new Map<string,any>();
+        this.lazyClosure = lazyClosure || new Map<string, Func>();
         this.parameters = [];
         this._parseFunc(func);
     }
@@ -53,16 +53,16 @@ export class Func{
 
     }
 
-    execute(extraClosure: Object|null=null, extraLazyClosure: Map<string, Func>|null=null){
+    execute(extraClosure: Map<string, any>=new Map(), extraLazyClosure: Map<string, Func>=new Map()){
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/apply
         // use a custom object like { 'length': 2, '0': 'eat', '1': 'bananas' }
-        const closure = Object.assign({}, this.closure, extraClosure);
+        const closure = new Map<string, any>(chain(this.closure, extraClosure));
         let args = {};
         args["length"] = this.parameters.length;
         for(let parameter of this.parameters){
             let argName = parameter.name;
             // only search in closure
-            args[parameter.index] = closure[argName];
+            args[parameter.index] = closure.get(argName);
         }
         return this.func.apply(null, args);
     }

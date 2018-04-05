@@ -5,18 +5,19 @@ import {Response} from "./response";
 import querystring from 'querystring';
 import {isString} from "util";
 import {Func} from "./func";
+import {chain} from "./utils";
 import {isAbsolute} from "path";
 const package_json = require("../package.json");
 
 export class Zebra{
-    registeredHandler: Map<string, Function>;
+    // registeredHandler: Map<string, Function>;
     routerManager: RouterManager;
     server: Server;
     ascii: String = "";
     lazyEnv: Map<string, Func>;
     constructor(){
         this.routerManager = new RouterManager();
-        this.registeredHandler = new Map();
+        // this.registeredHandler = new Map();
         this.server = createServer();
         this.lazyEnv = new Map<string, Func>();
     }
@@ -32,9 +33,9 @@ export class Zebra{
 
     inject(arg1: Function | string, func?: Function): void{
         if(isString(arg1)) {
-            this.lazyEnv[arg1] = func;
+            this.lazyEnv.set(arg1, new Func(func));
         }else{
-            this.lazyEnv[arg1.name] = arg1;
+            this.lazyEnv.set(arg1.name, new Func(arg1));
         }
     }
 
@@ -44,11 +45,11 @@ export class Zebra{
         // parsedUrl.query
         const handler = this.routerManager.get_function(parsedUrl.pathname, requestedMethod);
         const queryMap = querystring.parse(parsedUrl.query || "") || {};
-        const extraClosure = Object.assign({
-            "req": req,
-            "res": res,
-        }, queryMap);
 
+        const extraClosure = new Map<string, any>(chain([
+            ["req", req],
+            ["res", res],
+        ], Object.entries(queryMap)));
 
 
         let handlerPromise: Promise<object | Response> = Promise.resolve(handler.execute(extraClosure, this.lazyEnv));

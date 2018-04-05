@@ -1,5 +1,14 @@
 
 
+export function objectToMap(obj: Object): Map<string, any>{
+    return new Map<string, any>(Object.entries(obj));
+}
+
+export function* chain (...iterators) {
+  for (let iterator of iterators)
+    for (let x of iterator)
+      yield x;
+}
 
 export function union<T>(set1: Set<T>, set2: Set<T>){
     const unionSet = new Set(set1);
