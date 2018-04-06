@@ -55,15 +55,25 @@ export class Func{
 
     _execute(extraClosure: Map<string, any>=new Map(), extraLazyClosure: Map<string, Func>=new Map()){
         const closure = new Map<string, any>(chain(this.closure, extraClosure));
+        const lazyClosure = new Map<string, any>(chain(this.lazyClosure, extraLazyClosure));
         let args = {};
         args["length"] = this.parameters.length;
         for(let parameter of this.parameters){
             let argName = parameter.name;
-            if(!closure.has(argName)){
+            if(parameter.isRequired && !closure.has(argName) && !lazyClosure.has(argName)) {
                 throw Error(`function ${this.name} does not have ${argName}`)
             }
+
+            let value = closure.get(argName);
+
+            if(lazyClosure.has(argName)){
+                const lazyFunc =lazyClosure.get(argName);
+                value = lazyFunc._execute(extraClosure, extraLazyClosure)
+            }
+
             // only search in closure
-            args[parameter.index] = closure.get(argName);
+            args[parameter.index] = value;
+
         }
         return this.func.apply(null, args);
     }
@@ -71,10 +81,15 @@ export class Func{
     execute(extraClosure: Map<string, any>=new Map(), extraLazyClosure: Map<string, Func>=new Map()){
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/apply
         // use a custom object like { 'length': 2, '0': 'eat', '1': 'bananas' }
-        const lazyClosure = new Map<string, any>(chain(this.lazyClosure, extraLazyClosure));
+        const lazyClosure = new Map<string, Func>(chain(this.lazyClosure, extraLazyClosure));
         const reorderParameterMap = new Map<string, Parameter>();
 
-        for(const name of toposort(lazyClosure, true)){
+        const constraintGraph = new Map<string, Set<string>>();
+        for(const [name, func] of lazyClosure){
+            constraintGraph[name] = new Set(func.parameters.filter(p=> p.isRequired));
+        }
+
+        for(const name of toposort(constraintGraph, true)){
             const parameter = this.parameters.find(p => p.name == name);
             if(parameter !== undefined){
                 reorderParameterMap.set(name.toString(), parameter);

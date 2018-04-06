@@ -31,7 +31,7 @@ class TestInject {
     @test
     async testLazyInjector() {
         const lazyEnv = new Map([
-            ["name", new Func(() => "it")]
+            ["name", new Func(function name(){return "it"})]
         ]);
         const func = new Func((name: string) => `hello, ${name}`);
         assert.equal(func.execute(undefined, lazyEnv), "hello, it");
