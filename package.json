@@ -15,16 +15,19 @@
   },
   "homepage": "https://github.com/zhy0216/zebra#readme",
   "devDependencies": {
+    "@types/core-js": "^0.9.46",
     "@types/node": "^9.4.0",
     "assert": "^1.4.1",
+    "got": "^8.3.0",
+    "knex": "^0.14.4",
     "mocha": "^5.0.0",
     "mocha-typescript": "^1.1.12",
+    "sqlite3": "^4.0.0",
     "ts-node": "^4.1.0",
     "typescript": "^2.7.1",
     "xregexp": "^4.0.0"
   },
   "dependencies": {
-    "@types/core-js": "^0.9.46",
-    "got": "^8.3.0"
+    "xregexp": "^4.0.0"
   }
 }
