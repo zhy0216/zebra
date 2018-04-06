@@ -27,15 +27,15 @@ export function difference<T>(set1: Set<T>, set2: Set<T>): Set<T>{
     return differenceSet;
 }
 
-export function toposort<T>(graph: Map<T, Set<T>>, flatten=false): Array<Array<T>> | Array<T>{
+export function toposort<T, U>(graph: Map<T, Set<U>>, flatten=false): Array<Array<T>> | Array<T>{
     const r: Array<Array<T>> = [];
     const freeNodeSet = new Set();
-    graph = new Map<T, Set<T>>(graph); // make sure the original graph does not change
+    graph = new Map<T, Set<U>>(graph); // make sure the original graph does not change
 
     while(true){
         let visitList: Array<T> = [];
         for(const [node, nodeSet] of graph){
-            if(difference<T>(nodeSet, freeNodeSet).size === 0){
+            if(difference<U>(nodeSet, freeNodeSet).size === 0){
                 visitList.push(node)
             }
         }

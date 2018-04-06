@@ -28,4 +28,13 @@ class TestInject {
         assert.equal(func.execute(data), "hello, it");
     }
 
+    @test
+    async testLazyInjector() {
+        const lazyEnv = new Map([
+            ["name", new Func(() => "it")]
+        ]);
+        const func = new Func((name: string) => `hello, ${name}`);
+        assert.equal(func.execute(undefined, lazyEnv), "hello, it");
+    }
+
 }
