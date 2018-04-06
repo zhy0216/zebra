@@ -7,6 +7,14 @@ import {Func, Parameter} from "../../lib/func";
 @suite
 class TestFunc {
     @test
+    testFunctionNoParameters() {
+        function func() {
+        }
+        const myFunc = new Func(func);
+        assert.equal(myFunc.parameters.length, 0);
+    }
+
+    @test
     testFunctionParameters() {
         function func(a: string, b: number =1, dd: number){}
         const myFunc = new Func(func);
