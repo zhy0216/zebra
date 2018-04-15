@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "a typescript webframework",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha ./test/*"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zhy0216/zebra.git"
