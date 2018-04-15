@@ -40,6 +40,9 @@ export class Func{
         // parse parameter
         const fnStr = f.toString().replace(Func.STRIP_COMMENTS, '');
         const argsStr = fnStr.slice(fnStr.indexOf('(')+1, fnStr.indexOf(')'));
+        if(argsStr.length === 0){
+            return ;
+        }
         const argsList = argsStr.replace(/ /g, "").split(",");
         for(let index in argsList){
             let argName = argsList[index];

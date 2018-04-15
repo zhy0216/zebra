@@ -37,4 +37,14 @@ class TestInject {
         assert.equal(func.execute(undefined, lazyEnv), "hello, it");
     }
 
+    @test
+    async testInjectorWithRefer() {
+        const lazyEnv = new Map([
+            ["name", new Func(function name(){return "it"})],
+            ["another_name", new Func(function another_name(name){return name})]
+        ]);
+        const func = new Func((another_name: string) => `hello, ${another_name}`);
+        assert.equal(func.execute(undefined, lazyEnv), "hello, it");
+    }
+
 }
