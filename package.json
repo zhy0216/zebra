@@ -4,6 +4,7 @@
   "description": "a typescript webframework",
   "main": "index.js",
   "scripts": {
+    "compile": "tsc",
     "test": "./node_modules/mocha/bin/mocha ./test/*"
   },
   "repository": {
