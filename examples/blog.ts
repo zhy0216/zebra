@@ -30,10 +30,9 @@ interface NewBlog {
     content: string;
 }
 
-
 z.addPost("/blogs/", async function newBlog(body: NewBlog){
-    const blogId = await knex('blog').insert(body);
-    return {id: blogId}
+    const blogIdQuery = await knex('blog').insert(body);
+    return {id: blogIdQuery[0]}
 });
 
 

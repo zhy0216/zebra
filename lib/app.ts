@@ -68,6 +68,9 @@ export class Zebra{
             });
 
             req.on('end', () => {
+                if(chunks.length === 0){
+                    return resolve();
+                }
                 const data = JSON.parse(Buffer.concat(chunks).toString());
                 resolve(data);
             });
