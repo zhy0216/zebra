@@ -4,23 +4,24 @@ import {z} from "../lib/app";
 const knex = knex_connect({
     client: 'sqlite3',
     connection: {
-        filename: "sqlite:///:memory:"
+        filename: ":memory:"
     },
-    pool: {
-        afterCreate: function (conn, done) {
-          knex.createTable('blog', function (table) {
-              table.increments();
-              table.string('title');
-              table.text('content');
-              table.timestamp('created_at').defaultTo(knex.fn.now());
-          })
-        }
-    }
+    useNullAsDefault: true
 });
 
+async function init() {
+    await knex.schema.createTable('blog', function (table) {
+        table.increments();
+        table.string('title');
+        table.text('content');
+        table.timestamp('created_at').defaultTo(knex.fn.now());
+    });
+}
+init();
 
-z.addGet("/blogs/", function allBlog(){
-    return knex('blog')
+
+z.addGet("/blogs/", async function allBlog(){
+    return await knex('blog')
 });
 
 
@@ -30,8 +31,8 @@ interface NewBlog {
 }
 
 
-z.addPost("/blogs/", async function newBlog(blog: NewBlog){
-    const blogId = await knex('blog').returning('id').insert(blog);
+z.addPost("/blogs/", async function newBlog(body: NewBlog){
+    const blogId = await knex('blog').insert(body);
     return {id: blogId}
 });
 

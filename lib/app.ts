@@ -54,6 +54,28 @@ export class Zebra{
     }
 
     async requestHandlers(req: IncomingMessage, res: ServerResponse){
+
+        const body = new Promise(function (resolve, reject) {
+            const chunks: Array<Buffer> = [];
+
+            req.on('data', chunk => {
+                if(Buffer.isBuffer(chunk)){
+                    chunks.push(chunk)
+                }else{
+                    const buffer = Buffer.from(chunk);
+                    chunks.push(buffer);
+                }
+            });
+
+            req.on('end', () => {
+                const data = JSON.parse(Buffer.concat(chunks).toString());
+                resolve(data);
+            });
+        });
+
+
+
+
         const parsedUrl = url.parse(req.url!);
         const requestedMethod = req.method!;
         // parsedUrl.query
@@ -63,6 +85,7 @@ export class Zebra{
         const extraClosure = new Map<string, any>(chain([
             ["req", req],
             ["res", res],
+            ["body", await body]
         ], Object.entries(queryMap)));
 
 

@@ -26,7 +26,7 @@ export class UrlExtractor{
 
     extract(url): Map<string, string>{
         const r = new Map<string, string>();
-        
+
         if(this.metaPattern.xregexp.captureNames === null){
             return r;
         }
