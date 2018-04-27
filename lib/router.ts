@@ -26,6 +26,11 @@ export class UrlExtractor{
 
     extract(url): Map<string, string>{
         const r = new Map<string, string>();
+        
+        if(this.metaPattern.xregexp.captureNames === null){
+            return r;
+        }
+
         const data = XRegExp.exec(url, this.metaPattern);
         for(const variable_name of this.metaPattern.xregexp.captureNames){
             r.set(variable_name, data[variable_name]);

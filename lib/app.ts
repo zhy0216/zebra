@@ -31,6 +31,20 @@ export class Zebra{
         this.addPathPattern(path, new Set(["GET"]), handler);
     }
 
+    addPost(path: string, handler: Function){
+        this.addPathPattern(path, new Set(["POST"]), handler);
+    }
+
+    addDelete(path: string, handler: Function){
+        this.addPathPattern(path, new Set(["Delete"]), handler);
+    }
+
+    addPatch(path: string, handler: Function){
+        this.addPathPattern(path, new Set(["PATCH"]), handler);
+    }
+
+
+
     inject(arg1: Function | string, func?: Function): void{
         if(isString(arg1)) {
             this.lazyEnv.set(arg1, new Func(func));
