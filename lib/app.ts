@@ -51,7 +51,7 @@ export class Zebra{
     }
 
     addDelete(path: string, handler: Function){
-        this.addPathPattern(path, new Set(["Delete"]), handler);
+        this.addPathPattern(path, new Set(["DELETE"]), handler);
     }
 
     addPatch(path: string, handler: Function){
