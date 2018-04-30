@@ -9,17 +9,32 @@ import {chain} from "./utils";
 import {isAbsolute} from "path";
 const package_json = require("../package.json");
 
+interface ZebraEvent {
+    beforeRun: Array<Function>;
+    beforeStop: Array<Function>;
+}
+
 export class Zebra{
     // registeredHandler: Map<string, Function>;
     routerManager: RouterManager;
     server: Server;
     ascii: String = "";
     lazyEnv: Map<string, Func>;
+    events: ZebraEvent;
     constructor(){
         this.routerManager = new RouterManager();
         // this.registeredHandler = new Map();
         this.server = createServer();
         this.lazyEnv = new Map<string, Func>();
+        this.events = {beforeRun: [], beforeStop: []};
+    }
+
+    addBeforeRun(func: Function){
+        this.events.beforeRun.push(func);
+    }
+
+    addBeforeStop(func: Function){
+        this.events.beforeStop.push(func);
     }
 
     addPathPattern(pathPattern: string, methods: Set<string>, handler: Function){
@@ -77,8 +92,6 @@ export class Zebra{
         });
 
 
-
-
         const parsedUrl = url.parse(req.url!);
         const requestedMethod = req.method!;
         // parsedUrl.query
@@ -101,15 +114,21 @@ export class Zebra{
         res.end();
     }
 
-    run(){
+    async run(){
+        const self = this;
+        await Promise.all(Object.values(this.events.beforeRun).map(func => Promise.resolve(func())));
+
         let port = 8888;
         console.log(z.ascii);
         console.log(`running on localhost: ${port}`);
-        this.server.on("request", (async (req, res) => await z.requestHandlers(req, res)));
-        this.server.listen(port);
+        self.server.on("request", (async (req, res) => await z.requestHandlers(req, res)));
+        self.server.listen(port);
     }
 
     async stop(){
+        for(const func of this.events.beforeStop){
+            func();
+        }
         await this.server.close();
         this.server = createServer();
     }

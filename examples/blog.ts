@@ -9,16 +9,19 @@ const knex = knex_connect({
     useNullAsDefault: true
 });
 
-async function init() {
+
+z.addBeforeRun(async function init() {
     await knex.schema.createTable('blog', function (table) {
         table.increments();
         table.string('title');
         table.text('content');
         table.timestamp('created_at').defaultTo(knex.fn.now());
     });
-}
-init();
+});
 
+z.addBeforeStop(async function() {
+    await knex.destroy()
+});
 
 z.addGet("/blogs/", async function allBlog(){
     return await knex('blog')
