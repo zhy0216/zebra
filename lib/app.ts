@@ -114,11 +114,10 @@ export class Zebra{
         res.end();
     }
 
-    async run(){
+    async run(port:number=8888){
         const self = this;
         await Promise.all(Object.values(this.events.beforeRun).map(func => Promise.resolve(func())));
 
-        let port = 8888;
         console.log(z.ascii);
         console.log(`running on localhost: ${port}`);
         self.server.on("request", (async (req, res) => await z.requestHandlers(req, res)));
@@ -131,6 +130,7 @@ export class Zebra{
         }
         await this.server.close();
         this.server = createServer();
+        this.events = {beforeRun: [], beforeStop: []};
     }
 
 }
