@@ -8,6 +8,7 @@ import assert from "assert";
 class TestHello {
     @test
     async testHello() {
+        require("../../examples/auth");
         require("../../examples/hello");
         z.run();
         const response = await got.get("http://localhost:8888/hello/world");

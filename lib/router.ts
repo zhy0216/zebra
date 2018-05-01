@@ -13,9 +13,9 @@ export class UrlExtractor{
         const self = this;
         this.pattern = urlPattern;
         // this.registerVariable = new Set<string>();
-        this.metaPattern = XRegExp(XRegExp.replace(urlPattern, XRegExp('{(?<var>\\w+)}'), function (match) {
+        this.metaPattern = XRegExp("^" + XRegExp.replace(urlPattern, XRegExp('{(?<var>\\w+)}'), function (match) {
             return `(?<${match.var}>\\w+)`;
-        }, 'all'));
+        }, 'all') + "$");
 
     }
 
