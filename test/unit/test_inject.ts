@@ -44,7 +44,7 @@ class TestInject {
             ["another_name", new Func(function another_name(name){return name})]
         ]);
         const func = new Func((another_name: string) => `hello, ${another_name}`);
-        assert.equal(await func.execute(null, lazyEnv), "hello, it");
+        assert.equal(await func.execute(new Map<string, any>(), lazyEnv), "hello, it");
     }
 
 }

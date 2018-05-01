@@ -1,4 +1,4 @@
-
+import jwt from 'jsonwebtoken';
 
 export function objectToMap(obj: Object): Map<string, any>{
     return new Map<string, any>(Object.entries(obj));
@@ -61,4 +61,20 @@ export function toposort<T, U>(graph: Map<T, Set<U>>, flatten=false): Array<Arra
         return r;
     }
     return r;
+}
+
+export async function jwt_sign(data, secret){
+    return await new Promise(function (resolve, reject) {
+        jwt.sign(data, secret, { algorithm: 'HS256' }, function(err, token) {
+          resolve(token);
+        });
+    })
+}
+
+export async function jwt_decode(token , secret) {
+    return await new Promise(function (resolve, reject) {
+        jwt.verify(token, secret, function (err, decoded) {
+            resolve(decoded);
+        });
+    })
 }

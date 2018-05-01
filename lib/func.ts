@@ -78,7 +78,7 @@ export class Func{
             args[parameter.index] = value;
 
         }
-        return this.func.apply(null, args);
+        return await Promise.resolve(this.func.apply(null, args));
     }
 
     async execute(extraClosure: Map<string, any>=new Map(), extraLazyClosure: Map<string, Func>=new Map()){

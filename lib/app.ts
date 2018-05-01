@@ -106,12 +106,21 @@ export class Zebra{
 
 
         let handlerPromise: Promise<object | Response> = Promise.resolve(handler.execute(extraClosure, this.lazyEnv));
-        const response = Response.buildFromHandlerResult(await handlerPromise);
+
+        try{
+            const response = Response.buildFromHandlerResult(await handlerPromise);
+            res.writeHead(response.statusCode, response.headers);
+            res.write(response.content);
+            res.end();
+        }catch (e) { // better handler
+            res.writeHead(400);
+            res.write(e.toString());
+            res.end();
+        }
+
 
         // application/json
-        res.writeHead(response.statusCode, response.headers);
-        res.write(response.content);
-        res.end();
+
     }
 
     async run(port:number=8888){
