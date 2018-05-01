@@ -56,7 +56,7 @@ export class Func{
 
     }
 
-    _execute(extraClosure: Map<string, any>=new Map(), extraLazyClosure: Map<string, Func>=new Map()){
+    async _execute(extraClosure: Map<string, any>=new Map(), extraLazyClosure: Map<string, Func>=new Map()){
         const closure = new Map<string, any>(chain(this.closure, extraClosure));
         const lazyClosure = new Map<string, any>(chain(this.lazyClosure, extraLazyClosure));
         let args = {};
@@ -70,8 +70,8 @@ export class Func{
             let value = closure.get(argName);
 
             if(lazyClosure.has(argName)){
-                const lazyFunc =lazyClosure.get(argName);
-                value = lazyFunc._execute(extraClosure, extraLazyClosure)
+                const lazyFunc = lazyClosure.get(argName);
+                value = await Promise.resolve(lazyFunc._execute(extraClosure, extraLazyClosure))
             }
 
             // only search in closure
@@ -81,7 +81,7 @@ export class Func{
         return this.func.apply(null, args);
     }
 
-    execute(extraClosure: Map<string, any>=new Map(), extraLazyClosure: Map<string, Func>=new Map()){
+    async execute(extraClosure: Map<string, any>=new Map(), extraLazyClosure: Map<string, Func>=new Map()){
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/apply
         // use a custom object like { 'length': 2, '0': 'eat', '1': 'bananas' }
         const lazyClosure = new Map<string, Func>(chain(this.lazyClosure, extraLazyClosure));
@@ -106,7 +106,7 @@ export class Func{
         }
 
         this.parameters = Array.from(reorderParameterMap.values());
-        const r = this._execute(extraClosure, extraLazyClosure);
+        const r = await this._execute(extraClosure, extraLazyClosure);
         // some exit logic here
 
         return r;
