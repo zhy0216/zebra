@@ -1,18 +1,14 @@
 # zebra
-a typescript web framework
+## still in process....
 
-in process...
+A neat typescript web framework.
 
-an easy example will be
-```javascript
-import {z} from "zebra";
+[![Build Status](https://travis-ci.org/zhy0216/zebra.svg?branch=master)](https://travis-ci.org/zhy0216/zebra)
 
-z.addGet("/hello/{name}", (name: string) => `hello, ${name}`);
-z.run();
-```
+* Document: [https://zhy0216.github.io/zebra/](https://zhy0216.github.io/zebra/)
+* Examples: [https://github.com/zhy0216/zebra/tree/master/examples](https://github.com/zhy0216/zebra/tree/master/examples) 
 
+---------
 
-
-
-
-inspired by flask, koajs, hug, sanic;
+Not every neat framework hides an ugly implementation.
+~Yang 
