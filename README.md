@@ -1,4 +1,4 @@
-# zebra
+# Zebra
 ## still in process....
 
 A neat typescript web framework.
@@ -10,5 +10,5 @@ A neat typescript web framework.
 
 ---------
 
-Not every neat framework hides an ugly implementation.
+Not every neat framework hides an ugly implementation.  
 ~Yang 
