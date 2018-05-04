@@ -58,6 +58,10 @@ export class Zebra{
         this.addPathPattern(path, new Set(["PATCH"]), handler);
     }
 
+    handle(error: Error | number){
+        
+
+    }
 
 
     inject(arg1: Function | string, func?: Function): void{
