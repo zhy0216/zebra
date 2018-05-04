@@ -24,23 +24,54 @@ If you had not not learnt typescript, check the official website [tutorial](http
 Typing less a few characters really matters.
 
 
-## Routing
+## Injection (an default injector in the app, formalize the pattern?)
+The idea of injection is more like C#'s dependency injection(DI), but DI is based on type, which maybe not suitable for a dynamic language.
+So instead of injecting by type, we infer the variable by name. The idea is actually come from [pytest's fixture](https://docs.pytest.org/en/2.8.7/fixture.html).
 
-### Request parameters
+### Immediate Injection
+
+### Lazy Injection
+
+
+
+## Routing
+Zebra comes with a basic router that supports request parameters.
+
+To specify a parameter, surround it with parentheses like so: {PARAM}. Request parameters will be passed to the route handler functions as keyword arguments.
+
+```
+z.addGet('/tag/{tag}', (tag: str) => `Tag - ${tag}`)
+```
+Notice the type after `tag` in handle function, which will be always string for routing parameters.
+So when it is an integer, you have to convert it manually. (maybe can be automatically in a class view with ES7 decorator?)
 
 ## Request Data
+When an endpoint receives a HTTP request, the route function will inject all the request data.
+The following variables are accessible by function parameters:
+
+* req - IncomingMessage
+* res - ServerResponse (most time you should not access this object)
+* body (Any) - JSON body
+* you can also inject parameters here by using [injection](#injection)
 
 ## Response
 
-## Injection
 
-## Exceptions
+## Error handling
+explain the handle sequence, especially when multi inheritance involve.
+
 
 ## Why Zebra has no X features
 ### Cookies (talk about jwt)
+Cookie is not secure. All the modern browsers support local storage, just save jwt token and send back.
 ### Post Form
+Just send json data.
 ### ORM
+You can integral any one you want, that is actually the good part of framework.
 ### Template
+Similar like ORM.
+### Validation Schema
+Maybe I will add one.
 
 
 inspired by flask, koajs, hug, sanic and pytest;

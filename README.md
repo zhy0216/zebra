@@ -10,5 +10,5 @@ A neat typescript web framework.
 
 ---------
 
-Not every neat framework hides an ugly implementation.  
+Not every neat framework hides an ugly implementation.
 ~Yang 
