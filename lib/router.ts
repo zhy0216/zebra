@@ -1,24 +1,17 @@
 import XRegExp from 'xregexp';
 import {Func} from "./func";
 
-
-
-
-
 export class UrlExtractor{
     pattern: string;
     metaPattern: XRegExp;
     // registerVariable: Set<string>;
     constructor(urlPattern: string) {
-        const self = this;
         this.pattern = urlPattern;
         // this.registerVariable = new Set<string>();
         this.metaPattern = XRegExp("^" + XRegExp.replace(urlPattern, XRegExp('{(?<var>\\w+)}'), function (match) {
             return `(?<${match.var}>\\w+)`;
         }, 'all') + "$");
-
     }
-
 
     match(url): boolean {
         return this.metaPattern.test(url);

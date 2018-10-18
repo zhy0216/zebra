@@ -11,7 +11,6 @@ export class Parameter{
         this.isRequired = isRequired;
         this.index = index;
     }
-
 }
 
 export class Func{

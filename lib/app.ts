@@ -6,7 +6,6 @@ import querystring from 'querystring';
 import {isString} from "util";
 import {Func} from "./func";
 import {chain} from "./utils";
-import {isAbsolute} from "path";
 const package_json = require("../package.json");
 
 interface ZebraEvent {
@@ -70,7 +69,7 @@ export class Zebra{
 
     async requestHandlers(req: IncomingMessage, res: ServerResponse){
 
-        const body = new Promise(function (resolve, reject) {
+        const body = new Promise(function (resolve) {
             const chunks: Array<Buffer> = [];
 
             req.on('data', chunk => {

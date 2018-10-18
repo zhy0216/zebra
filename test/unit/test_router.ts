@@ -2,7 +2,7 @@
 
 import assert from 'assert';
 
-import { suite, test, slow, timeout } from "mocha-typescript";
+import { suite, test } from "mocha-typescript";
 import {UrlExtractor} from "../../lib/router";
 import {objectToMap} from "../../lib/utils";
 

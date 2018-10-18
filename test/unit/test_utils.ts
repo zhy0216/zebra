@@ -1,8 +1,6 @@
-// import {getFunctionParameters} from '../lib/utils';
-
 import assert from 'assert';
 
-import { suite, test, slow, timeout } from "mocha-typescript";
+import { suite, test } from "mocha-typescript";
 import {difference, union, toposort} from "../../lib/utils";
 
 @suite
@@ -68,9 +66,6 @@ class TestUtils {
            [2, new Set([1])],
         ]);
         assert.throws(() => toposort(graph, false))
-
     }
-
-
 
 }

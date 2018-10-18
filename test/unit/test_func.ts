@@ -1,8 +1,6 @@
-
 import assert from 'assert';
-
-import { suite, test, slow, timeout } from "mocha-typescript";
-import {Func, Parameter} from "../../lib/func";
+import { suite, test } from "mocha-typescript";
+import {Func} from "../../lib/func";
 
 @suite
 class TestFunc {

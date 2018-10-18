@@ -64,7 +64,7 @@ export function toposort<T, U>(graph: Map<T, Set<U>>, flatten=false): Array<Arra
 }
 
 export async function jwt_sign(data, secret){
-    return await new Promise(function (resolve, reject) {
+    return await new Promise(function (resolve) {
         jwt.sign(data, secret, { algorithm: 'HS256' }, function(err, token) {
           resolve(token);
         });

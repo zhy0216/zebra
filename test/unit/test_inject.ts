@@ -1,10 +1,7 @@
 import assert from 'assert';
 
-import { suite, test, slow, timeout } from "mocha-typescript";
-import {UrlExtractor} from "../../lib/router";
-import {z} from "../../lib/app";
+import { suite, test } from "mocha-typescript";
 import {Func} from "../../lib/func";
-import got from "got";
 
 @suite
 class TestInject {
@@ -46,5 +43,4 @@ class TestInject {
         const func = new Func((another_name: string) => `hello, ${another_name}`);
         assert.equal(await func.execute(new Map<string, any>(), lazyEnv), "hello, it");
     }
-
 }
