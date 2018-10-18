@@ -40,7 +40,6 @@ export class Zebra{
         this.routerManager.add(new Router(methods, pathPattern, handler))
     }
 
-
     addGet(path: string, handler: Function){
         this.addPathPattern(path, new Set(["GET"]), handler);
     }
@@ -57,8 +56,6 @@ export class Zebra{
         this.addPathPattern(path, new Set(["PATCH"]), handler);
     }
 
-
-
     inject(arg1: Function | string, func?: Function): void{
         if(isString(arg1)) {
             this.lazyEnv.set(arg1, new Func(func));
@@ -67,9 +64,12 @@ export class Zebra{
         }
     }
 
-    async requestHandlers(req: IncomingMessage, res: ServerResponse){
+    async sendFile(filename: string): Promise<Response>{
+        throw Error;
+    }
 
-        const body = new Promise(function (resolve) {
+    async getRequestBody(req: IncomingMessage){
+        return new Promise(function (resolve) {
             const chunks: Array<Buffer> = [];
 
             req.on('data', chunk => {
@@ -89,7 +89,10 @@ export class Zebra{
                 resolve(data);
             });
         });
+    }
 
+    async requestHandlers(req: IncomingMessage, res: ServerResponse){
+        const body = await this.getRequestBody(req);
 
         const parsedUrl = url.parse(req.url!);
         const requestedMethod = req.method!;
@@ -100,14 +103,11 @@ export class Zebra{
         const extraClosure = new Map<string, any>(chain([
             ["req", req],
             ["res", res],
-            ["body", await body]
+            ["body", body]
         ], Object.entries(queryMap)));
 
-
-        let handlerPromise: Promise<object | Response> = Promise.resolve(handler.execute(extraClosure, this.lazyEnv));
-
         try{
-            const response = Response.buildFromHandlerResult(await handlerPromise);
+            const response = Response.buildFromHandlerResult(await handler.execute(extraClosure, this.lazyEnv));
             res.writeHead(response.statusCode, response.headers);
             res.write(response.content);
             res.end();

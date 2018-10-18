@@ -1,3 +1,4 @@
+import {Response} from "./response";
 import {chain, toposort} from './utils';
 
 
@@ -80,7 +81,7 @@ export class Func{
         return await Promise.resolve(this.func.apply(null, args));
     }
 
-    async execute(extraClosure: Map<string, any>=new Map(), extraLazyClosure: Map<string, Func>=new Map()){
+    async execute(extraClosure: Map<string, any>=new Map(), extraLazyClosure: Map<string, Func>=new Map()): Promise<Response>{
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/apply
         // use a custom object like { 'length': 2, '0': 'eat', '1': 'bananas' }
         const lazyClosure = new Map<string, Func>(chain(this.lazyClosure, extraLazyClosure));
