@@ -1,26 +1,26 @@
-import {IncomingMessage, ServerResponse, createServer, Server} from "http";
-import {RouterManager, Router} from './router';
-import url from 'url';
-import {Response} from "./response";
-import querystring from 'querystring';
-import {isString} from "util";
-import {Func} from "./func";
-import {chain} from "./utils";
-const package_json = require("../package.json");
+import { IncomingMessage, ServerResponse, createServer, Server } from "http";
+import { isString } from "util";
+import { RouterManager, Router } from "./router";
+import url from "url";
+import { Response } from "./response";
+import querystring from "querystring";
+import { Func } from "./func";
+import { chain } from "./utils";
+const packageJson = require("../package.json");
 
 interface ZebraEvent {
-    beforeRun: Array<Function>;
-    beforeStop: Array<Function>;
+    beforeRun: Function[];
+    beforeStop: Function[];
 }
 
-export class Zebra{
+export class Zebra {
     // registeredHandler: Map<string, Function>;
     routerManager: RouterManager;
     server: Server;
     ascii: String = "";
     lazyEnv: Map<string, Func>;
     events: ZebraEvent;
-    constructor(){
+    constructor() {
         this.routerManager = new RouterManager();
         // this.registeredHandler = new Map();
         this.server = createServer();
@@ -28,11 +28,11 @@ export class Zebra{
         this.events = {beforeRun: [], beforeStop: []};
     }
 
-    addBeforeRun(func: Function){
+    addBeforeRun(func: Function) {
         this.events.beforeRun.push(func);
     }
 
-    addBeforeStop(func: Function){
+    addBeforeStop(func: Function) {
         this.events.beforeStop.push(func);
     }
 
@@ -40,31 +40,31 @@ export class Zebra{
         this.routerManager.add(new Router(methods, pathPattern, handler))
     }
 
-    addGet(path: string, handler: Function){
+    addGet(path: string, handler: Function) {
         this.addPathPattern(path, new Set(["GET"]), handler);
     }
 
-    addPost(path: string, handler: Function){
+    addPost(path: string, handler: Function) {
         this.addPathPattern(path, new Set(["POST"]), handler);
     }
 
-    addDelete(path: string, handler: Function){
+    addDelete(path: string, handler: Function) {
         this.addPathPattern(path, new Set(["DELETE"]), handler);
     }
 
-    addPatch(path: string, handler: Function){
+    addPatch(path: string, handler: Function) {
         this.addPathPattern(path, new Set(["PATCH"]), handler);
     }
 
-    inject(arg1: Function | string, func?: Function): void{
-        if(isString(arg1)) {
+    inject(arg1: Function | string, func?: Function): void {
+        if (isString(arg1)) {
             this.lazyEnv.set(arg1, new Func(func));
-        }else{
+        } else {
             this.lazyEnv.set(arg1.name, new Func(arg1));
         }
     }
 
-    async sendFile(filename: string): Promise<Response>{
+    async sendFile(filename: string): Promise<Response> {
         throw Error;
     }
 
@@ -97,7 +97,7 @@ export class Zebra{
         const parsedUrl = url.parse(req.url!);
         const requestedMethod = req.method!;
         // parsedUrl.query
-        const handler = this.routerManager.get_function(parsedUrl.pathname, requestedMethod);
+        const handler = this.routerManager.getFunction(parsedUrl.pathname, requestedMethod);
         const queryMap = querystring.parse(parsedUrl.query || "") || {};
 
         const extraClosure = new Map<string, any>(chain([
@@ -106,12 +106,12 @@ export class Zebra{
             ["body", body]
         ], Object.entries(queryMap)));
 
-        try{
+        try {
             const response = Response.buildFromHandlerResult(await handler.execute(extraClosure, this.lazyEnv));
             res.writeHead(response.statusCode, response.headers);
             res.write(response.content);
             res.end();
-        }catch (e) { // better handler
+        } catch (e) { // better handler
             res.writeHead(400);
             res.write(e.toString());
             res.end();
@@ -122,18 +122,17 @@ export class Zebra{
 
     }
 
-    async run(port:number=8888){
-        const self = this;
+    async run(port = 8888) {
         await Promise.all(Object.values(this.events.beforeRun).map(func => Promise.resolve(func())));
 
         console.log(z.ascii);
         console.log(`running on localhost: ${port}`);
-        self.server.on("request", (async (req, res) => await z.requestHandlers(req, res)));
-        self.server.listen(port);
+        this.server.on("request", (async (req, res) => await z.requestHandlers(req, res)));
+        this.server.listen(port);
     }
 
-    async stop(){
-        for(const func of this.events.beforeStop){
+    async stop() {
+        for (const func of this.events.beforeStop) {
             func();
         }
         await this.server.close();
@@ -155,7 +154,7 @@ z.ascii = `
 ███████╗███████╗██████╔╝██║  ██║██║  ██║
 ╚══════╝╚══════╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
     WEB FRAMEWORK FOR LAZY PEOPLE
-       VERSION: ${package_json.version}
+       VERSION: ${packageJson.version}
 ########################################       
        
 Copyright (C) 2018 Yang
