@@ -7,19 +7,11 @@ export class UrlExtractor {
     constructor(urlPattern: string) {
         this.pattern = urlPattern;
         this.metaPattern = new RegExp("^" +
-            urlPattern.replace(new RegExp("{(?<var>\\w+)}"), (...params) => {
-                console.log(params)
+            urlPattern.replace(new RegExp("{(?<var>\\w+)}", "g"), (...params) => {
                 const group = params.pop();
-                console.log("group:")
-                console.log(group)
                 return `(?<${group.var}>\\w+)`;
             })  +
             "$");
-        console.log("metaPattern: " + urlPattern.replace(new RegExp("{(?<var>\\w+)}"), (...params) => {
-            // console.log(params)
-            const group = params.pop();
-                return `(?<${group.var}>\\w+)`;
-            }))
     }
 
     match(url): boolean {
@@ -29,9 +21,12 @@ export class UrlExtractor {
     extract(url): Map<string, string> {
         const r = new Map<string, string>();
         const data = this.metaPattern.exec(url);
-        console.log(data)
-        for(const variableName of data.groups) {
-            r.set(variableName, data[variableName]);
+        if (data === null || data.groups === null) {
+            return r;
+        }
+
+        for (const variableName of Object.keys(data.groups)) {
+            r.set(variableName, data.groups[variableName]);
         }
         return r;
     }

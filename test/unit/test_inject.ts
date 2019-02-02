@@ -28,7 +28,7 @@ class TestInject {
     @test
     async testLazyInjector() {
         const lazyEnv = new Map([
-            ["name", new Func(function name() {return "it";})]
+            ["name", new Func(function name() {return "it"; })]
         ]);
         const func = new Func((name: string) => `hello, ${name}`);
         assert.equal(await func.execute(undefined, lazyEnv), "hello, it");
@@ -37,8 +37,8 @@ class TestInject {
     @test
     async testInjectorWithRefer() {
         const lazyEnv = new Map([
-            ["name", new Func(function name() {return "it";})],
-            ["another_name", new Func(function another_name(name) {return name;})]
+            ["name", new Func(function name() {return "it"; })],
+            ["anotherName", new Func(function anotherName(name) {return name; })]
         ]);
         const func = new Func((anotherName: string) => `hello, ${anotherName}`);
         assert.equal(await func.execute(new Map<string, any>(), lazyEnv), "hello, it");
