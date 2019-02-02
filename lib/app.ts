@@ -17,7 +17,7 @@ export class Zebra {
     // registeredHandler: Map<string, Function>;
     routerManager: RouterManager;
     server: Server;
-    ascii: String = "";
+    ascii = "";
     lazyEnv: Map<string, Func>;
     events: ZebraEvent;
     constructor() {
@@ -36,8 +36,8 @@ export class Zebra {
         this.events.beforeStop.push(func);
     }
 
-    addPathPattern(pathPattern: string, methods: Set<string>, handler: Function){
-        this.routerManager.add(new Router(methods, pathPattern, handler))
+    addPathPattern(pathPattern: string, methods: Set<string>, handler: Function) {
+        this.routerManager.add(new Router(methods, pathPattern, handler));
     }
 
     addGet(path: string, handler: Function) {
@@ -68,21 +68,21 @@ export class Zebra {
         throw Error;
     }
 
-    async getRequestBody(req: IncomingMessage){
-        return new Promise(function (resolve) {
-            const chunks: Array<Buffer> = [];
+    async getRequestBody(req: IncomingMessage) {
+        return new Promise((resolve) => {
+            const chunks: Buffer[] = [];
 
-            req.on('data', chunk => {
-                if(Buffer.isBuffer(chunk)){
-                    chunks.push(chunk)
-                }else{
+            req.on("data", chunk => {
+                if (Buffer.isBuffer(chunk)) {
+                    chunks.push(chunk);
+                } else {
                     const buffer = Buffer.from(chunk);
                     chunks.push(buffer);
                 }
             });
 
-            req.on('end', () => {
-                if(chunks.length === 0){
+            req.on("end", () => {
+                if (chunks.length === 0) {
                     return resolve();
                 }
                 const data = JSON.parse(Buffer.concat(chunks).toString());
@@ -91,7 +91,7 @@ export class Zebra {
         });
     }
 
-    async requestHandlers(req: IncomingMessage, res: ServerResponse){
+    async requestHandlers(req: IncomingMessage, res: ServerResponse) {
         const body = await this.getRequestBody(req);
 
         const parsedUrl = url.parse(req.url!);
@@ -127,7 +127,7 @@ export class Zebra {
 
         console.log(z.ascii);
         console.log(`running on localhost: ${port}`);
-        this.server.on("request", (async (req, res) => await z.requestHandlers(req, res)));
+        this.server.on("request", (async (req, res) => z.requestHandlers(req, res)));
         this.server.listen(port);
     }
 

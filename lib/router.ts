@@ -21,7 +21,7 @@ export class UrlExtractor {
     extract(url): Map<string, string> {
         const r = new Map<string, string>();
         const data = this.metaPattern.exec(url);
-        if (data === null || data.groups === null) {
+        if (data == null || data.groups == null) {
             return r;
         }
 
@@ -46,7 +46,7 @@ export class Router {
         return this.urlExtractor.match(url) && this.methods.has(method);
     }
 
-    public extract(url){
+    public extract(url) {
         return this.urlExtractor.extract(url);
     }
 }
@@ -64,7 +64,7 @@ export class RouterManager {
     getFunction(url, method= "GET"): Func {
         for (const router of this.routerList) {
             if (router.match(url, method)) {
-                return new Func(router.func, router.extract(url))
+                return new Func(router.func, router.extract(url));
             }
         }
         throw new Error(); // a better exception

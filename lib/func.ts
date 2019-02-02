@@ -19,12 +19,12 @@ export class Func {
     closure: Map<string, any>;
     lazyClosure: Map<string, Func>;
     parameters: Parameter[];
-    name: string;
+    name?: string;
     static STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
 
     constructor(func, closure?: Map<string, any>, lazyClosure?: Map<string, Func>) {
         this.func = func;
-        this.name = null;
+        this.name = undefined;
         this.closure = closure || new Map<string, any>();
         this.lazyClosure = lazyClosure || new Map<string, Func>();
         this.parameters = [];
@@ -77,7 +77,7 @@ export class Func {
             args[parameter.index] = value;
 
         }
-        return Promise.resolve(this.func.apply(null, args));
+        return Promise.resolve(this.func.apply(undefined, args));
     }
 
     async execute(extraClosure: Map<string, any>= new Map(), extraLazyClosure: Map<string, Func>= new Map()): Promise<Response> {
