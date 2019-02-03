@@ -2,7 +2,7 @@ export class Response {
     content: string;
     headers: Dict<string>;
     statusCode: number;
-    constructor(content, headers, statusCode = 200) {
+    constructor(content, headers, statusCode= 200) {
         this.content = content;
         this.headers = headers || {};
         this.statusCode = statusCode;

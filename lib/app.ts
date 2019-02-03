@@ -8,10 +8,11 @@ import { Func } from "./func";
 import { chain } from "./utils";
 const packageJson = require("../package.json");
 
+type EventFunc = (() => void | Promise<void>);
 
 interface ZebraEvent {
-    beforeRun: Function[];
-    beforeStop: Function[];
+    beforeRun: EventFunc[];
+    beforeStop: EventFunc[];
 }
 
 export class Zebra {
@@ -29,11 +30,11 @@ export class Zebra {
         this.events = {beforeRun: [], beforeStop: []};
     }
 
-    addBeforeRun(func: Function) {
+    addBeforeRun(func: EventFunc) {
         this.events.beforeRun.push(func);
     }
 
-    addBeforeStop(func: Function) {
+    addBeforeStop(func: EventFunc) {
         this.events.beforeStop.push(func);
     }
 
@@ -142,7 +143,6 @@ export class Zebra {
     }
 
 }
-
 
 // TODO: make this singleton?
 export const z = new Zebra();

@@ -20,7 +20,6 @@ export function union<T>(set1: Set<T>, set2: Set<T>) {
     return unionSet;
 }
 
-
 export function difference<T>(set1: Set<T>, set2: Set<T>): Set<T> {
     const differenceSet = new Set(set1);
     for (const elem of set2) {
@@ -65,7 +64,7 @@ export function toposort<T, U>(graph: Map<T, Set<U>>, flatten= false): T[][] | T
     return r;
 }
 
-export async function jwt_sign(data, secret) {
+export async function jwtSign(data, secret) {
     return new Promise((resolve) => {
         jwt.sign(data, secret, { algorithm: "HS256" }, (err, token) => {
           resolve(token);
@@ -73,7 +72,7 @@ export async function jwt_sign(data, secret) {
     });
 }
 
-export async function jwt_decode(token , secret) {
+export async function jwtDecode(token , secret) {
     return new Promise((resolve) => {
         jwt.verify(token, secret, (err, decoded) => {
             resolve(decoded);

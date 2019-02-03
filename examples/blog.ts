@@ -10,7 +10,6 @@ const knex = knex_connect({
     useNullAsDefault: true
 });
 
-
 z.addBeforeRun(async function init() {
     await knex.schema.createTable("blog", (table) => {
         table.increments();
