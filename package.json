@@ -18,8 +18,8 @@
   },
   "homepage": "https://github.com/zhy0216/zebra#readme",
   "devDependencies": {
-    "@types/core-js": "^0.9.46",
-    "@types/node": "^9.4.0",
+    "@types/core-js": "^2.5.0",
+    "@types/node": "^10.12.21",
     "assert": "^1.4.1",
     "got": "^8.3.0",
     "jsonwebtoken": "^8.2.1",
@@ -28,7 +28,7 @@
     "mocha-typescript": "^1.1.12",
     "sqlite3": "^4.0.0",
     "ts-node": "^4.1.0",
-    "typescript": "^2.7.1",
-    "tslint": "^5.12.1"
+    "tslint": "^5.12.1",
+    "typescript": "^3.3.1"
   }
 }

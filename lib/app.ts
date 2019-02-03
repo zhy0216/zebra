@@ -8,6 +8,7 @@ import { Func } from "./func";
 import { chain } from "./utils";
 const packageJson = require("../package.json");
 
+
 interface ZebraEvent {
     beforeRun: Function[];
     beforeStop: Function[];

@@ -35,7 +35,7 @@ class TestFunc {
 
     @test
     testLambdaParameters() {
-        const func = (k=1, f, c) => {};
+        const func = (k= 1, f, c) => {};
         const myFunc = new Func(func);
 
         const argA = myFunc.parameters[0];

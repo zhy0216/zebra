@@ -21,7 +21,7 @@ export class UrlExtractor {
     extract(url): Map<string, string> {
         const r = new Map<string, string>();
         const data = this.metaPattern.exec(url);
-        if (data == null || data.groups == null) {
+        if (data === null || data.groups === undefined) {
             return r;
         }
 
