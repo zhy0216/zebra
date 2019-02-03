@@ -1,70 +1,70 @@
-import XRegExp from 'xregexp';
-import {Func} from "./func";
+import { Func } from "./func";
 
-export class UrlExtractor{
-    pattern: string;
-    metaPattern: XRegExp;
+export class UrlExtractor {
+    private pattern: string;
+    private readonly metaPattern: RegExp;
     // registerVariable: Set<string>;
     constructor(urlPattern: string) {
         this.pattern = urlPattern;
-        // this.registerVariable = new Set<string>();
-        this.metaPattern = XRegExp("^" + XRegExp.replace(urlPattern, XRegExp('{(?<var>\\w+)}'), function (match) {
-            return `(?<${match.var}>\\w+)`;
-        }, 'all') + "$");
+        this.metaPattern = new RegExp("^" +
+            urlPattern.replace(new RegExp("{(?<var>\\w+)}", "g"), (...params) => {
+                const group = params.pop();
+                return `(?<${group.var}>\\w+)`;
+            })  +
+            "$");
     }
 
     match(url): boolean {
         return this.metaPattern.test(url);
     }
 
-    extract(url): Map<string, string>{
+    extract(url): Map<string, string> {
         const r = new Map<string, string>();
-
-        if(this.metaPattern.xregexp.captureNames === null){
+        const data = this.metaPattern.exec(url);
+        if (data === null || data.groups === undefined) {
             return r;
         }
 
-        const data = XRegExp.exec(url, this.metaPattern);
-        for(const variable_name of this.metaPattern.xregexp.captureNames){
-            r.set(variable_name, data[variable_name]);
+        for (const variableName of Object.keys(data.groups)) {
+            r.set(variableName, data.groups[variableName]);
         }
         return r;
     }
 }
 
-export class Router{
-    methods: Set<string>;
-    urlExtractor: UrlExtractor;
+export class Router {
+    private methods: Set<string>;
+    private urlExtractor: UrlExtractor;
     func: Function;
-    constructor(methods, urlPattern, func: Function){
+    constructor(methods, urlPattern, func: Function) {
         this.methods = methods;
         this.urlExtractor = new UrlExtractor(urlPattern);
         this.func = func;
     }
 
-    match(url, method): Boolean{
+    public match(url, method): boolean {
         return this.urlExtractor.match(url) && this.methods.has(method);
     }
 
-    extract(url){
-        return this.urlExtractor.extract(url)
+    public extract(url) {
+        return this.urlExtractor.extract(url);
     }
 }
 
-export class RouterManager{
-    routerList: Array<Router>;
-    constructor(){
+export class RouterManager {
+    routerList: Router[];
+    constructor() {
         this.routerList = [];
     }
 
-    add(router: Router){
+    add(router: Router) {
         this.routerList.push(router);
     }
 
-    get_function(url, method='GET'): Func{
-        for(const router of this.routerList){
-            if(router.match(url, method)){
-                return new Func(router.func, router.extract(url))
+    getFunction(url, method= "GET"): Func {
+        for (const router of this.routerList) {
+            if (router.match(url, method)) {
+                return new Func(router.func, router.extract(url));
             }
         }
         throw new Error(); // a better exception

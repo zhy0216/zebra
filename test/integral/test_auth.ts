@@ -1,7 +1,7 @@
 import { suite, test } from "mocha-typescript";
 import got from "got";
-import {z} from "../../lib/app";
-import {jwt_sign} from "../../lib/utils";
+import { z } from "../../lib/app";
+import { jwt_sign } from "../../lib/utils";
 import assert from "assert";
 
 @suite
@@ -10,10 +10,10 @@ class TestAuth {
     async testAuth() {
         require("../../examples/auth");
         z.run();
-        const jwt_token = await jwt_sign({"name": "6789"}, "9876");
+        const jwtToken = await jwt_sign({name: "6789"}, "9876");
         const response = await got.get("http://localhost:8888/hello/", {
             headers: {
-                "Authorization": `Bearer ${jwt_token}`
+                Authorization: `Bearer ${jwtToken}`
             }
         });
         assert.equal(JSON.parse(response.body), "hello, 6789");

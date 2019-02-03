@@ -1,6 +1,6 @@
-import assert from 'assert';
+import assert from "assert";
 import { suite, test } from "mocha-typescript";
-import {Func} from "../../lib/func";
+import { Func } from "../../lib/func";
 
 @suite
 class TestFunc {
@@ -14,7 +14,7 @@ class TestFunc {
 
     @test
     testFunctionParameters() {
-        function func(a: string, b: number =1, dd: number){}
+        function func(a: string, b = 1, dd: number) {}
         const myFunc = new Func(func);
         assert.equal(myFunc.parameters.length, 3);
         const argA = myFunc.parameters[0];
@@ -35,7 +35,7 @@ class TestFunc {
 
     @test
     testLambdaParameters() {
-        const func = (k=1, f, c) => {};
+        const func = (k= 1, f, c) => {};
         const myFunc = new Func(func);
 
         const argA = myFunc.parameters[0];
@@ -56,7 +56,7 @@ class TestFunc {
 
     @test
     testLambdaParameters2() {
-        const func = (k, f, c="test") => {};
+        const func = (k, f, c= "test") => {};
         const myFunc = new Func(func);
 
         const argA = myFunc.parameters[0];

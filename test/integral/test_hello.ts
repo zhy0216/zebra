@@ -1,6 +1,6 @@
-import { suite, test} from "mocha-typescript";
+import { suite, test } from "mocha-typescript";
 import got from "got";
-import {z} from "../../lib/app";
+import { z } from "../../lib/app";
 import assert from "assert";
 
 @suite
