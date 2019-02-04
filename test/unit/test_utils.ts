@@ -1,7 +1,7 @@
-import assert from 'assert';
+import assert from "assert";
 
 import { suite, test } from "mocha-typescript";
-import {difference, union, toposort} from "../../lib/utils";
+import { difference, union, toposort } from "../../lib/utils";
 
 @suite
 class TestUtils {
@@ -21,11 +21,11 @@ class TestUtils {
         assert.deepEqual(difference(new Set([1, 3, 5]), new  Set([1, 3])), new Set([5]));
     }
 
-    static _testTopoOrder(graph, topoList){
-        const free_node_set = new Set();
-        for(const node of topoList){
-            assert.equal(difference(graph[node], free_node_set).size, 0);
-            free_node_set.add(node);
+    static _testTopoOrder(graph, topoList) {
+        const freeNodeSet = new Set();
+        for (const node of topoList) {
+            assert.equal(difference(graph[node], freeNodeSet).size, 0);
+            freeNodeSet.add(node);
         }
     }
 
@@ -65,7 +65,7 @@ class TestUtils {
            [1, new Set([2])],
            [2, new Set([1])],
         ]);
-        assert.throws(() => toposort(graph, false))
+        assert.throws(() => toposort(graph, false));
     }
 
 }
