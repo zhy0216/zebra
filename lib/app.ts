@@ -1,11 +1,14 @@
 import { IncomingMessage, ServerResponse, createServer, Server } from "http";
-import { isString } from "util";
-import { RouterManager, Router } from "./router";
 import url from "url";
+import path from "path";
+import fs from "fs";
+
+import { RouterManager, Router } from "./router";
 import { Response } from "./response";
 import querystring from "querystring";
 import { Func } from "./func";
 import { chain } from "./utils";
+import { getMemeType } from "./mime";
 const packageJson = require("../package.json");
 
 type EventFunc = (() => void | Promise<void>);
@@ -59,7 +62,7 @@ export class Zebra {
     }
 
     inject(arg1: Function | string, func?: Function): void {
-        if (isString(arg1)) {
+        if (typeof arg1 === "string") {
             this.lazyEnv.set(arg1, new Func(func));
         } else {
             this.lazyEnv.set(arg1.name, new Func(arg1));
@@ -67,7 +70,13 @@ export class Zebra {
     }
 
     async sendFile(filename: string): Promise<Response> {
-        throw Error;
+        return new Promise((resolve) => {
+            fs.readFile(filename, (err, data) => { // TODO: handle error
+                const ext = path.parse(filename).ext;
+                const contentType = getMemeType[ext] || "text/plain";
+                return resolve(new Response(data, {"Content-Type": contentType}));
+            });
+        });
     }
 
     async getRequestBody(req: IncomingMessage) {
