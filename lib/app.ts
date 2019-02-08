@@ -74,7 +74,7 @@ export class Zebra {
             fs.readFile(filename, (err, data) => { // TODO: handle error
                 const ext = path.parse(filename).ext;
                 const contentType = getMemeType[ext] || "text/plain";
-                return new Response(data, {"Content-Type": contentType});
+                return resolve(new Response(data, {"Content-Type": contentType}));
             });
         });
     }
