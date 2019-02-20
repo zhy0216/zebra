@@ -7,7 +7,7 @@ import { RouterManager, Router } from "./router";
 import { Response } from "./response";
 import querystring from "querystring";
 import { Func } from "./func";
-import { chain } from "./utils";
+import {chain, objectToMap} from "./utils";
 import { getMemeType } from "./mime";
 const packageJson = require("../package.json");
 
@@ -70,7 +70,7 @@ export class Zebra {
     }
 
     async sendFile(filename: string): Promise<Response> {
-        return new Promise((resolve) => {
+        return new Promise<Response>((resolve) => {
             fs.readFile(filename, (err, data) => { // TODO: handle error
                 const ext = path.parse(filename).ext;
                 const contentType = getMemeType[ext] || "text/plain";
