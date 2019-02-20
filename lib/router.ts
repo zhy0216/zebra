@@ -9,7 +9,7 @@ export class UrlExtractor {
         this.metaPattern = new RegExp("^" +
             urlPattern.replace(new RegExp("{(?<var>\\w+)}", "g"), (...params) => {
                 const group = params.pop();
-                return `(?<${group.var}>\\w+)`;
+                return `(?<${group.var}>.+)`;
             })  +
             "$");
     }

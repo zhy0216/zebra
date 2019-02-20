@@ -10,6 +10,7 @@ class TestRouter {
     testSingleVarExtractor() {
         const extractor = new UrlExtractor("/hello/{name}");
         assert.deepEqual(extractor.extract("/hello/a"), objectToMap({name: "a"}));
+        assert.deepEqual(extractor.extract("/hello/a/b"), objectToMap({name: "a/b"}));
     }
 
     @test
