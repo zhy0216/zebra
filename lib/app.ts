@@ -7,7 +7,7 @@ import { RouterManager, Router } from "./router";
 import { Response } from "./response";
 import querystring from "querystring";
 import { Func } from "./func";
-import {chain, objectToMap} from "./utils";
+import { chain, objectToMap } from "./utils";
 import { getMemeType } from "./mime";
 const packageJson = require("../package.json");
 
@@ -59,6 +59,12 @@ export class Zebra {
 
     addPatch(path: string, handler: Function) {
         this.addPathPattern(path, new Set(["PATCH"]), handler);
+    }
+
+    static(routPath: string, filepath: string) {
+        this.addGet(routPath + "/{filename}", (filename) => {
+            return this.sendFile(path.join(filepath, filename));
+        });
     }
 
     inject(arg1: Function | string, func?: Function): void {
