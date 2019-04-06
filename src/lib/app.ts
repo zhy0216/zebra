@@ -9,7 +9,7 @@ import querystring from "querystring";
 import { Func } from "./func";
 import { chain, objectToMap } from "./utils";
 import { getMemeType } from "./mime";
-const packageJson = require("../package.json");
+const packageJson = require("../../package.json");
 
 type EventFunc = (() => void | Promise<void>);
 
