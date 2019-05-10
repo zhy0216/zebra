@@ -1,11 +1,11 @@
 sudo: false
 language: node_js
-node_js: "9"
+node_js: "10"
 install:
   - npm install
 script:
   - npm run compile
-  - npm run test
+  - npm run travis
 notifications:
   email:
     on_success: never # default: change

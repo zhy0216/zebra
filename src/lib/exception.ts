@@ -1,0 +1,4 @@
+class NoMatchUrlError extends Error {
+
+}
+

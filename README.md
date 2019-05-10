@@ -9,6 +9,3 @@ A neat typescript web framework.
 * Examples: [https://github.com/zhy0216/zebra/tree/master/examples](https://github.com/zhy0216/zebra/tree/master/examples) 
 
 ---------
-
-Not every neat framework hides an ugly implementation.
-~Yang 

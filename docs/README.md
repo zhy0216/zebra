@@ -2,11 +2,11 @@
 
 ## Quick tutorial
 
-1. Install zebra-web: `npm install zebra-web`
+1. Install zebra-web: `yarn install zebra-web`
 2. Create a file called `main.ts` with the following code:
 
 ```javascript
-import {z} from "zebra";
+import { z } from "zebra";
 
 z.addGet("/hello/{name}", (name: string) => `hello, ${name}`);
 z.run();
@@ -24,14 +24,15 @@ If you had not not learnt typescript, check the official website [tutorial](http
 Typing less a few characters really matters.
 
 
-## Injection (an default injector in the app, formalize the pattern?)
+## Injection
 The idea of injection is more like C#'s dependency injection(DI), but DI is based on type, which maybe not suitable for a dynamic language.
 So instead of injecting by type, we infer the variable by name. The idea is actually come from [pytest's fixture](https://docs.pytest.org/en/2.8.7/fixture.html).
 
 ### Immediate Injection
+You can bind a parameter name with a variable for all the handles. [an example is here](TODO:)
 
 ### Lazy Injection
-
+Instead of binding with a variable, we can even bind with a function then the behavior will like call-by-need.
 
 
 ## Routing
@@ -62,8 +63,8 @@ explain the handle sequence, especially when multi inheritance involve.
 
 
 ## Why Zebra has no X features
-### Cookies (talk about jwt)
-Cookie is not secure. All the modern browsers support local storage, just save jwt token and send back.
+### Cookies
+Cookie is not secure. All the modern browsers support local storage, just save [jwt](https://jwt.io/) token and send back.
 ### Post Form
 Just send json data.
 ### ORM
@@ -73,5 +74,6 @@ Similar like ORM.
 ### Validation Schema
 Maybe I will add one.
 
+See [examples](https://github.com/zhy0216/zebra/tree/master/examples) and [tests](https://github.com/zhy0216/zebra/tree/master/test).
 
-inspired by flask, koajs, hug, sanic and pytest;
+Inspired by flask, koajs, hug, sanic and pytest;
