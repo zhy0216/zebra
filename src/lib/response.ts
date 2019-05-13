@@ -18,8 +18,5 @@ export class Response {
             return result;
         }
         return new Response(JSON.stringify(result), undefined);
-
     }
-
-
 }

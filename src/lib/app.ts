@@ -7,7 +7,7 @@ import { RouterManager, Router } from "./router";
 import { Response } from "./response";
 import querystring from "querystring";
 import { Func } from "./func";
-import { chain, objectToMap } from "./utils";
+import { chain } from "./utils";
 import { getMemeType } from "./mime";
 const packageJson = require("../../package.json");
 
@@ -176,7 +176,7 @@ z.ascii = `
        VERSION: ${packageJson.version}
 ########################################       
        
-Copyright (C) 2018 Yang
+Copyright (C) 2019 Yang
 Under the MIT License
 `;
 

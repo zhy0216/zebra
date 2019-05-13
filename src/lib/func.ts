@@ -105,10 +105,8 @@ export class Func {
         }
 
         this.parameters = Array.from(reorderParameterMap.values());
-        const r = await this._execute(extraClosure, extraLazyClosure);
+        return this._execute(extraClosure, extraLazyClosure);
         // some exit logic here
-
-        return r;
     }
 
 }
