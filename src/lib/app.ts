@@ -61,9 +61,9 @@ export class Zebra {
         this.addPathPattern(path, new Set(["PATCH"]), handler);
     }
 
-    handle(error: Error | number){
+    handle(error: Error | number) {
     }
-        
+
     static(routPath: string, filepath: string) {
         this.addGet(routPath + "/{filename}", (filename) => {
             return this.sendFile(path.join(filepath, filename));
