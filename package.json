@@ -1,6 +1,6 @@
 {
   "name": "zebra-web",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "a typescript web framework",
   "main": "dist/lib/app.js",
   "types": "dist/lib/app.d.ts",
