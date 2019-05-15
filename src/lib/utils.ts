@@ -1,4 +1,5 @@
-import jwt from "jsonwebtoken";
+import * as crypto from "crypto";
+import {rejects} from "assert";
 
 export function objectToMap(obj: object): Map<string, any> {
     return new Map<string, any>(Object.entries(obj));
@@ -64,18 +65,40 @@ export function toposort<T, U>(graph: Map<T, Set<U>>, flatten= false): T[][] | T
     return r;
 }
 
+const toBase64 = (str: string, encoding?: string) =>
+  Buffer.from(str, encoding || "utf8")
+    .toString("base64")
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+
+
+export const fromBase64 = (bae64Str: string) => Buffer.from(bae64Str, "base64").toString("utf8");
+
 export async function jwtSign(data, secret) {
     return new Promise((resolve) => {
-        jwt.sign(data, secret, { algorithm: "HS256" }, (err, token) => {
-          resolve(token);
-        });
+        const header = toBase64(JSON.stringify({alg: "HS256", typ: "JWT"}), "binary");
+        const payload = toBase64(JSON.stringify(data));
+        const hmac = crypto.createHmac("sha256", secret);
+        const data2 = header + "." + payload;
+        hmac.update(data2);
+        const sign = hmac.digest("base64");
+        resolve(data2 + "." + sign);
     });
 }
 
 export async function jwtDecode(token , secret) {
-    return new Promise((resolve) => {
-        jwt.verify(token, secret, (err, decoded) => {
-            resolve(decoded);
-        });
+    return new Promise((resolve, reject) => {
+        const [header, payload, sign] = token.split(".");
+        const hmac = crypto.createHmac("sha256", secret);
+        const data2 = header + "." + payload;
+        hmac.update(data2);
+        const sign2 = hmac.digest("base64");
+
+        if (sign === sign2) {
+            resolve(JSON.parse(fromBase64(payload)));
+        } else {
+            reject("invalid token");
+        }
     });
 }

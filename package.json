@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zhy0216/zebra.git"
+    "url": "git@github.com:zhy0216/zebra.git"
   },
   "keywords": ["best", "web", "framework", "elegant", "typescript", "lazy"],
   "author": "Yang",
@@ -36,6 +36,5 @@
     "typescript": "^3.3.1"
   },
   "dependencies": {
-    "jsonwebtoken": "^8.4.0"
   }
 }
