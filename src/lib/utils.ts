@@ -1,5 +1,4 @@
 import * as crypto from "crypto";
-import {rejects} from "assert";
 
 export function objectToMap(obj: object): Map<string, any> {
     return new Map<string, any>(Object.entries(obj));
@@ -75,6 +74,12 @@ const toBase64 = (str: string, encoding?: string) =>
 
 export const fromBase64 = (bae64Str: string) => Buffer.from(bae64Str, "base64").toString("utf8");
 
+const cleanSign = (sign: string) =>
+  sign
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+
 export async function jwtSign(data, secret) {
     return new Promise((resolve) => {
         const header = toBase64(JSON.stringify({alg: "HS256", typ: "JWT"}), "binary");
@@ -82,7 +87,7 @@ export async function jwtSign(data, secret) {
         const hmac = crypto.createHmac("sha256", secret);
         const data2 = header + "." + payload;
         hmac.update(data2);
-        const sign = hmac.digest("base64");
+        const sign = cleanSign(hmac.digest("base64"));
         resolve(data2 + "." + sign);
     });
 }
@@ -93,7 +98,7 @@ export async function jwtDecode(token , secret) {
         const hmac = crypto.createHmac("sha256", secret);
         const data2 = header + "." + payload;
         hmac.update(data2);
-        const sign2 = hmac.digest("base64");
+        const sign2 = cleanSign(hmac.digest("base64"));
 
         if (sign === sign2) {
             resolve(JSON.parse(fromBase64(payload)));
