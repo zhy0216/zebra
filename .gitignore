@@ -57,8 +57,8 @@ typings/
 # dotenv environment variables file
 .env
 .idea
-lib/*.js
-test/unit/*.js
-test/integral/*.js
-examples/*.js
+src/lib/*.js
+src/test/unit/*.js
+src/test/integral/*.js
+src/examples/*.js
 dist/

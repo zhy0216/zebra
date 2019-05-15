@@ -1,7 +1,6 @@
 import knex_connect from "knex";
 import { z } from "../lib/app";
 
-
 const knex = knex_connect({
     client: "sqlite3",
     connection: {
