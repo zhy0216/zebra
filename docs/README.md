@@ -5,10 +5,10 @@
 1. Install zebra-web: `yarn install zebra-web`
 2. Create a file called `main.ts` with the following code:
 
-```javascript
+```typescript
 import { z } from "zebra";
 
-z.addGet("/hello/{name}", (name: string) => `hello, ${name}`);
+z.get("/hello/{name}", (name: string) => `hello, ${name}`);
 z.run();
 ```
 
@@ -20,7 +20,7 @@ If you had not not learnt typescript, check the official website [tutorial](http
 
 *By default*, Zebra treats all the incoming data and response data with `Content-Type: application/json; charset=utf-8`.
 
-`z` is the singleton instance of `Zebra`. The reason to choose `z` instead of (`zebra`, `zapp`, `zebraApp`) is because that `z` is shortest among the candidates.
+`z` is the default instance of `Zebra`. The reason to choose `z` instead of (`zebra`, `zapp`, `zebraApp`) is because that `z` is shortest among the candidates.
 Typing less a few characters really matters.
 
 
@@ -41,7 +41,7 @@ Zebra comes with a basic router that supports request parameters.
 To specify a parameter, surround it with parentheses like so: {PARAM}. Request parameters will be passed to the route handler functions as keyword arguments.
 
 ```
-z.addGet('/tag/{tag}', (tag: str) => `Tag - ${tag}`)
+z.get('/tag/{tag}', (tag: string) => `Tag - ${tag}`)
 ```
 Notice the type after `tag` in handle function, which will be always string for routing parameters.
 So when it is an integer, you have to convert it manually. (maybe can be automatically in a class view with ES7 decorator?)
@@ -69,11 +69,12 @@ Cookie is not secure. All the modern browsers support local storage, just save [
 Just send json data.
 ### ORM
 You can integral any one you want, that is actually the good part of framework.
+I recommend to use [typeorm](https://github.com/typeorm/typeorm) 
 ### Template
-Similar like ORM.
+JSX should be good enough.
 ### Validation Schema
-Maybe I will add one.
+[io-ts](https://github.com/gcanti/io-ts)
 
-See [examples](https://github.com/zhy0216/zebra/tree/master/examples) and [tests](https://github.com/zhy0216/zebra/tree/master/test).
+See [examples](https://github.com/zhy0216/zebra/tree/master/src/examples) and [tests](https://github.com/zhy0216/zebra/tree/master/src/test).
 
 Inspired by flask, koajs, hug, sanic and pytest;
