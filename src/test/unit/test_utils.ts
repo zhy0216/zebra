@@ -7,32 +7,32 @@ import { difference, union, toposort } from "../../lib/utils";
 class TestUtils {
     @test
     testSetUnion() {
-        assert.deepEqual(union(new Set([1]), new  Set([1])), new Set([1]));
-        assert.deepEqual(union(new Set([1]), new  Set()), new Set([1]));
-        assert.deepEqual(union(new Set([]), new  Set([1])), new Set([1]));
-        assert.deepEqual(union(new Set([1, 3, 5]), new  Set([1, 3, 9])), new Set([1, 3, 5, 9]));
+        assert.deepStrictEqual(union(new Set([1]), new  Set([1])), new Set([1]));
+        assert.deepStrictEqual(union(new Set([1]), new  Set()), new Set([1]));
+        assert.deepStrictEqual(union(new Set([]), new  Set([1])), new Set([1]));
+        assert.deepStrictEqual(union(new Set([1, 3, 5]), new  Set([1, 3, 9])), new Set([1, 3, 5, 9]));
     }
 
     @test
     testSetDiff() {
-        assert.deepEqual(difference(new Set([1]), new  Set([1])), new Set());
-        assert.deepEqual(difference(new Set([1]), new  Set()), new Set([1]));
-        assert.deepEqual(difference(new Set([]), new  Set([1])), new Set());
-        assert.deepEqual(difference(new Set([1, 3, 5]), new  Set([1, 3])), new Set([5]));
+        assert.deepStrictEqual(difference(new Set([1]), new  Set([1])), new Set());
+        assert.deepStrictEqual(difference(new Set([1]), new  Set()), new Set([1]));
+        assert.deepStrictEqual(difference(new Set([]), new  Set([1])), new Set());
+        assert.deepStrictEqual(difference(new Set([1, 3, 5]), new  Set([1, 3])), new Set([5]));
     }
 
     static _testTopoOrder(graph, topoList) {
         const freeNodeSet = new Set();
         for (const node of topoList) {
-            assert.equal(difference(graph[node], freeNodeSet).size, 0);
+            assert.strictEqual(difference(graph[node], freeNodeSet).size, 0);
             freeNodeSet.add(node);
         }
     }
 
     @test
     testTopoSortWithEmptyGraph() {
-        assert.deepEqual(toposort(new Map()), []);
-        assert.deepEqual(toposort(new Map(), true), []);
+        assert.deepStrictEqual(toposort(new Map()), []);
+        assert.deepStrictEqual(toposort(new Map(), true), []);
     }
 
     @test

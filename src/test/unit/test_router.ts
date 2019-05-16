@@ -9,13 +9,13 @@ class TestRouter {
     @test
     testSingleVarExtractor() {
         const extractor = new UrlExtractor("/hello/{name}");
-        assert.deepEqual(extractor.extract("/hello/a"), objectToMap({name: "a"}));
-        assert.deepEqual(extractor.extract("/hello/a/b"), objectToMap({name: "a/b"}));
+        assert.deepStrictEqual(extractor.extract("/hello/a"), objectToMap({name: "a"}));
+        assert.deepStrictEqual(extractor.extract("/hello/a/b"), objectToMap({name: "a/b"}));
     }
 
     @test
     testMultiVarExtractor() {
         const extractor = new UrlExtractor("/hello/{name}/{age}");
-        assert.deepEqual(extractor.extract("/hello/a/30"), objectToMap({name: "a", age: "30"}));
+        assert.deepStrictEqual(extractor.extract("/hello/a/30"), objectToMap({name: "a", age: "30"}));
     }
 }

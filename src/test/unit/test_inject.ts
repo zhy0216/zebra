@@ -13,7 +13,7 @@ class TestInject {
         ]);
 
         const func = new Func((name: string) => `hello, ${name}`, data);
-        assert.equal(await func.execute(), "hello, it");
+        assert.strictEqual(await func.execute(), "hello, it");
     }
 
     @test
@@ -22,7 +22,7 @@ class TestInject {
             ["name", "it"]
         ]);
         const func = new Func((name: string) => `hello, ${name}`);
-        assert.equal(await func.execute(data), "hello, it");
+        assert.strictEqual(await func.execute(data), "hello, it");
     }
 
     @test
@@ -31,7 +31,7 @@ class TestInject {
             ["name", new Func(function name() {return "it"; })]
         ]);
         const func = new Func((name: string) => `hello, ${name}`);
-        assert.equal(await func.execute(undefined, lazyEnv), "hello, it");
+        assert.strictEqual(await func.execute(undefined, lazyEnv), "hello, it");
     }
 
     @test
@@ -41,6 +41,6 @@ class TestInject {
             ["anotherName", new Func(function anotherName(name) {return name; })]
         ]);
         const func = new Func((anotherName: string) => `hello, ${anotherName}`);
-        assert.equal(await func.execute(new Map<string, any>(), lazyEnv), "hello, it");
+        assert.strictEqual(await func.execute(new Map<string, any>(), lazyEnv), "hello, it");
     }
 }

@@ -9,28 +9,28 @@ class TestFunc {
         function func() {
         }
         const myFunc = new Func(func);
-        assert.equal(myFunc.parameters.length, 0);
+        assert.strictEqual(myFunc.parameters.length, 0);
     }
 
     @test
     testFunctionParameters() {
         function func(a: string, b = 1, dd: number) {}
         const myFunc = new Func(func);
-        assert.equal(myFunc.parameters.length, 3);
+        assert.strictEqual(myFunc.parameters.length, 3);
         const argA = myFunc.parameters[0];
-        assert.equal(argA.name, "a");
-        assert.equal(argA.isRequired, true);
-        assert.equal(argA.index, 0);
+        assert.strictEqual(argA.name, "a");
+        assert.strictEqual(argA.isRequired, true);
+        assert.strictEqual(argA.index, 0);
 
         const argB = myFunc.parameters[1];
-        assert.equal(argB.name, "b");
-        assert.equal(argB.isRequired, false);
-        assert.equal(argB.index, 1);
+        assert.strictEqual(argB.name, "b");
+        assert.strictEqual(argB.isRequired, false);
+        assert.strictEqual(argB.index, 1);
 
         const argC = myFunc.parameters[2];
-        assert.equal(argC.name, "dd");
-        assert.equal(argC.isRequired, true);
-        assert.equal(argC.index, 2);
+        assert.strictEqual(argC.name, "dd");
+        assert.strictEqual(argC.isRequired, true);
+        assert.strictEqual(argC.index, 2);
     }
 
     @test
@@ -39,19 +39,19 @@ class TestFunc {
         const myFunc = new Func(func);
 
         const argA = myFunc.parameters[0];
-        assert.equal(argA.name, "k");
-        assert.equal(argA.isRequired, false);
-        assert.equal(argA.index, 0);
+        assert.strictEqual(argA.name, "k");
+        assert.strictEqual(argA.isRequired, false);
+        assert.strictEqual(argA.index, 0);
 
         const argB = myFunc.parameters[1];
-        assert.equal(argB.name, "f");
-        assert.equal(argB.isRequired, true);
-        assert.equal(argB.index, 1);
+        assert.strictEqual(argB.name, "f");
+        assert.strictEqual(argB.isRequired, true);
+        assert.strictEqual(argB.index, 1);
 
         const argC = myFunc.parameters[2];
-        assert.equal(argC.name, "c");
-        assert.equal(argC.isRequired, true);
-        assert.equal(argC.index, 2);
+        assert.strictEqual(argC.name, "c");
+        assert.strictEqual(argC.isRequired, true);
+        assert.strictEqual(argC.index, 2);
     }
 
     @test
@@ -60,19 +60,19 @@ class TestFunc {
         const myFunc = new Func(func);
 
         const argA = myFunc.parameters[0];
-        assert.equal(argA.name, "k");
-        assert.equal(argA.isRequired, true);
-        assert.equal(argA.index, 0);
+        assert.strictEqual(argA.name, "k");
+        assert.strictEqual(argA.isRequired, true);
+        assert.strictEqual(argA.index, 0);
 
         const argB = myFunc.parameters[1];
-        assert.equal(argB.name, "f");
-        assert.equal(argB.isRequired, true);
-        assert.equal(argB.index, 1);
+        assert.strictEqual(argB.name, "f");
+        assert.strictEqual(argB.isRequired, true);
+        assert.strictEqual(argB.index, 1);
 
         const argC = myFunc.parameters[2];
-        assert.equal(argC.name, "c");
-        assert.equal(argC.isRequired, false);
-        assert.equal(argC.index, 2);
+        assert.strictEqual(argC.name, "c");
+        assert.strictEqual(argC.isRequired, false);
+        assert.strictEqual(argC.index, 2);
 
     }
 
