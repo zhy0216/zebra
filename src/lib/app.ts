@@ -22,7 +22,21 @@ export class Zebra {
     // registeredHandler: Map<string, Function>;
     routerManager: RouterManager;
     server: Server;
-    ascii = "";
+    static ascii = `
+########################################
+███████╗███████╗██████╗ ██████╗  █████╗ 
+╚══███╔╝██╔════╝██╔══██╗██╔══██╗██╔══██╗
+  ███╔╝ █████╗  ██████╔╝██████╔╝███████║
+ ███╔╝  ██╔══╝  ██╔══██╗██╔══██╗██╔══██║
+███████╗███████╗██████╔╝██║  ██║██║  ██║
+╚══════╝╚══════╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
+    WEB FRAMEWORK FOR LAZY PEOPLE
+       VERSION: ${packageJson.version}
+########################################       
+       
+Copyright (C) 2019 Yang
+Under the MIT License
+`;
     lazyEnv: Map<string, Func>;
     events: ZebraEvent;
     constructor() {
@@ -145,7 +159,7 @@ export class Zebra {
     async run(port = 8888) {
         await Promise.all(Object.values(this.events.beforeRun).map(func => Promise.resolve(func())));
 
-        console.log(z.ascii);
+        console.log(Zebra.ascii);
         console.log(`running on localhost: ${port}`);
         this.server.on("request", (async (req, res) => z.requestHandlers(req, res)));
         this.server.listen(port);
@@ -164,22 +178,6 @@ export class Zebra {
 
 // TODO: make this singleton?
 export const z = new Zebra();
-z.ascii = `
-########################################
-███████╗███████╗██████╗ ██████╗  █████╗ 
-╚══███╔╝██╔════╝██╔══██╗██╔══██╗██╔══██╗
-  ███╔╝ █████╗  ██████╔╝██████╔╝███████║
- ███╔╝  ██╔══╝  ██╔══██╗██╔══██╗██╔══██║
-███████╗███████╗██████╔╝██║  ██║██║  ██║
-╚══════╝╚══════╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
-    WEB FRAMEWORK FOR LAZY PEOPLE
-       VERSION: ${packageJson.version}
-########################################       
-       
-Copyright (C) 2019 Yang
-Under the MIT License
-`;
-
 
 export * from "./func";
 export * from "./mime";
