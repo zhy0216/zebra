@@ -44,7 +44,7 @@ export class Func {
             return ;
         }
         const argsList = argsStr.replace(/ /g, "").split(",");
-        for (const index in argsList) {
+        for (let index = 0; index < argsList.length; index++) {
             const argName = argsList[index];
             const equationIndex = argName.indexOf("=");
             if (equationIndex === -1) {
