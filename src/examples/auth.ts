@@ -22,7 +22,7 @@ z.inject(async function user(req: IncomingMessage) {
     }
 });
 
-z.addGet("/hello/", (user: User) => `hello, ${user.name}`);
+z.get("/hello/", (user: User) => `hello, ${user.name}`);
 
 if (require.main === module) {
     z.run();

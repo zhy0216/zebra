@@ -45,19 +45,19 @@ export class Zebra {
         this.routerManager.add(new Router(methods, pathPattern, handler));
     }
 
-    addGet(path: string, handler: Function) {
+    get(path: string, handler: Function) {
         this.addPathPattern(path, new Set(["GET"]), handler);
     }
 
-    addPost(path: string, handler: Function) {
+    post(path: string, handler: Function) {
         this.addPathPattern(path, new Set(["POST"]), handler);
     }
 
-    addDelete(path: string, handler: Function) {
+    delete(path: string, handler: Function) {
         this.addPathPattern(path, new Set(["DELETE"]), handler);
     }
 
-    addPatch(path: string, handler: Function) {
+    patch(path: string, handler: Function) {
         this.addPathPattern(path, new Set(["PATCH"]), handler);
     }
 
@@ -65,7 +65,7 @@ export class Zebra {
     }
 
     static(routPath: string, filepath: string) {
-        this.addGet(routPath + "/{filename}", (filename) => {
+        this.get(routPath + "/{filename}", (filename) => {
             return this.sendFile(path.join(filepath, filename));
         });
     }

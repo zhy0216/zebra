@@ -22,7 +22,7 @@ z.addBeforeStop(async () => {
     await knex.destroy();
 });
 
-z.addGet("/blogs/", async function allBlog() {
+z.get("/blogs/", async function allBlog() {
     return knex("blog");
 });
 
@@ -32,17 +32,17 @@ interface BlogJson {
     content: string;
 }
 
-z.addPost("/blogs/", async function newBlog(body: BlogJson) {
+z.post("/blogs/", async function newBlog(body: BlogJson) {
     const blogIdQuery = await knex("blog").insert(body);
     return {id: blogIdQuery[0]};
 });
 
-z.addDelete("/blogs/{blogId}/", async (blogId) => {
+z.delete("/blogs/{blogId}/", async (blogId) => {
     await knex("blog").where("id", blogId).del();
     return {};
 });
 
-z.addPatch("/blogs/{blogId}/", async (blogId, body: BlogJson) => {
+z.patch("/blogs/{blogId}/", async (blogId, body: BlogJson) => {
     await knex("blog").where("id", blogId).update(body);
     return {};
 });

@@ -8,7 +8,7 @@ import { z } from "../../lib/app";
 class TestRouter {
     @test
     async testSendStaticFile() {
-        z.addGet("/test", () => {
+        z.get("/test", () => {
             return z.sendFile("LICENSE");
         });
         z.run();
