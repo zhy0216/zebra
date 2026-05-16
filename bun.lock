@@ -11,6 +11,13 @@
         "typescript": "^5.6.0",
       },
     },
+    "examples/hello": {
+      "name": "example-hello",
+      "version": "0.0.0",
+      "dependencies": {
+        "zebra": "workspace:*",
+      },
+    },
     "packages/core": {
       "name": "@zebra/core",
       "version": "0.0.0",
@@ -61,6 +68,8 @@
     "@zebra/testing": ["@zebra/testing@workspace:packages/testing"],
 
     "bun-types": ["bun-types@1.3.14", "https://registry.npmmirror.com/bun-types/-/bun-types-1.3.14.tgz", { "dependencies": { "@types/node": "*" } }, "sha512-4N0ig0fEomHt5R0KCFWjovxow98rIoRwKolrYdCcknNwMekCXRnWEUvgu5soYV8QXtVsrUD8B95MBOZGPvr6KQ=="],
+
+    "example-hello": ["example-hello@workspace:examples/hello"],
 
     "reflect-metadata": ["reflect-metadata@0.2.2", "https://registry.npmmirror.com/reflect-metadata/-/reflect-metadata-0.2.2.tgz", {}, "sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q=="],
 
