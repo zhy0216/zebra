@@ -9,6 +9,7 @@ import type { Middleware } from "../middleware/types.ts";
 import type { ZebraOptions, RouteHandler, DepsSpec, RegisteredRoute } from "./types.ts";
 import { Group, type GroupApi } from "./group.ts";
 import type { LifecycleEvent, LifecycleHandler } from "./lifecycle.ts";
+import { validateGraph } from "./boot-validation.ts";
 
 const DEFAULT_BODY = {
   maxSize: 1024 * 1024,
@@ -46,7 +47,7 @@ export class Zebra {
 
   async listen(opts: { port: number; hostname?: string }): Promise<{ port: number }> {
     for (const h of this.hooks.boot) await h();
-    // (Boot-time DI graph validation is added in Task 31)
+    validateGraph(this.container, this.routes, this.middlewares);
     this.frozen = true;
     const serveOpts: { port: number; hostname?: string; fetch: (req: Request) => Promise<Response> } = {
       port: opts.port,
