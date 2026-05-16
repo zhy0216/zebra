@@ -1,6 +1,6 @@
 import { Binding, BindingBuilder } from "./binding.ts";
 import { getConstructorDeps } from "./decorators.ts";
-import { UnboundTokenError } from "./errors.ts";
+import { CircularDependencyError, UnboundTokenError } from "./errors.ts";
 import { keyOf, displayName, type BindingKey } from "./key.ts";
 import { ScopeKind } from "./scope.ts";
 import type { Identifier } from "./token.ts";
@@ -23,16 +23,24 @@ export class Container {
   }
 
   resolve<T>(id: Identifier<T>): T {
+    return this.resolveWithStack(id, []);
+  }
+
+  protected resolveWithStack<T>(id: Identifier<T>, stack: string[]): T {
+    const name = displayName(id);
+    if (stack.includes(name)) {
+      throw new CircularDependencyError([...stack, name]);
+    }
     const binding = this.findBinding(id);
-    if (!binding) throw new UnboundTokenError(displayName(id), [displayName(id)]);
-    return this.instantiate(binding);
+    if (!binding) throw new UnboundTokenError(name, [...stack, name]);
+    return this.instantiate(binding, [...stack, name]);
   }
 
   protected findBinding<T>(id: Identifier<T>): Binding<T> | undefined {
     return this.bindings.get(keyOf(id)) ?? this.parent?.findBinding(id);
   }
 
-  protected instantiate<T>(binding: Binding<T>): T {
+  protected instantiate<T>(binding: Binding<T>, stack: string[]): T {
     const key = keyOf(binding.identifier);
     if (binding.kind === "value") return binding.target as T;
     if (binding.scope === ScopeKind.Singleton && this.instances.has(key)) {
@@ -43,7 +51,7 @@ export class Container {
       instance = (binding.target as (c: Container) => T)(this);
     } else {
       const cls = binding.target as new (...args: any[]) => T;
-      const deps = getConstructorDeps(cls).map((d) => this.resolve(d));
+      const deps = getConstructorDeps(cls).map((d) => this.resolveWithStack(d, stack));
       instance = new cls(...deps);
     }
     if (binding.scope === ScopeKind.Singleton) this.instances.set(key, instance);
