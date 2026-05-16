@@ -1,5 +1,6 @@
 import { Binding, BindingBuilder } from "./binding.ts";
 import { getConstructorDeps } from "./decorators.ts";
+import { isDisposable } from "./disposable.ts";
 import { CircularDependencyError, UnboundTokenError } from "./errors.ts";
 import { keyOf, displayName, type BindingKey } from "./key.ts";
 import { ScopeKind } from "./scope.ts";
@@ -45,6 +46,13 @@ export class Container {
     child.parent = this;
     child.scopeKind = kind;
     return child;
+  }
+
+  async dispose(): Promise<void> {
+    for (const instance of this.instances.values()) {
+      if (isDisposable(instance)) await instance.dispose();
+    }
+    this.instances.clear();
   }
 
   protected instantiate<T>(binding: Binding<T>, stack: string[]): T {
