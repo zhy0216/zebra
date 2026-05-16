@@ -7,10 +7,11 @@ import { ScopeKind } from "./scope.ts";
 import type { Identifier } from "./token.ts";
 
 export class Container {
-  protected bindings = new Map<BindingKey, Binding<any>>();
-  protected instances = new Map<BindingKey, any>();
+  protected bindings: Map<BindingKey, Binding<any>> = new Map<BindingKey, Binding<any>>();
+  protected instances: Map<BindingKey, any> = new Map<BindingKey, any>();
   protected scopeKind: ScopeKind = ScopeKind.Singleton;
   protected parent: Container | null = null;
+  private snapshots: Array<{ bindings: Map<BindingKey, Binding<any>>; instances: Map<BindingKey, any> }> = [];
 
   bind<T>(id: Identifier<T>): BindingBuilder<T> {
     const binding: Binding<T> = {
@@ -21,6 +22,26 @@ export class Container {
     };
     this.bindings.set(keyOf(id), binding);
     return new BindingBuilder(binding);
+  }
+
+  rebind<T>(id: Identifier<T>): BindingBuilder<T> {
+    this.bindings.delete(keyOf(id));
+    this.instances.delete(keyOf(id));
+    return this.bind(id);
+  }
+
+  snapshot(): void {
+    this.snapshots.push({
+      bindings: new Map(this.bindings),
+      instances: new Map(this.instances),
+    });
+  }
+
+  restore(): void {
+    const s = this.snapshots.pop();
+    if (!s) return;
+    this.bindings = s.bindings;
+    this.instances = s.instances;
   }
 
   resolve<T>(id: Identifier<T>): T {
