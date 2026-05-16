@@ -1,11 +1,13 @@
 # Zebra
-## still in process....
 
-A neat typescript web framework.
+A Bun-first TypeScript web framework with first-class DI.
 
-[![Build Status](https://travis-ci.org/zhy0216/zebra.svg?branch=master)](https://travis-ci.org/zhy0216/zebra)
+> v2 is a rewrite. v1 (2019) is archived on the `v1-archive` tag.
 
-* Document: [https://zhy0216.github.io/zebra/](https://zhy0216.github.io/zebra/)
-* Examples: [https://github.com/zhy0216/zebra/tree/master/examples](https://github.com/zhy0216/zebra/tree/master/src/examples) 
+## Status
 
----------
+v0.1 MVP — under construction. See [design spec](docs/superpowers/specs/2026-05-16-zebra-v2-design.md).
+
+## License
+
+MIT
