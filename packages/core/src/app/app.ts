@@ -7,6 +7,7 @@ import { compose } from "../middleware/compose.ts";
 import { errorMiddleware } from "../middleware/error.ts";
 import type { Middleware } from "../middleware/types.ts";
 import type { ZebraOptions, RouteHandler, DepsSpec, RegisteredRoute } from "./types.ts";
+import { Group, type GroupApi } from "./group.ts";
 
 const DEFAULT_BODY = {
   maxSize: 1024 * 1024,
@@ -79,6 +80,14 @@ export class Zebra {
   delete(path: string, a: any, b?: any): void {
     if (b === undefined) this.register("DELETE", path, null, a);
     else this.register("DELETE", path, a, b);
+  }
+
+  group(prefix: string, fn: (g: GroupApi) => void): void {
+    const g = new Group(prefix, []);
+    fn(g);
+    for (const r of g.routes) {
+      this.register(r.method, r.path, r.deps, r.handler, r.groupMiddlewares);
+    }
   }
 
   async dispatch(raw: Request): Promise<Response> {
