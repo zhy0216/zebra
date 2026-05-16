@@ -8,6 +8,7 @@ import { errorMiddleware } from "../middleware/error.ts";
 import type { Middleware } from "../middleware/types.ts";
 import type { ZebraOptions, RouteHandler, DepsSpec, RegisteredRoute } from "./types.ts";
 import { Group, type GroupApi } from "./group.ts";
+import type { LifecycleEvent, LifecycleHandler } from "./lifecycle.ts";
 
 const DEFAULT_BODY = {
   maxSize: 1024 * 1024,
@@ -24,6 +25,8 @@ export class Zebra {
   protected bodyOpts;
   protected exposeStack: boolean;
   protected frozen = false;
+  protected hooks: Record<LifecycleEvent, LifecycleHandler[]> = { boot: [], ready: [], shutdown: [] };
+  protected server: ReturnType<typeof Bun.serve> | null = null;
 
   constructor(opts: ZebraOptions) {
     this.container = opts.container;
@@ -34,6 +37,34 @@ export class Zebra {
   use(mw: Middleware): this {
     this.middlewares.push(mw);
     return this;
+  }
+
+  on(event: LifecycleEvent, fn: LifecycleHandler): this {
+    this.hooks[event].push(fn);
+    return this;
+  }
+
+  async listen(opts: { port: number; hostname?: string }): Promise<{ port: number }> {
+    for (const h of this.hooks.boot) await h();
+    // (Boot-time DI graph validation is added in Task 31)
+    this.frozen = true;
+    const serveOpts: { port: number; hostname?: string; fetch: (req: Request) => Promise<Response> } = {
+      port: opts.port,
+      fetch: (req) => this.dispatch(req),
+    };
+    if (opts.hostname !== undefined) serveOpts.hostname = opts.hostname;
+    this.server = Bun.serve(serveOpts);
+    for (const h of this.hooks.ready) await h();
+    return { port: this.server.port as number };
+  }
+
+  async stop(): Promise<void> {
+    for (const h of this.hooks.shutdown) await h();
+    if (this.server) {
+      this.server.stop(true);
+      this.server = null;
+    }
+    await this.container.dispose();
   }
 
   protected register(
