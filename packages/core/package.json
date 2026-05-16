@@ -1,0 +1,18 @@
+{
+  "name": "@zebra/core",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "build": "echo 'no build yet'"
+  },
+  "dependencies": {
+    "reflect-metadata": "^0.2.2"
+  }
+}
