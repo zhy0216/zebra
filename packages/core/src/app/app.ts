@@ -5,6 +5,7 @@ import { buildRequest } from "../http/request.ts";
 import { HttpError } from "../http/errors.ts";
 import { compose } from "../middleware/compose.ts";
 import { errorMiddleware } from "../middleware/error.ts";
+import { serveStatic, type StaticOptions } from "../http/static.ts";
 import type { Middleware } from "../middleware/types.ts";
 import type { ZebraOptions, RouteHandler, DepsSpec, RegisteredRoute } from "./types.ts";
 import { Group, type GroupApi } from "./group.ts";
@@ -112,6 +113,17 @@ export class Zebra {
   delete(path: string, a: any, b?: any): void {
     if (b === undefined) this.register("DELETE", path, null, a);
     else this.register("DELETE", path, a, b);
+  }
+
+  static(routPath: string, root: string, opts: Partial<StaticOptions> = {}): void {
+    const o: StaticOptions = {
+      index: opts.index ?? "index.html",
+      maxAge: opts.maxAge ?? 3600,
+    };
+    const pattern = routPath.replace(/\/+$/, "") + "/*file";
+    this.register("GET", pattern, null, async (req) => {
+      return serveStatic(root, (req.params as any).file ?? "", o);
+    });
   }
 
   group(prefix: string, fn: (g: GroupApi) => void): void {
