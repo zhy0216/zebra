@@ -40,12 +40,22 @@ export class Container {
     return this.bindings.get(keyOf(id)) ?? this.parent?.findBinding(id);
   }
 
+  createChildScope(kind: ScopeKind): Container {
+    const child = new Container();
+    child.parent = this;
+    child.scopeKind = kind;
+    return child;
+  }
+
   protected instantiate<T>(binding: Binding<T>, stack: string[]): T {
     const key = keyOf(binding.identifier);
     if (binding.kind === "value") return binding.target as T;
-    if (binding.scope === ScopeKind.Singleton && this.instances.has(key)) {
-      return this.instances.get(key);
+
+    const cacheContainer = this.cacheContainerFor(binding.scope);
+    if (cacheContainer && cacheContainer.instances.has(key)) {
+      return cacheContainer.instances.get(key);
     }
+
     let instance: T;
     if (binding.kind === "factory") {
       instance = (binding.target as (c: Container) => T)(this);
@@ -54,7 +64,23 @@ export class Container {
       const deps = getConstructorDeps(cls).map((d) => this.resolveWithStack(d, stack));
       instance = new cls(...deps);
     }
-    if (binding.scope === ScopeKind.Singleton) this.instances.set(key, instance);
+    if (cacheContainer) cacheContainer.instances.set(key, instance);
     return instance;
+  }
+
+  protected cacheContainerFor(scope: ScopeKind): Container | null {
+    if (scope === ScopeKind.Transient) return null;
+    if (scope === ScopeKind.Singleton) {
+      let c: Container = this;
+      while (c.parent) c = c.parent;
+      return c;
+    }
+    // Request or Session: find nearest matching scope ancestor (including self)
+    let c: Container | null = this;
+    while (c) {
+      if (c.scopeKind === scope) return c;
+      c = c.parent;
+    }
+    return null; // not in matching scope, treat as transient
   }
 }
