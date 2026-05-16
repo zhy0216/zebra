@@ -1,5 +1,5 @@
-import type { Middleware } from "./types.ts";
 import { toProblemJson } from "../http/errors.ts";
+import type { Middleware } from "./types.ts";
 
 export function errorMiddleware(opts: { exposeStack: boolean }): Middleware {
   return async (req, next) => {

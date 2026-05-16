@@ -1,10 +1,14 @@
 import "reflect-metadata";
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 import { Container, injectable } from "@zebra/core";
 import { createTestApp } from "../src/index.ts";
 
 @injectable()
-class Echo { say(msg: string) { return msg; } }
+class Echo {
+  say(msg: string) {
+    return msg;
+  }
+}
 
 test("createTestApp dispatches in-process without opening a port", async () => {
   const c = new Container();

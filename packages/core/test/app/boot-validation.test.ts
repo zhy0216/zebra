@@ -1,14 +1,14 @@
 import "reflect-metadata";
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 import { Zebra } from "../../src/app/app.ts";
 import { Container } from "../../src/di/container.ts";
-import { injectable, inject } from "../../src/di/decorators.ts";
-import { token } from "../../src/di/token.ts";
+import { inject, injectable } from "../../src/di/decorators.ts";
 import {
-  UnboundTokenError,
-  ScopeMismatchError,
   CircularDependencyError,
+  ScopeMismatchError,
+  UnboundTokenError,
 } from "../../src/di/errors.ts";
+import { token } from "../../src/di/token.ts";
 
 @injectable() class Db {}
 @injectable() class Repo { constructor(public db: Db) {} }

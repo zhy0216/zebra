@@ -1,4 +1,4 @@
-import { isToken, type Identifier } from "./token.ts";
+import { type Identifier, isToken } from "./token.ts";
 
 export type BindingKey = symbol | Function;
 

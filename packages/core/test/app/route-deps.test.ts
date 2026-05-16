@@ -1,12 +1,14 @@
 import "reflect-metadata";
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 import { Zebra } from "../../src/app/app.ts";
 import { Container } from "../../src/di/container.ts";
 import { injectable } from "../../src/di/decorators.ts";
 
 @injectable()
 class BlogService {
-  async find(id: string) { return { id, title: `blog ${id}` }; }
+  async find(id: string) {
+    return { id, title: `blog ${id}` };
+  }
 }
 
 test("handler receives resolved deps as second arg", async () => {

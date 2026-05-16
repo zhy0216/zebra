@@ -1,4 +1,4 @@
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 import { compose } from "../../src/middleware/compose.ts";
 import type { Middleware } from "../../src/middleware/types.ts";
 
@@ -31,7 +31,5 @@ test("calling next twice throws", async () => {
     await next();
     return next();
   };
-  await expect(
-    compose({} as any, [bad], async () => new Response("x")),
-  ).rejects.toThrow();
+  await expect(compose({} as any, [bad], async () => new Response("x"))).rejects.toThrow();
 });

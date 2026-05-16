@@ -1,5 +1,5 @@
-import { test, expect } from "bun:test";
-import { parseBody, type BodyOptions } from "../../src/http/body.ts";
+import { expect, test } from "bun:test";
+import { type BodyOptions, parseBody } from "../../src/http/body.ts";
 import { HttpError } from "../../src/http/errors.ts";
 
 const defaultOpts: BodyOptions = {

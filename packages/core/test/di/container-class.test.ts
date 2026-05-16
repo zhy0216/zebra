@@ -1,8 +1,10 @@
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 import { Container } from "../../src/di/container.ts";
 
 class NoDeps {
-  hello() { return "hi"; }
+  hello() {
+    return "hi";
+  }
 }
 
 test("toSelf on a no-arg class instantiates it", () => {
@@ -20,8 +22,14 @@ test("singleton class: same instance", () => {
 });
 
 test(".to(OtherClass) replaces target", () => {
-  abstract class Animal { abstract sound(): string; }
-  class Dog extends Animal { sound() { return "woof"; } }
+  abstract class Animal {
+    abstract sound(): string;
+  }
+  class Dog extends Animal {
+    sound() {
+      return "woof";
+    }
+  }
   const c = new Container();
   c.bind(Animal).to(Dog);
   expect(c.resolve(Animal).sound()).toBe("woof");

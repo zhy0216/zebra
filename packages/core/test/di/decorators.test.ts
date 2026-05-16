@@ -1,7 +1,7 @@
 import "reflect-metadata";
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 import { Container } from "../../src/di/container.ts";
-import { injectable, inject } from "../../src/di/decorators.ts";
+import { inject, injectable } from "../../src/di/decorators.ts";
 import { token } from "../../src/di/token.ts";
 
 class Logger {

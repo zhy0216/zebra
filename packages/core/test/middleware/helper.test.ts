@@ -1,11 +1,13 @@
 import "reflect-metadata";
-import { test, expect } from "bun:test";
-import { middleware, getMiddlewareDeps } from "../../src/middleware/helper.ts";
+import { expect, test } from "bun:test";
 import { Container } from "../../src/di/container.ts";
+import { getMiddlewareDeps, middleware } from "../../src/middleware/helper.ts";
 
 class Audit {
   events: string[] = [];
-  log(e: string) { this.events.push(e); }
+  log(e: string) {
+    this.events.push(e);
+  }
 }
 
 test("middleware() carries deps that can be inspected", () => {

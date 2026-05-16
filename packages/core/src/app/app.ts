@@ -1,16 +1,16 @@
 import { Container } from "../di/container.ts";
 import { ScopeKind } from "../di/scope.ts";
-import { Router } from "../router/radix.ts";
-import { buildRequest } from "../http/request.ts";
 import { HttpError } from "../http/errors.ts";
+import { buildRequest } from "../http/request.ts";
+import { type StaticOptions, serveStatic } from "../http/static.ts";
 import { compose } from "../middleware/compose.ts";
 import { errorMiddleware } from "../middleware/error.ts";
-import { serveStatic, type StaticOptions } from "../http/static.ts";
 import type { Middleware } from "../middleware/types.ts";
-import type { ZebraOptions, RouteHandler, DepsSpec, RegisteredRoute } from "./types.ts";
+import { Router } from "../router/radix.ts";
+import { validateGraph } from "./boot-validation.ts";
 import { Group, type GroupApi } from "./group.ts";
 import type { LifecycleEvent, LifecycleHandler } from "./lifecycle.ts";
-import { validateGraph } from "./boot-validation.ts";
+import type { DepsSpec, RegisteredRoute, RouteHandler, ZebraOptions } from "./types.ts";
 
 const DEFAULT_BODY = {
   maxSize: 1024 * 1024,
@@ -27,7 +27,11 @@ export class Zebra {
   protected bodyOpts;
   protected exposeStack: boolean;
   protected frozen = false;
-  protected hooks: Record<LifecycleEvent, LifecycleHandler[]> = { boot: [], ready: [], shutdown: [] };
+  protected hooks: Record<LifecycleEvent, LifecycleHandler[]> = {
+    boot: [],
+    ready: [],
+    shutdown: [],
+  };
   protected server: ReturnType<typeof Bun.serve> | null = null;
 
   constructor(opts: ZebraOptions) {
@@ -50,7 +54,11 @@ export class Zebra {
     for (const h of this.hooks.boot) await h();
     validateGraph(this.container, this.routes, this.middlewares);
     this.frozen = true;
-    const serveOpts: { port: number; hostname?: string; fetch: (req: Request) => Promise<Response> } = {
+    const serveOpts: {
+      port: number;
+      hostname?: string;
+      fetch: (req: Request) => Promise<Response>;
+    } = {
       port: opts.port,
       fetch: (req) => this.dispatch(req),
     };
@@ -120,7 +128,7 @@ export class Zebra {
       index: opts.index ?? "index.html",
       maxAge: opts.maxAge ?? 3600,
     };
-    const pattern = routPath.replace(/\/+$/, "") + "/*file";
+    const pattern = `${routPath.replace(/\/+$/, "")}/*file`;
     this.register("GET", pattern, null, async (req) => {
       return serveStatic(root, (req.params as any).file ?? "", o);
     });

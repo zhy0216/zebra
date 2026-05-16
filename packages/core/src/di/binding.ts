@@ -34,8 +34,20 @@ export class BindingBuilder<T> {
     this.binding.scope = ScopeKind.Singleton;
     return this;
   }
-  inSingletonScope(): BindingBuilder<T> { this.binding.scope = ScopeKind.Singleton; return this; }
-  inSessionScope(): BindingBuilder<T>  { this.binding.scope = ScopeKind.Session;  return this; }
-  inRequestScope(): BindingBuilder<T>  { this.binding.scope = ScopeKind.Request;  return this; }
-  inTransientScope(): BindingBuilder<T>{ this.binding.scope = ScopeKind.Transient;return this; }
+  inSingletonScope(): BindingBuilder<T> {
+    this.binding.scope = ScopeKind.Singleton;
+    return this;
+  }
+  inSessionScope(): BindingBuilder<T> {
+    this.binding.scope = ScopeKind.Session;
+    return this;
+  }
+  inRequestScope(): BindingBuilder<T> {
+    this.binding.scope = ScopeKind.Request;
+    return this;
+  }
+  inTransientScope(): BindingBuilder<T> {
+    this.binding.scope = ScopeKind.Transient;
+    return this;
+  }
 }

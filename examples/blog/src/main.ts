@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { Zebra, Container, HttpError } from "zebra";
+import { Container, HttpError, Zebra } from "zebra";
 import { BlogRepo, BlogService } from "./services.ts";
 
 const container = new Container();
@@ -19,7 +19,7 @@ app.group("/blogs", (g) => {
   });
 
   g.post("/", { blog: BlogService }, async (req, { blog }) => {
-    const body = await req.body() as { title: string; content: string };
+    const body = (await req.body()) as { title: string; content: string };
     return blog.create(body.title, body.content);
   });
 

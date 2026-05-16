@@ -1,4 +1,4 @@
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 import { Router } from "../../src/router/radix.ts";
 
 test("static route match", () => {

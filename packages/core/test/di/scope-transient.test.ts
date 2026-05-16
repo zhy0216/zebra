@@ -1,10 +1,13 @@
 import "reflect-metadata";
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 import { Container } from "../../src/di/container.ts";
 import { injectable } from "../../src/di/decorators.ts";
 
 @injectable()
-class Counter { static n = 0; readonly id = ++Counter.n; }
+class Counter {
+  static n = 0;
+  readonly id = ++Counter.n;
+}
 
 test("transient: each resolve returns a new instance", () => {
   Counter.n = 0;

@@ -1,16 +1,12 @@
 import { Container } from "../di/container.ts";
-import { keyOf, displayName, type BindingKey } from "../di/key.ts";
-import type { Identifier } from "../di/token.ts";
-import { ScopeKind, canDependOn } from "../di/scope.ts";
-import {
-  CircularDependencyError,
-  ScopeMismatchError,
-  UnboundTokenError,
-} from "../di/errors.ts";
 import { getConstructorDeps } from "../di/decorators.ts";
-import type { RegisteredRoute } from "./types.ts";
+import { CircularDependencyError, ScopeMismatchError, UnboundTokenError } from "../di/errors.ts";
+import { type BindingKey, displayName, keyOf } from "../di/key.ts";
+import { ScopeKind, canDependOn } from "../di/scope.ts";
+import type { Identifier } from "../di/token.ts";
 import { getMiddlewareDeps } from "../middleware/helper.ts";
 import type { Middleware } from "../middleware/types.ts";
+import type { RegisteredRoute } from "./types.ts";
 
 export function validateGraph(
   container: Container,

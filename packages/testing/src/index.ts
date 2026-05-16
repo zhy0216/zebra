@@ -1,4 +1,4 @@
-import { Zebra, validateGraph, type ZebraOptions } from "@zebra/core";
+import { Zebra, type ZebraOptions, validateGraph } from "@zebra/core";
 
 export interface TestApp extends Zebra {
   request(path: string, init?: RequestInit): Promise<Response>;
@@ -12,11 +12,7 @@ export function createTestApp(opts: ZebraOptions): TestApp {
     return app.dispatch(new Request(url, init));
   };
   app.boot = async () => {
-    validateGraph(
-      (app as any).container,
-      (app as any).routes,
-      (app as any).middlewares,
-    );
+    validateGraph((app as any).container, (app as any).routes, (app as any).middlewares);
   };
   return app;
 }

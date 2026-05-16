@@ -12,8 +12,8 @@ export function injectable(): ClassDecorator {
 
 export function inject<T>(id: Identifier<T>): ParameterDecorator {
   return (target, _propertyKey, parameterIndex) => {
-    const existing: Record<number, Identifier<any>> =
-      Reflect.getMetadata(INJECT_PARAMS, target) ?? {};
+    const existing: Record<number, Identifier<any>> = Reflect.getMetadata(INJECT_PARAMS, target) ??
+    {};
     existing[parameterIndex] = id;
     Reflect.defineMetadata(INJECT_PARAMS, existing, target);
   };
@@ -25,7 +25,6 @@ export function isInjectable(cls: Function): boolean {
 
 export function getConstructorDeps(cls: Function): Identifier<any>[] {
   const types: Function[] = Reflect.getMetadata("design:paramtypes", cls) ?? [];
-  const explicit: Record<number, Identifier<any>> =
-    Reflect.getMetadata(INJECT_PARAMS, cls) ?? {};
+  const explicit: Record<number, Identifier<any>> = Reflect.getMetadata(INJECT_PARAMS, cls) ?? {};
   return types.map((t, i) => explicit[i] ?? (t as Identifier<any>));
 }

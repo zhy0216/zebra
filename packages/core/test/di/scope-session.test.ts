@@ -1,16 +1,18 @@
 import "reflect-metadata";
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 import { Container } from "../../src/di/container.ts";
 import { injectable } from "../../src/di/decorators.ts";
-import { ScopeKind } from "../../src/di/scope.ts";
 import type { Disposable } from "../../src/di/disposable.ts";
+import { ScopeKind } from "../../src/di/scope.ts";
 
 @injectable()
 class SessionState implements Disposable {
   static disposed = 0;
   static created = 0;
   readonly id = ++SessionState.created;
-  dispose() { SessionState.disposed++; }
+  dispose() {
+    SessionState.disposed++;
+  }
 }
 
 test("session scope behaves like request: cached within child", () => {

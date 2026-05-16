@@ -1,4 +1,4 @@
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 import { HttpError, toProblemJson } from "../../src/http/errors.ts";
 
 test("HttpError holds status, code, title", () => {

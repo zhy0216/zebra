@@ -1,6 +1,6 @@
 import "reflect-metadata";
+import { expect, test } from "bun:test";
 import { resolve } from "node:path";
-import { test, expect } from "bun:test";
 import { Zebra } from "../../src/app/app.ts";
 import { Container } from "../../src/di/container.ts";
 

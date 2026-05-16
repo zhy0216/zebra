@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { Zebra, Container } from "zebra";
+import { Container, Zebra } from "zebra";
 
 const app = new Zebra({ container: new Container() });
 

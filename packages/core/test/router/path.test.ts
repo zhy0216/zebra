@@ -1,5 +1,5 @@
-import { test, expect } from "bun:test";
-import { parsePath, type PathSegment } from "../../src/router/path.ts";
+import { expect, test } from "bun:test";
+import { type PathSegment, parsePath } from "../../src/router/path.ts";
 
 test("parsePath splits a static path", () => {
   const segs = parsePath("/blogs/list");

@@ -1,11 +1,14 @@
 import "reflect-metadata";
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 import { Container } from "../../src/di/container.ts";
 import { injectable } from "../../src/di/decorators.ts";
 import { ScopeKind } from "../../src/di/scope.ts";
 
 @injectable()
-class Req { static n = 0; readonly id = ++Req.n; }
+class Req {
+  static n = 0;
+  readonly id = ++Req.n;
+}
 
 test("request scope: same instance within child, new on different children", () => {
   Req.n = 0;
@@ -21,7 +24,11 @@ test("request scope: same instance within child, new on different children", () 
 });
 
 test("singletons resolved from child come from root cache", () => {
-  @injectable() class Single { static n = 0; readonly id = ++Single.n; }
+  @injectable()
+  class Single {
+    static n = 0;
+    readonly id = ++Single.n;
+  }
   const root = new Container();
   root.bind(Single).toSelf();
   const child = root.createChildScope(ScopeKind.Request);

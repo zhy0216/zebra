@@ -1,4 +1,4 @@
-import { parseBody, type BodyOptions } from "./body.ts";
+import { type BodyOptions, parseBody } from "./body.ts";
 
 export interface ZebraRequest<P = Record<string, string>, Q = Record<string, string>> {
   raw: Request;
@@ -17,7 +17,11 @@ const DEFAULT_BODY: BodyOptions = {
   multipart: { limit: 16 * 1024 * 1024, maxFiles: 10, maxFileSize: 8 * 1024 * 1024 },
 };
 
-export function buildRequest<P>(raw: Request, params: P, bodyOpts: BodyOptions = DEFAULT_BODY): ZebraRequest<P> {
+export function buildRequest<P>(
+  raw: Request,
+  params: P,
+  bodyOpts: BodyOptions = DEFAULT_BODY,
+): ZebraRequest<P> {
   const url = new URL(raw.url);
   const query: Record<string, string> = {};
   for (const [k, v] of url.searchParams) query[k] = v;

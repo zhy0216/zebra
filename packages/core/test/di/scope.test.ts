@@ -1,6 +1,6 @@
-import { test, expect } from "bun:test";
-import { ScopeKind, scopeRank, canDependOn } from "../../src/di/scope.ts";
-import { keyOf, displayName } from "../../src/di/key.ts";
+import { expect, test } from "bun:test";
+import { displayName, keyOf } from "../../src/di/key.ts";
+import { ScopeKind, canDependOn, scopeRank } from "../../src/di/scope.ts";
 import { token } from "../../src/di/token.ts";
 
 test("scope ranks order from widest to narrowest", () => {

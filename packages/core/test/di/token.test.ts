@@ -1,5 +1,5 @@
-import { test, expect } from "bun:test";
-import { token, isToken, type Token } from "../../src/di/token.ts";
+import { expect, test } from "bun:test";
+import { type Token, isToken, token } from "../../src/di/token.ts";
 
 test("token() creates a token with a unique symbol id and name", () => {
   const Db = token<{ query(): unknown }>("Db");

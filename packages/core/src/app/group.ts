@@ -46,7 +46,7 @@ export class Group implements GroupApi {
     deps: DepsSpec | null,
     handler: RouteHandler,
   ): void {
-    const joined = this.prefix + (path.startsWith("/") ? path : "/" + path);
+    const joined = this.prefix + (path.startsWith("/") ? path : `/${path}`);
     this.routes.push({
       method,
       path: joined,
@@ -78,10 +78,10 @@ export class Group implements GroupApi {
   }
 
   group(prefix: string, fn: (g: GroupApi) => void): void {
-    const child = new Group(
-      this.prefix + (prefix.startsWith("/") ? prefix : "/" + prefix),
-      [...this.inherited, ...this.middlewares],
-    );
+    const child = new Group(this.prefix + (prefix.startsWith("/") ? prefix : `/${prefix}`), [
+      ...this.inherited,
+      ...this.middlewares,
+    ]);
     fn(child);
     for (const r of child.routes) this.routes.push(r);
   }

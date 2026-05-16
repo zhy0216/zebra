@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 import { Container } from "../../src/di/container.ts";
 import { token } from "../../src/di/token.ts";
 

@@ -6,7 +6,10 @@ export class CircularDependencyError extends Error {
 }
 
 export class UnboundTokenError extends Error {
-  constructor(public readonly identifier: string, public readonly path: string[]) {
+  constructor(
+    public readonly identifier: string,
+    public readonly path: string[],
+  ) {
     super(`Unbound identifier "${identifier}" required by: ${path.join(" -> ")}`);
     this.name = "UnboundTokenError";
   }

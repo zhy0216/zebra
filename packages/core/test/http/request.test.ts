@@ -1,4 +1,4 @@
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 import { buildRequest } from "../../src/http/request.ts";
 
 test("buildRequest exposes params, query, headers, url", async () => {

@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 import { Zebra } from "../../src/app/app.ts";
 import { Container } from "../../src/di/container.ts";
 

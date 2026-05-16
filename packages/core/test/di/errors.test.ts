@@ -1,8 +1,8 @@
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 import {
   CircularDependencyError,
-  UnboundTokenError,
   ScopeMismatchError,
+  UnboundTokenError,
 } from "../../src/di/errors.ts";
 
 test("CircularDependencyError carries the path", () => {

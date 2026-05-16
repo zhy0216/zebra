@@ -2,7 +2,7 @@ import { Binding, BindingBuilder } from "./binding.ts";
 import { getConstructorDeps } from "./decorators.ts";
 import { isDisposable } from "./disposable.ts";
 import { CircularDependencyError, UnboundTokenError } from "./errors.ts";
-import { keyOf, displayName, type BindingKey } from "./key.ts";
+import { type BindingKey, displayName, keyOf } from "./key.ts";
 import { ScopeKind } from "./scope.ts";
 import type { Identifier } from "./token.ts";
 
@@ -11,7 +11,10 @@ export class Container {
   protected instances: Map<BindingKey, any> = new Map<BindingKey, any>();
   protected scopeKind: ScopeKind = ScopeKind.Singleton;
   protected parent: Container | null = null;
-  private snapshots: Array<{ bindings: Map<BindingKey, Binding<any>>; instances: Map<BindingKey, any> }> = [];
+  private snapshots: Array<{
+    bindings: Map<BindingKey, Binding<any>>;
+    instances: Map<BindingKey, any>;
+  }> = [];
 
   bind<T>(id: Identifier<T>): BindingBuilder<T> {
     const binding: Binding<T> = {
@@ -81,7 +84,7 @@ export class Container {
     if (binding.kind === "value") return binding.target as T;
 
     const cacheContainer = this.cacheContainerFor(binding.scope);
-    if (cacheContainer && cacheContainer.instances.has(key)) {
+    if (cacheContainer?.instances.has(key)) {
       return cacheContainer.instances.get(key);
     }
 
