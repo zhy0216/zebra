@@ -1,4 +1,5 @@
 import { Binding, BindingBuilder } from "./binding.ts";
+import { getConstructorDeps } from "./decorators.ts";
 import { UnboundTokenError } from "./errors.ts";
 import { keyOf, displayName, type BindingKey } from "./key.ts";
 import { ScopeKind } from "./scope.ts";
@@ -37,10 +38,14 @@ export class Container {
     if (binding.scope === ScopeKind.Singleton && this.instances.has(key)) {
       return this.instances.get(key);
     }
-    const instance =
-      binding.kind === "factory"
-        ? (binding.target as (c: Container) => T)(this)
-        : new (binding.target as new () => T)();
+    let instance: T;
+    if (binding.kind === "factory") {
+      instance = (binding.target as (c: Container) => T)(this);
+    } else {
+      const cls = binding.target as new (...args: any[]) => T;
+      const deps = getConstructorDeps(cls).map((d) => this.resolve(d));
+      instance = new cls(...deps);
+    }
     if (binding.scope === ScopeKind.Singleton) this.instances.set(key, instance);
     return instance;
   }
