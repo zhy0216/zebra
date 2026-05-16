@@ -16,4 +16,5 @@ export function isToken(x: unknown): x is Token<unknown> {
 }
 
 export type ClassConstructor<T> = new (...args: any[]) => T;
-export type Identifier<T> = Token<T> | ClassConstructor<T>;
+export type AbstractConstructor<T> = abstract new (...args: any[]) => T;
+export type Identifier<T> = Token<T> | ClassConstructor<T> | AbstractConstructor<T>;
