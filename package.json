@@ -5,14 +5,15 @@
   "workspaces": ["packages/*", "examples/*"],
   "scripts": {
     "test": "bun test",
-    "build": "bun --filter '*' run build",
-    "typecheck": "bun --filter '*' run typecheck",
+    "build": "bun --filter='*' run build",
+    "typecheck": "bun --filter='*' run typecheck",
     "lint": "biome check .",
     "format": "biome format --write ."
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
-    "typescript": "^5.6.0",
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "reflect-metadata": "^0.2.2",
+    "typescript": "^5.6.0"
   }
 }
