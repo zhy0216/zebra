@@ -1,14 +1,12 @@
 import "reflect-metadata";
-import { Container, HttpError, Zebra } from "zebra";
+import { HttpError, Zebra } from "zebra";
 import { BlogRepo, BlogService } from "./services.ts";
 
-const container = new Container();
-container.bind(BlogRepo).toSelf();
-container.bind(BlogService).toSelf();
+const z = new Zebra();
+z.injectSingleton(BlogRepo);
+z.injectSingleton(BlogService);
 
-const app = new Zebra({ container });
-
-app.group("/blogs", (g) => {
+z.group("/blogs", (g) => {
   g.get("/", { blog: BlogService }, async (_req, { blog }) => blog.list());
 
   g.get("/:id", { blog: BlogService }, async (req, { blog }) => {
@@ -30,5 +28,5 @@ app.group("/blogs", (g) => {
   });
 });
 
-await app.listen({ port: 3001 });
+await z.listen({ port: 3001 });
 console.log("blog example on http://localhost:3001");
