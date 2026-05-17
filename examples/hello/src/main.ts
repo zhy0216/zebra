@@ -1,9 +1,9 @@
 import "reflect-metadata";
-import { Container, Zebra } from "zebra";
+import { Zebra } from "zebra";
 
-const app = new Zebra({ container: new Container() });
+const z = new Zebra();
 
-app.get("/hello/:name", async (req) => `hello, ${req.params.name}`);
+z.get("/hello/:name", async (req) => `hello, ${req.params.name}`);
 
-await app.listen({ port: 3000 });
+await z.listen({ port: 3000 });
 console.log("hello example listening on http://localhost:3000");
