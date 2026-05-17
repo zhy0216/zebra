@@ -8,7 +8,7 @@ export interface Binding<T> {
   kind: BindingKind;
   target: unknown;
   scope: ScopeKind;
-  factoryDeps?: Record<string, Identifier<unknown>>;
+  factoryDeps?: Record<string, Identifier<unknown>> | undefined;
 }
 
 export class BindingBuilder<T> {
@@ -27,7 +27,7 @@ export class BindingBuilder<T> {
   toFactory(fn: (c: any) => T): BindingBuilder<T> {
     this.binding.kind = "factory";
     this.binding.target = fn;
-    delete this.binding.factoryDeps;
+    this.binding.factoryDeps = undefined;
     return this;
   }
   toFactoryWithDeps(
