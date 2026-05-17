@@ -1,5 +1,6 @@
 import { Container } from "../di/container.ts";
 import { ScopeKind } from "../di/scope.ts";
+import type { Identifier } from "../di/token.ts";
 import { HttpError } from "../http/errors.ts";
 import { buildRequest } from "../http/request.ts";
 import { type StaticOptions, serveStatic } from "../http/static.ts";
@@ -75,6 +76,17 @@ export class Zebra {
       this.server = null;
     }
     await this.container.dispose();
+  }
+
+  injectValue<T>(id: Identifier<T>, value: T): void {
+    this.assertNotFrozen();
+    this.container.bind(id).toValue(value);
+  }
+
+  protected assertNotFrozen(): void {
+    if (this.frozen) {
+      throw new Error("Cannot register bindings after app.listen()");
+    }
   }
 
   protected register(
