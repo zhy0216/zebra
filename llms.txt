@@ -1,0 +1,55 @@
+# Zebra
+
+> A Bun-first TypeScript web framework with first-class dependency injection. Built on `Bun.serve` and Web Standard `Request`/`Response` — no Node compat layer. Every app is built around a DI `Container` whose graph is validated at boot.
+
+Zebra v2 (current) is a rewrite. v1 (2019) is archived on the `v1-archive` git tag. The framework is at v0.1 MVP status: DI container, radix router, middleware, app + lifecycle, static files, and testing helpers are implemented. Validation, OpenAPI, session, WebSocket, CORS, and rate-limit are planned packages.
+
+Core principles:
+- DI is mandatory, not bolted on. Routes and middleware declare their dependencies via a named-object spec (`{ svc: Service }`); the container resolves them and validates the full graph (circular deps, scope violations) at boot.
+- Web Standards. Handlers receive a `ZebraRequest` (a `Request` superset with `params`, `query`, and lazy body parsing) and return a `Response` or value.
+- Structured errors. Default error responses follow RFC 9457 (Problem+Json) via `HttpError`.
+- Four DI scopes: singleton, request, session, transient — with scope-rank rules enforced at boot.
+
+## Docs
+
+- [README](README.md): install, quick start, features, package layout
+- [Design spec (v0.1 → v1.0 surface)](docs/superpowers/specs/2026-05-16-zebra-v2-design.md): the authoritative design document for the rewrite
+- [v2 MVP plan](docs/superpowers/plans/2026-05-16-zebra-v2-mvp.md): implementation plan and milestones
+- [LICENSE](LICENSE): MIT
+
+## Packages
+
+- [`zebra`](packages/zebra): public facade — re-exports `@zebra/core`
+- [`@zebra/core`](packages/core): app, DI container, radix router, HTTP layer, middleware, lifecycle
+- [`@zebra/testing`](packages/testing): `createTestApp` for in-process integration tests (no sockets)
+
+## Public API surface (`packages/core/src/index.ts`)
+
+- App: `Zebra`, `ZebraOptions`, `RouteHandler`, `DepsSpec`, `RegisteredRoute`, `GroupApi`, `LifecycleEvent`, `LifecycleHandler`, `validateGraph`
+- DI: `Container`, `token`, `Token`, `injectable`, `inject`, `ScopeKind`, `Disposable`, `CircularDependencyError`, `UnboundTokenError`, `ScopeMismatchError`
+- HTTP: `ZebraRequest`, `buildRequest`, `HttpError`, `toProblemJson`, `ProblemJson`
+- Middleware: `Middleware`, `middleware`, `getMiddlewareDeps`
+
+## Source layout (`packages/core/src/`)
+
+- `app/` — `app.ts` (Zebra class), `boot-validation.ts`, `group.ts`, `lifecycle.ts`, `types.ts`
+- `di/` — `container.ts`, `binding.ts`, `decorators.ts`, `disposable.ts`, `errors.ts`, `key.ts`, `scope.ts`, `token.ts`
+- `http/` — `request.ts`, `body.ts`, `errors.ts`, `static.ts`
+- `middleware/` — `compose.ts` (Koa-style), `error.ts` (Problem+Json), `helper.ts`, `types.ts`
+- `router/` — `radix.ts` (radix-tree router), `path.ts`
+
+## Examples
+
+- [`examples/hello`](examples/hello): minimal Zebra app
+- [`examples/blog`](examples/blog): DI services, route groups, structured errors
+
+Run from repo root: `bun --filter example-hello start` or `bun --filter example-blog start`.
+
+## Tooling
+
+- Runtime: Bun (required — uses `Bun.serve`, `Bun.file`)
+- TypeScript: `experimentalDecorators` and `emitDecoratorMetadata` required; `reflect-metadata` imported once at entry
+- Lint/format: Biome (`bun run lint`, `bun run format`)
+- Test: `bun test`
+- Build all: `bun run build`
+- Typecheck all: `bun run typecheck`
