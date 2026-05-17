@@ -67,5 +67,10 @@ function walk(
     for (const d of childDeps) {
       walk(container, d, [...stack, name], visited, binding.scope);
     }
+  } else if (binding.kind === "factory" && binding.factoryDeps) {
+    for (const d of Object.values(binding.factoryDeps) as Identifier<unknown>[]) {
+      walk(container, d, [...stack, name], visited, binding.scope);
+    }
   }
+  // factory without factoryDeps, or value: no further deps to walk
 }
