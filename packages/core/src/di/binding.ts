@@ -27,7 +27,7 @@ export class BindingBuilder<T> {
   toFactory(fn: (c: any) => T): BindingBuilder<T> {
     this.binding.kind = "factory";
     this.binding.target = fn;
-    this.binding.factoryDeps = undefined;
+    delete this.binding.factoryDeps;
     return this;
   }
   toFactoryWithDeps(
