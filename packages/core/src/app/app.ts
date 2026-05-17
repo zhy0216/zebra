@@ -97,6 +97,64 @@ export class Zebra {
     this.bindClass(id, impl, ScopeKind.Session);
   }
 
+  injectFactorySingleton<T>(id: Identifier<T>, fn: (c: Container) => T): void;
+  injectFactorySingleton<T>(
+    id: Identifier<T>,
+    deps: Record<string, Identifier<unknown>>,
+    fn: (deps: Record<string, unknown>) => T,
+  ): void;
+  injectFactorySingleton(id: any, a: any, b?: any): void {
+    this.bindFactory(id, a, b, ScopeKind.Singleton);
+  }
+
+  injectFactoryRequest<T>(id: Identifier<T>, fn: (c: Container) => T): void;
+  injectFactoryRequest<T>(
+    id: Identifier<T>,
+    deps: Record<string, Identifier<unknown>>,
+    fn: (deps: Record<string, unknown>) => T,
+  ): void;
+  injectFactoryRequest(id: any, a: any, b?: any): void {
+    this.bindFactory(id, a, b, ScopeKind.Request);
+  }
+
+  injectFactoryTransient<T>(id: Identifier<T>, fn: (c: Container) => T): void;
+  injectFactoryTransient<T>(
+    id: Identifier<T>,
+    deps: Record<string, Identifier<unknown>>,
+    fn: (deps: Record<string, unknown>) => T,
+  ): void;
+  injectFactoryTransient(id: any, a: any, b?: any): void {
+    this.bindFactory(id, a, b, ScopeKind.Transient);
+  }
+
+  injectFactorySession<T>(id: Identifier<T>, fn: (c: Container) => T): void;
+  injectFactorySession<T>(
+    id: Identifier<T>,
+    deps: Record<string, Identifier<unknown>>,
+    fn: (deps: Record<string, unknown>) => T,
+  ): void;
+  injectFactorySession(id: any, a: any, b?: any): void {
+    this.bindFactory(id, a, b, ScopeKind.Session);
+  }
+
+  private bindFactory(
+    id: Identifier<any>,
+    a: ((c: Container) => any) | Record<string, Identifier<unknown>>,
+    b: ((deps: Record<string, unknown>) => any) | undefined,
+    scope: ScopeKind,
+  ): void {
+    this.assertNotFrozen();
+    const builder = this.container.bind(id);
+    if (b === undefined) {
+      // Lazy form: a is the factory fn
+      builder.toFactory(a as (c: Container) => any);
+    } else {
+      // Declared form: a is deps spec, b is the fn taking resolved deps
+      builder.toFactoryWithDeps(a as Record<string, Identifier<unknown>>, b);
+    }
+    Zebra.applyScope(builder, scope);
+  }
+
   private bindClass<T>(
     id: Identifier<T>,
     impl: ClassConstructor<T> | undefined,
