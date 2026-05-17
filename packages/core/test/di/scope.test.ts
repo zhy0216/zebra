@@ -16,6 +16,12 @@ test("canDependOn: narrower scope may depend on wider, not the reverse", () => {
   expect(canDependOn(ScopeKind.Transient, ScopeKind.Session)).toBe(true);
 });
 
+test("canDependOn: any scope may depend on Transient (no-cache short-circuit)", () => {
+  expect(canDependOn(ScopeKind.Singleton, ScopeKind.Transient)).toBe(true);
+  expect(canDependOn(ScopeKind.Session, ScopeKind.Transient)).toBe(true);
+  expect(canDependOn(ScopeKind.Request, ScopeKind.Transient)).toBe(true);
+});
+
 test("keyOf returns symbol for token, function for class", () => {
   const T = token("X");
   class C {}
