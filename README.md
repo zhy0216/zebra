@@ -34,13 +34,13 @@ Import `reflect-metadata` once at your entry point, before anything else.
 
 ```ts
 import "reflect-metadata";
-import { Container, Zebra } from "zebra";
+import { Zebra } from "zebra";
 
-const app = new Zebra({ container: new Container() });
+const z = new Zebra();
 
-app.get("/hello/:name", async (req) => `hello, ${req.params.name}`);
+z.get("/hello/:name", async (req) => `hello, ${req.params.name}`);
 
-await app.listen({ port: 3000 });
+await z.listen({ port: 3000 });
 ```
 
 ```sh
@@ -48,6 +48,36 @@ bun run src/main.ts
 curl http://localhost:3000/hello/world
 # hello, world
 ```
+
+With dependencies, register them on the `Zebra` instance and pull them into routes by name:
+
+```ts
+import "reflect-metadata";
+import { Zebra, injectable } from "zebra";
+
+@injectable() class Greeter { greet(n: string) { return `hi, ${n}`; } }
+
+const z = new Zebra();
+z.injectSingleton(Greeter);
+
+z.get("/hi/:name", { g: Greeter }, async (req, { g }) => g.greet(req.params.name));
+
+await z.listen({ port: 3000 });
+```
+
+### Advanced: bring your own Container
+
+For tests that mock specific bindings or apps that share a container, construct one explicitly:
+
+```ts
+import { Container, Zebra } from "zebra";
+
+const container = new Container();
+container.bind(IRepo).to(MockRepo);
+const z = new Zebra({ container });
+```
+
+`z.inject*` methods write to whichever container the `Zebra` instance owns.
 
 ## Features
 
