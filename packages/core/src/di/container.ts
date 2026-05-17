@@ -90,7 +90,15 @@ export class Container {
 
     let instance: T;
     if (binding.kind === "factory") {
-      instance = (binding.target as (c: Container) => T)(this);
+      if (binding.factoryDeps) {
+        const resolved: Record<string, unknown> = {};
+        for (const [name, id] of Object.entries(binding.factoryDeps)) {
+          resolved[name] = this.resolveWithStack(id, stack);
+        }
+        instance = (binding.target as (r: Record<string, unknown>) => T)(resolved);
+      } else {
+        instance = (binding.target as (c: Container) => T)(this);
+      }
     } else {
       const cls = binding.target as new (...args: any[]) => T;
       const deps = getConstructorDeps(cls).map((d) => this.resolveWithStack(d, stack));
