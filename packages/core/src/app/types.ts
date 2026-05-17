@@ -8,7 +8,7 @@ export type RouteHandler<D = any> = (req: ZebraRequest, deps?: D) => Promise<unk
 export type DepsSpec = Record<string, any>;
 
 export interface ZebraOptions {
-  container: Container;
+  container?: Container;
   body?: Partial<BodyOptions>;
   errors?: { exposeStack?: boolean };
 }

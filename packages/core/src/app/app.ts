@@ -34,8 +34,8 @@ export class Zebra {
   };
   protected server: ReturnType<typeof Bun.serve> | null = null;
 
-  constructor(opts: ZebraOptions) {
-    this.container = opts.container;
+  constructor(opts: ZebraOptions = {}) {
+    this.container = opts.container ?? new Container();
     this.bodyOpts = { ...DEFAULT_BODY, ...(opts.body ?? {}) };
     this.exposeStack = opts.errors?.exposeStack ?? false;
   }
