@@ -531,3 +531,9 @@ These are deferred but called out so we don't accidentally close doors:
 - Server-side rendering / template engines
 - ORM
 - Auth provider (users compose with their own auth lib + `@zebra/session`)
+
+---
+
+## Addendum (2026-05-17): Implicit DI sugar
+
+The DI section of this spec describes the `Container` API in full. After v0.1 shipped, a follow-up spec ([2026-05-17-zebra-implicit-di-design.md](2026-05-17-zebra-implicit-di-design.md)) added `inject*` methods directly on the `Zebra` class and made `ZebraOptions.container` optional. The underlying `Container` API is unchanged; the new methods are sugar that delegate to it. New apps should prefer the sugar; the explicit `Container` path remains for advanced cases (test mocks, shared containers, snapshot/restore).
