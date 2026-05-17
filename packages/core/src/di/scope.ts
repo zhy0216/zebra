@@ -17,5 +17,7 @@ export function scopeRank(s: ScopeKind): number {
 }
 
 export function canDependOn(consumer: ScopeKind, dependency: ScopeKind): boolean {
+  // Transient has no cache, so any scope can safely depend on it.
+  if (dependency === ScopeKind.Transient) return true;
   return scopeRank(dependency) <= scopeRank(consumer);
 }

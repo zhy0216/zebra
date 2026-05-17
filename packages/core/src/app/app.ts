@@ -1,6 +1,7 @@
+import type { BindingBuilder } from "../di/binding.ts";
 import { Container } from "../di/container.ts";
 import { ScopeKind } from "../di/scope.ts";
-import type { Identifier } from "../di/token.ts";
+import type { ClassConstructor, Identifier } from "../di/token.ts";
 import { HttpError } from "../http/errors.ts";
 import { buildRequest } from "../http/request.ts";
 import { type StaticOptions, serveStatic } from "../http/static.ts";
@@ -81,6 +82,48 @@ export class Zebra {
   injectValue<T>(id: Identifier<T>, value: T): void {
     this.assertNotFrozen();
     this.container.bind(id).toValue(value);
+  }
+
+  injectSingleton<T>(id: Identifier<T>, impl?: ClassConstructor<T>): void {
+    this.bindClass(id, impl, ScopeKind.Singleton);
+  }
+  injectRequest<T>(id: Identifier<T>, impl?: ClassConstructor<T>): void {
+    this.bindClass(id, impl, ScopeKind.Request);
+  }
+  injectTransient<T>(id: Identifier<T>, impl?: ClassConstructor<T>): void {
+    this.bindClass(id, impl, ScopeKind.Transient);
+  }
+  injectSession<T>(id: Identifier<T>, impl?: ClassConstructor<T>): void {
+    this.bindClass(id, impl, ScopeKind.Session);
+  }
+
+  private bindClass<T>(
+    id: Identifier<T>,
+    impl: ClassConstructor<T> | undefined,
+    scope: ScopeKind,
+  ): void {
+    this.assertNotFrozen();
+    const b = this.container.bind(id);
+    if (impl) b.to(impl);
+    else b.toSelf();
+    Zebra.applyScope(b, scope);
+  }
+
+  private static applyScope(b: BindingBuilder<unknown>, scope: ScopeKind): void {
+    switch (scope) {
+      case ScopeKind.Singleton:
+        b.inSingletonScope();
+        break;
+      case ScopeKind.Request:
+        b.inRequestScope();
+        break;
+      case ScopeKind.Transient:
+        b.inTransientScope();
+        break;
+      case ScopeKind.Session:
+        b.inSessionScope();
+        break;
+    }
   }
 
   protected assertNotFrozen(): void {
