@@ -51,3 +51,11 @@ test("unknown route returns null", () => {
   r.add("GET", "/a", "h");
   expect(r.find("GET", "/b")).toBeNull();
 });
+
+test("parameter names belong to each method's registered route", () => {
+  const r = new Router<string>();
+  r.add("GET", "/users/:id", "get");
+  r.add("POST", "/users/:userId", "post");
+  expect(r.find("GET", "/users/1")?.params).toEqual({ id: "1" });
+  expect(r.find("POST", "/users/2")?.params).toEqual({ userId: "2" });
+});

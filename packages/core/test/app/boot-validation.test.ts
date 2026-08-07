@@ -36,6 +36,23 @@ test("listen fails with ScopeMismatchError: singleton depends on request", async
   await expect(app.listen({ port: 0 })).rejects.toThrow(ScopeMismatchError);
 });
 
+@injectable() class TransientBridge { constructor(public request: ReqDep) {} }
+@injectable() class SingletonViaTransient { constructor(public bridge: TransientBridge) {} }
+
+test("scope validation follows transient dependencies without hiding narrower scopes", async () => {
+  const c = new Container();
+  c.bind(ReqDep).toSelf().inRequestScope();
+  c.bind(TransientBridge).toSelf().inTransientScope();
+  c.bind(SingletonViaTransient).toSelf();
+  const app = new Zebra({ container: c });
+  app.get(
+    "/x",
+    { bridge: TransientBridge, singleton: SingletonViaTransient },
+    async () => "ok",
+  );
+  await expect(app.listen({ port: 0 })).rejects.toThrow(ScopeMismatchError);
+});
+
 const CycAToken = token<any>("CycA");
 const CycBToken = token<any>("CycB");
 

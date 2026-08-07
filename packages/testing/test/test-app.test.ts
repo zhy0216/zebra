@@ -38,3 +38,32 @@ test("createTestApp runs boot validation eagerly", async () => {
   app.get("/echo/:msg", { echo: Echo }, async (req, { echo }) => echo.say(req.params.msg));
   await expect(app.boot()).rejects.toThrow();
 });
+
+test("request validates dependencies before dispatch", async () => {
+  const app = createTestApp();
+  app.get("/echo/:msg", { echo: Echo }, async (req, { echo }) => echo.say(req.params.msg));
+  await expect(app.request("/echo/hello")).rejects.toThrow();
+});
+
+test("boot hooks run before test-app dependency validation", async () => {
+  const container = new Container();
+  const app = createTestApp({ container });
+  app.on("boot", () => {
+    container.bind(Echo).toSelf();
+  });
+  app.get("/echo/:msg", { echo: Echo }, async (req, { echo }) => echo.say(req.params.msg));
+
+  const response = await app.request("/echo/hello");
+  expect(await response.json()).toBe("hello");
+});
+
+test("concurrent test-app boot calls run boot hooks once", async () => {
+  const app = createTestApp();
+  let calls = 0;
+  app.on("boot", async () => {
+    calls++;
+    await Bun.sleep(5);
+  });
+  await Promise.all([app.boot(), app.boot()]);
+  expect(calls).toBe(1);
+});

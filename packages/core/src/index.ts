@@ -18,14 +18,24 @@ export {
   UnboundTokenError,
   ScopeMismatchError,
 } from "./di/errors.ts";
-export { HttpError, toProblemJson, type ProblemJson } from "./http/errors.ts";
+export {
+  HttpError,
+  ValidationError,
+  toProblemJson,
+  type ProblemJson,
+  type ValidationIssue,
+} from "./http/errors.ts";
 export { type ZebraRequest, buildRequest } from "./http/request.ts";
 export type { Middleware } from "./middleware/types.ts";
 export { middleware, getMiddlewareDeps } from "./middleware/helper.ts";
 export type {
   RouteHandler,
   DepsSpec,
+  ResolvedDeps,
+  PathParams,
+  JoinPath,
   ZebraOptions,
+  SessionOptions,
   RegisteredRoute,
 } from "./app/types.ts";
 export type { GroupApi } from "./app/group.ts";

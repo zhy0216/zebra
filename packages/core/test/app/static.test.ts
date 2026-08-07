@@ -21,3 +21,11 @@ test("app.static blocks traversal", async () => {
   const res = await app.dispatch(new Request("http://x/assets/..%2Fpackage.json"));
   expect(res.status).toBe(403);
 });
+
+test("app.static serves the configured index at the mount path", async () => {
+  const app = new Zebra({ container: new Container() });
+  app.static("/assets", fixtures, { index: "hello.txt" });
+  const res = await app.dispatch(new Request("http://x/assets"));
+  expect(res.status).toBe(200);
+  expect(await res.text()).toBe("static hello\n");
+});

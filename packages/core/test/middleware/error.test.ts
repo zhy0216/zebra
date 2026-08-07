@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { HttpError } from "../../src/http/errors.ts";
+import { HttpError, ValidationError } from "../../src/http/errors.ts";
 import { buildRequest } from "../../src/http/request.ts";
 import { errorMiddleware } from "../../src/middleware/error.ts";
 
@@ -26,4 +26,16 @@ test("Unknown error → 500 generic, no stack by default", async () => {
   const body = (await res.json()) as any;
   expect(body.title).toBe("Internal Server Error");
   expect("stack" in body).toBe(false);
+});
+
+test("ValidationError → 422 Problem+Json with field issues", async () => {
+  const mw = errorMiddleware({ exposeStack: false });
+  const req = { url: new URL("http://x/blogs") } as any;
+  const res = await mw(req, async () => {
+    throw new ValidationError([{ path: "body.title", message: "Required" }]);
+  });
+  expect(res.status).toBe(422);
+  expect(await res.json()).toMatchObject({
+    errors: [{ path: "body.title", message: "Required" }],
+  });
 });

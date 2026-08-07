@@ -1,19 +1,57 @@
 import type { Middleware } from "../middleware/types.ts";
-import type { DepsSpec, RouteHandler } from "./types.ts";
+import type { DepsSpec, JoinPath, PathParams, ResolvedDeps, RouteHandler } from "./types.ts";
 
-export interface GroupApi {
+export interface GroupApi<Prefix extends string = string> {
   use(mw: Middleware): this;
-  get(path: string, handler: RouteHandler): void;
-  get(path: string, deps: DepsSpec, handler: RouteHandler): void;
-  post(path: string, handler: RouteHandler): void;
-  post(path: string, deps: DepsSpec, handler: RouteHandler): void;
-  put(path: string, handler: RouteHandler): void;
-  put(path: string, deps: DepsSpec, handler: RouteHandler): void;
-  patch(path: string, handler: RouteHandler): void;
-  patch(path: string, deps: DepsSpec, handler: RouteHandler): void;
-  delete(path: string, handler: RouteHandler): void;
-  delete(path: string, deps: DepsSpec, handler: RouteHandler): void;
-  group(prefix: string, fn: (g: GroupApi) => void): void;
+  get<const Path extends string>(
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  get<const Path extends string, D extends DepsSpec>(
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  post<const Path extends string>(
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  post<const Path extends string, D extends DepsSpec>(
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  put<const Path extends string>(
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  put<const Path extends string, D extends DepsSpec>(
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  patch<const Path extends string>(
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  patch<const Path extends string, D extends DepsSpec>(
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  delete<const Path extends string>(
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  delete<const Path extends string, D extends DepsSpec>(
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  group<const ChildPrefix extends string>(
+    prefix: ChildPrefix,
+    fn: (g: GroupApi<JoinPath<Prefix, ChildPrefix>>) => void,
+  ): void;
 }
 
 export interface GroupedRoute {
@@ -24,13 +62,13 @@ export interface GroupedRoute {
   groupMiddlewares: Middleware[];
 }
 
-export class Group implements GroupApi {
+export class Group<Prefix extends string = string> implements GroupApi<Prefix> {
   middlewares: Middleware[] = [];
   routes: GroupedRoute[] = [];
   private prefix: string;
   private inherited: Middleware[];
 
-  constructor(prefix: string, inherited: Middleware[] = []) {
+  constructor(prefix: Prefix, inherited: Middleware[] = []) {
     this.prefix = prefix.replace(/\/+$/, "");
     this.inherited = inherited;
   }
@@ -56,32 +94,81 @@ export class Group implements GroupApi {
     });
   }
 
+  get<const Path extends string>(
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  get<const Path extends string, D extends DepsSpec>(
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
   get(path: string, a: any, b?: any): void {
     if (b === undefined) this.register("GET", path, null, a);
     else this.register("GET", path, a, b);
   }
+  post<const Path extends string>(
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  post<const Path extends string, D extends DepsSpec>(
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
   post(path: string, a: any, b?: any): void {
     if (b === undefined) this.register("POST", path, null, a);
     else this.register("POST", path, a, b);
   }
+  put<const Path extends string>(
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  put<const Path extends string, D extends DepsSpec>(
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
   put(path: string, a: any, b?: any): void {
     if (b === undefined) this.register("PUT", path, null, a);
     else this.register("PUT", path, a, b);
   }
+  patch<const Path extends string>(
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  patch<const Path extends string, D extends DepsSpec>(
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
   patch(path: string, a: any, b?: any): void {
     if (b === undefined) this.register("PATCH", path, null, a);
     else this.register("PATCH", path, a, b);
   }
+  delete<const Path extends string>(
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  delete<const Path extends string, D extends DepsSpec>(
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
   delete(path: string, a: any, b?: any): void {
     if (b === undefined) this.register("DELETE", path, null, a);
     else this.register("DELETE", path, a, b);
   }
 
-  group(prefix: string, fn: (g: GroupApi) => void): void {
-    const child = new Group(this.prefix + (prefix.startsWith("/") ? prefix : `/${prefix}`), [
-      ...this.inherited,
-      ...this.middlewares,
-    ]);
+  group<const ChildPrefix extends string>(
+    prefix: ChildPrefix,
+    fn: (g: GroupApi<JoinPath<Prefix, ChildPrefix>>) => void,
+  ): void {
+    const childPrefix = this.prefix + (prefix.startsWith("/") ? prefix : `/${prefix}`);
+    const child = new Group<JoinPath<Prefix, ChildPrefix>>(
+      childPrefix as JoinPath<Prefix, ChildPrefix>,
+      [...this.inherited, ...this.middlewares],
+    );
     fn(child);
     for (const r of child.routes) this.routes.push(r);
   }

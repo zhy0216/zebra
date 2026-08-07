@@ -1,18 +1,22 @@
-import { Zebra, type ZebraOptions, validateGraph } from "@zebra/core";
+import { Zebra, type ZebraOptions } from "@zebra/core";
 
 export interface TestApp extends Zebra {
   request(path: string, init?: RequestInit): Promise<Response>;
   boot(): Promise<void>;
 }
 
-export function createTestApp(opts: ZebraOptions): TestApp {
-  const app = new Zebra(opts) as TestApp;
-  app.request = (path: string, init?: RequestInit) => {
+class TestZebra extends Zebra implements TestApp {
+  async request(path: string, init?: RequestInit): Promise<Response> {
+    await this.boot();
     const url = path.startsWith("http") ? path : `http://test.local${path}`;
-    return app.dispatch(new Request(url, init));
-  };
-  app.boot = async () => {
-    validateGraph((app as any).container, (app as any).routes, (app as any).middlewares);
-  };
-  return app;
+    return this.dispatch(new Request(url, init));
+  }
+
+  async boot(): Promise<void> {
+    await this.prepare();
+  }
+}
+
+export function createTestApp(opts: ZebraOptions = {}): TestApp {
+  return new TestZebra(opts);
 }

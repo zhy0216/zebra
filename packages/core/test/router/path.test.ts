@@ -30,3 +30,8 @@ test("parsePath extracts *splat at the end", () => {
 test("parsePath rejects *splat in middle", () => {
   expect(() => parsePath("/a/*x/b")).toThrow();
 });
+
+test("parsePath rejects empty parameter and wildcard names", () => {
+  expect(() => parsePath("/users/:")).toThrow(/parameter name is missing/);
+  expect(() => parsePath("/files/*")).toThrow(/wildcard name is missing/);
+});

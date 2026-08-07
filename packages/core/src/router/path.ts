@@ -11,8 +11,10 @@ export function parsePath(path: string): PathSegment[] {
   for (let i = 0; i < parts.length; i++) {
     const p = parts[i]!;
     if (p.startsWith(":")) {
+      if (p.length === 1) throw new Error(`path parameter name is missing in "${path}"`);
       result.push({ kind: "param", name: p.slice(1) });
     } else if (p.startsWith("*")) {
+      if (p.length === 1) throw new Error(`wildcard name is missing in "${path}"`);
       if (i !== parts.length - 1) {
         throw new Error(`wildcard *${p.slice(1)} must be the last segment in "${path}"`);
       }

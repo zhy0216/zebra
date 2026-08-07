@@ -23,3 +23,16 @@ test("body is lazy: accessing returns parsed value", async () => {
   const z = buildRequest(raw, {});
   expect(await z.body()).toEqual({ k: 1 });
 });
+
+test("concurrent body calls share one memoized parse", async () => {
+  const raw = new Request("http://x/", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ k: 1 }),
+  });
+  const z = buildRequest(raw, {});
+  const first = z.body();
+  const second = z.body();
+  expect(second).toBe(first);
+  expect(await first).toEqual({ k: 1 });
+});

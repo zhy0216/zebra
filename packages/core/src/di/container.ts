@@ -6,17 +6,24 @@ import { type BindingKey, displayName, keyOf } from "./key.ts";
 import { ScopeKind } from "./scope.ts";
 import type { Identifier } from "./token.ts";
 
+interface ResolutionFrame {
+  key: BindingKey;
+  name: string;
+}
+
 export class Container {
   protected bindings: Map<BindingKey, Binding<any>> = new Map<BindingKey, Binding<any>>();
   protected instances: Map<BindingKey, any> = new Map<BindingKey, any>();
   protected scopeKind: ScopeKind = ScopeKind.Singleton;
   protected parent: Container | null = null;
+  private frozen = false;
   private snapshots: Array<{
     bindings: Map<BindingKey, Binding<any>>;
     instances: Map<BindingKey, any>;
   }> = [];
 
   bind<T>(id: Identifier<T>): BindingBuilder<T> {
+    this.assertMutable();
     const binding: Binding<T> = {
       identifier: id,
       kind: "class",
@@ -28,6 +35,7 @@ export class Container {
   }
 
   rebind<T>(id: Identifier<T>): BindingBuilder<T> {
+    this.assertMutable();
     this.bindings.delete(keyOf(id));
     this.instances.delete(keyOf(id));
     return this.bind(id);
@@ -41,6 +49,7 @@ export class Container {
   }
 
   restore(): void {
+    this.assertMutable();
     const s = this.snapshots.pop();
     if (!s) return;
     this.bindings = s.bindings;
@@ -51,14 +60,19 @@ export class Container {
     return this.resolveWithStack(id, []);
   }
 
-  protected resolveWithStack<T>(id: Identifier<T>, stack: string[]): T {
+  protected resolveWithStack<T>(id: Identifier<T>, stack: ResolutionFrame[]): T {
+    const key = keyOf(id);
     const name = displayName(id);
-    if (stack.includes(name)) {
-      throw new CircularDependencyError([...stack, name]);
+    const cycleStart = stack.findIndex((frame) => frame.key === key);
+    if (cycleStart !== -1) {
+      throw new CircularDependencyError([
+        ...stack.slice(cycleStart).map((frame) => frame.name),
+        name,
+      ]);
     }
     const binding = this.findBinding(id);
-    if (!binding) throw new UnboundTokenError(name, [...stack, name]);
-    return this.instantiate(binding, [...stack, name]);
+    if (!binding) throw new UnboundTokenError(name, [...stack.map((frame) => frame.name), name]);
+    return this.instantiate(binding, [...stack, { key, name }]);
   }
 
   protected findBinding<T>(id: Identifier<T>): Binding<T> | undefined {
@@ -72,14 +86,22 @@ export class Container {
     return child;
   }
 
+  freeze(): void {
+    this.frozen = true;
+  }
+
   async dispose(): Promise<void> {
-    for (const instance of this.instances.values()) {
+    const disposables = new Set<unknown>(this.instances.values());
+    for (const binding of this.bindings.values()) {
+      if (binding.kind === "value") disposables.add(binding.target);
+    }
+    for (const instance of disposables) {
       if (isDisposable(instance)) await instance.dispose();
     }
     this.instances.clear();
   }
 
-  protected instantiate<T>(binding: Binding<T>, stack: string[]): T {
+  protected instantiate<T>(binding: Binding<T>, stack: ResolutionFrame[]): T {
     const key = keyOf(binding.identifier);
     if (binding.kind === "value") return binding.target as T;
 
@@ -122,5 +144,9 @@ export class Container {
       c = c.parent;
     }
     return null; // not in matching scope, treat as transient
+  }
+
+  private assertMutable(): void {
+    if (this.frozen) throw new Error("Cannot register bindings after app.listen()");
   }
 }

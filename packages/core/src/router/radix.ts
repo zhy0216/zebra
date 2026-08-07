@@ -2,9 +2,9 @@ import { parsePath } from "./path.ts";
 
 interface Node<T> {
   static: Map<string, Node<T>>;
-  param?: { name: string; node: Node<T> };
-  wildcard?: { name: string; node: Node<T> };
-  handlers: Map<string, T>;
+  param?: Node<T>;
+  wildcard?: Node<T>;
+  handlers: Map<string, { handler: T; paramNames: string[] }>;
 }
 
 function newNode<T>(): Node<T> {
@@ -22,6 +22,7 @@ export class Router<T> {
   add(method: string, path: string, handler: T): void {
     const segs = parsePath(path);
     let node = this.root;
+    const paramNames: string[] = [];
     for (const s of segs) {
       if (s.kind === "static") {
         let next = node.static.get(s.value);
@@ -31,57 +32,61 @@ export class Router<T> {
         }
         node = next;
       } else if (s.kind === "param") {
-        if (!node.param) node.param = { name: s.name, node: newNode() };
-        node = node.param.node;
+        node.param ??= newNode();
+        node = node.param;
+        paramNames.push(s.name);
       } else {
-        if (!node.wildcard) node.wildcard = { name: s.name, node: newNode() };
-        node = node.wildcard.node;
+        node.wildcard ??= newNode();
+        node = node.wildcard;
+        paramNames.push(s.name);
         break;
       }
     }
-    node.handlers.set(method.toUpperCase(), handler);
+    node.handlers.set(method.toUpperCase(), { handler, paramNames });
   }
 
   find(method: string, path: string): MatchResult<T> | null {
     const trimmed = path.replace(/^\/+/, "").replace(/\/+$/, "");
     const parts = trimmed === "" ? [] : trimmed.split("/");
-    return this.walk(this.root, parts, 0, {}, method.toUpperCase());
+    return this.walk(this.root, parts, 0, [], method.toUpperCase());
   }
 
   private walk(
     node: Node<T>,
     parts: string[],
     idx: number,
-    params: Record<string, string>,
+    captures: string[],
     method: string,
   ): MatchResult<T> | null {
     if (idx === parts.length) {
-      const handler = node.handlers.get(method);
-      return handler !== undefined ? { handler, params } : null;
+      const entry = node.handlers.get(method);
+      return entry !== undefined ? this.toMatch(entry, captures) : null;
     }
     const part = parts[idx]!;
     const staticChild = node.static.get(part);
     if (staticChild) {
-      const r = this.walk(staticChild, parts, idx + 1, params, method);
+      const r = this.walk(staticChild, parts, idx + 1, captures, method);
       if (r) return r;
     }
     if (node.param) {
-      const r = this.walk(
-        node.param.node,
-        parts,
-        idx + 1,
-        { ...params, [node.param.name]: part },
-        method,
-      );
+      const r = this.walk(node.param, parts, idx + 1, [...captures, part], method);
       if (r) return r;
     }
     if (node.wildcard) {
       const rest = parts.slice(idx).join("/");
-      const handler = node.wildcard.node.handlers.get(method);
-      if (handler !== undefined) {
-        return { handler, params: { ...params, [node.wildcard.name]: rest } };
+      const entry = node.wildcard.handlers.get(method);
+      if (entry !== undefined) {
+        return this.toMatch(entry, [...captures, rest]);
       }
     }
     return null;
+  }
+
+  private toMatch(entry: { handler: T; paramNames: string[] }, captures: string[]): MatchResult<T> {
+    const params: Record<string, string> = {};
+    for (let i = 0; i < entry.paramNames.length; i++) {
+      params[entry.paramNames[i]!] = captures[i]!;
+    }
+    return { handler: entry.handler, params };
   }
 }

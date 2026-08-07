@@ -28,48 +28,65 @@ export function validateGraph(
     }
   }
 
-  const visited = new Set<BindingKey>();
+  const visited = new Map<BindingKey, Set<ScopeKind | null>>();
   for (const root of roots) {
     // Treat the route-level resolution as request-scoped consumer
-    walk(container, root, [], visited, ScopeKind.Request);
+    walk(container, root, [], visited, ScopeKind.Request, "<route>");
   }
+}
+
+interface ValidationFrame {
+  key: BindingKey;
+  name: string;
 }
 
 function walk(
   container: Container,
   id: Identifier<any>,
-  stack: string[],
-  visited: Set<BindingKey>,
+  stack: ValidationFrame[],
+  visited: Map<BindingKey, Set<ScopeKind | null>>,
   consumerScope: ScopeKind | null,
+  consumerName: string,
 ): void {
+  const key = keyOf(id);
   const name = displayName(id);
-  if (stack.includes(name)) {
-    throw new CircularDependencyError([...stack, name]);
+  const cycleStart = stack.findIndex((frame) => frame.key === key);
+  if (cycleStart !== -1) {
+    throw new CircularDependencyError([
+      ...stack.slice(cycleStart).map((frame) => frame.name),
+      name,
+    ]);
   }
 
   const binding = (container as any).findBinding(id);
-  if (!binding) throw new UnboundTokenError(name, [...stack, name]);
+  if (!binding) {
+    throw new UnboundTokenError(name, [...stack.map((frame) => frame.name), name]);
+  }
 
   if (consumerScope !== null) {
     if (!canDependOn(consumerScope, binding.scope)) {
-      const consumerName = stack[stack.length - 1] ?? "<root>";
       throw new ScopeMismatchError(name, binding.scope, consumerName, consumerScope);
     }
   }
 
-  const key = keyOf(id);
-  if (visited.has(key)) return;
-  visited.add(key);
+  const childConsumerScope = binding.scope === ScopeKind.Transient ? consumerScope : binding.scope;
+  const childConsumerName = binding.scope === ScopeKind.Transient ? consumerName : name;
+  const visitedScopes = visited.get(key) ?? new Set<ScopeKind | null>();
+  if (visitedScopes.has(childConsumerScope)) return;
+  visitedScopes.add(childConsumerScope);
+  visited.set(key, visitedScopes);
+
+  const nextStack = [...stack, { key, name }];
 
   if (binding.kind === "class") {
     const cls = binding.target as Function;
     const childDeps = getConstructorDeps(cls);
     for (const d of childDeps) {
-      walk(container, d, [...stack, name], visited, binding.scope);
+      walk(container, d, nextStack, visited, childConsumerScope, childConsumerName);
     }
   } else if (binding.kind === "factory" && binding.factoryDeps) {
     for (const d of Object.values(binding.factoryDeps) as Identifier<unknown>[]) {
-      walk(container, d, [...stack, name], visited, binding.scope);
+      walk(container, d, nextStack, visited, childConsumerScope, childConsumerName);
     }
   }
   // factory without factoryDeps, or value: no further deps to walk

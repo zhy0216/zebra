@@ -10,6 +10,18 @@ export class HttpError extends Error {
   }
 }
 
+export interface ValidationIssue {
+  path: string;
+  message: string;
+}
+
+export class ValidationError extends Error {
+  constructor(public readonly errors: ValidationIssue[]) {
+    super("Validation failed");
+    this.name = "ValidationError";
+  }
+}
+
 export interface ProblemJson {
   type: string;
   status: number;
@@ -17,6 +29,7 @@ export interface ProblemJson {
   detail?: unknown;
   instance: string;
   stack?: string;
+  errors?: ValidationIssue[];
 }
 
 export function toProblemJson(
@@ -33,6 +46,15 @@ export function toProblemJson(
     };
     if (err.detail !== undefined) p.detail = err.detail;
     return p;
+  }
+  if (err instanceof ValidationError) {
+    return {
+      type: "https://errors.zebra.dev/validation_failed",
+      status: 422,
+      title: "Validation failed",
+      instance,
+      errors: err.errors,
+    };
   }
   const p: ProblemJson = {
     type: "https://errors.zebra.dev/internal",

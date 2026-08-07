@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { HttpError, toProblemJson } from "../../src/http/errors.ts";
+import { HttpError, toProblemJson, ValidationError } from "../../src/http/errors.ts";
 
 test("HttpError holds status, code, title", () => {
   const e = new HttpError(404, "blog_not_found", "no such blog", { id: "42" });
@@ -31,4 +31,14 @@ test("toProblemJson(unknown) returns 500 generic", () => {
 test("toProblemJson exposes stack when configured", () => {
   const p = toProblemJson(new Error("boom"), "/x", { exposeStack: true });
   expect(typeof p.stack).toBe("string");
+});
+
+test("ValidationError returns 422 with field-level issues", () => {
+  const issue = { path: "body.title", message: "Required" };
+  const problem = toProblemJson(new ValidationError([issue]), "/blogs");
+  expect(problem).toMatchObject({
+    status: 422,
+    title: "Validation failed",
+    errors: [issue],
+  });
 });

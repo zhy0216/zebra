@@ -1,12 +1,12 @@
 import { type BodyOptions, parseBody } from "./body.ts";
 
-export interface ZebraRequest<P = Record<string, string>, Q = Record<string, string>> {
+export interface ZebraRequest<P = Record<string, string>, B = unknown, Q = Record<string, string>> {
   raw: Request;
   params: P;
   query: Q;
   headers: Headers;
   url: URL;
-  body: () => Promise<unknown>;
+  body: () => Promise<B>;
   ctx: Map<symbol, unknown>;
 }
 
@@ -17,26 +17,24 @@ const DEFAULT_BODY: BodyOptions = {
   multipart: { limit: 16 * 1024 * 1024, maxFiles: 10, maxFileSize: 8 * 1024 * 1024 },
 };
 
-export function buildRequest<P>(
+export function buildRequest<P, B = unknown>(
   raw: Request,
   params: P,
   bodyOpts: BodyOptions = DEFAULT_BODY,
-): ZebraRequest<P> {
+): ZebraRequest<P, B> {
   const url = new URL(raw.url);
   const query: Record<string, string> = {};
   for (const [k, v] of url.searchParams) query[k] = v;
-  let bodyCache: { v: unknown } | null = null;
+  let bodyPromise: Promise<B> | null = null;
   return {
     raw,
     params,
     query,
     headers: raw.headers,
     url,
-    body: async () => {
-      if (bodyCache) return bodyCache.v;
-      const v = await parseBody(raw, bodyOpts);
-      bodyCache = { v };
-      return v;
+    body: () => {
+      bodyPromise ??= parseBody(raw, bodyOpts) as Promise<B>;
+      return bodyPromise;
     },
     ctx: new Map(),
   };

@@ -25,3 +25,12 @@ test("self-referential resolution throws CircularDependencyError", () => {
   c.bind(TokenB).to(B as any);
   expect(() => c.resolve(TokenA)).toThrow(CircularDependencyError);
 });
+
+test("distinct tokens with the same display name do not look circular", () => {
+  const Left = token<string>("duplicate");
+  const Right = token<string>("duplicate");
+  const c = new Container();
+  c.bind(Right).toValue("right");
+  c.bind(Left).toFactoryWithDeps({ right: Right }, ({ right }) => `left:${right}`);
+  expect(c.resolve(Left)).toBe("left:right");
+});
