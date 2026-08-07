@@ -38,7 +38,7 @@ import { Zebra } from "zebra";
 
 const z = new Zebra();
 
-z.get("/hello/:name", async (req) => `hello, ${req.params.name}`);
+z.get("/hello/:name", async (req) => new Response(`hello, ${req.params.name}`));
 
 await z.listen({ port: 3000 });
 ```
@@ -86,8 +86,9 @@ const z = new Zebra({ container });
 - **Groups** — `app.group("/blogs", g => { ... })` with prefix and per-group middleware scoping.
 - **Middleware** — Koa-style compose, dep-aware `middleware()` helper, default Problem+Json error middleware.
 - **HTTP** — `ZebraRequest` with lazy body parsing, content-type-aware body parser with size limits, `HttpError` for structured failures.
-- **Static files** — `app.static()` with path-traversal defense.
-- **Lifecycle** — boot/start/stop hooks wired to `Bun.serve`.
+- **Static files** — `app.static()` with path-traversal defense, weak ETags, conditional requests, and byte ranges.
+- **Lifecycle** — boot/ready/shutdown hooks, graceful draining, and disposable cleanup wired to `Bun.serve`.
+- **Session-scoped DI** — session-id resolution, idle TTL, explicit `disposeSession()`, and request-local anonymous sessions.
 - **Testing** — `@zebra/testing` `createTestApp` runs requests in-process without opening sockets.
 
 ## Examples
@@ -112,7 +113,7 @@ bun --filter example-blog start
 
 ## Status
 
-v0.1 MVP — under construction. Today: DI container, radix router, middleware, app + lifecycle, static files, testing helpers. See the [design spec](docs/superpowers/specs/2026-05-16-zebra-v2-design.md) for the full v0.1 → v1.0 surface (validation, OpenAPI, session, WebSocket, CORS, rate-limit are planned packages).
+v0.1 MVP is implemented. The core, testing helper, facade, examples, and all v0.1 behaviors are covered by the repository test suite. See the [design spec](docs/superpowers/specs/2026-05-16-zebra-v2-design.md) for the full v0.1 → v1.0 surface; validation, OpenAPI, cookie-session middleware, WebSocket, CORS, and rate-limit remain planned packages.
 
 ## License
 

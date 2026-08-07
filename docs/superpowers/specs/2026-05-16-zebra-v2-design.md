@@ -1,7 +1,7 @@
 # Zebra v2 — Design Spec
 
 **Date**: 2026-05-16
-**Status**: Draft for approval
+**Status**: Approved — v0.1 MVP implemented; v0.2+ package APIs remain advisory
 **Scope**: Full API surface for v0.1 → v1.0. Implementation plan (writing-plans) targets v0.1 MVP only.
 
 ---
@@ -67,7 +67,7 @@ v2 is a ground-up rewrite. There is no migration path from v1.
 ```
 zebra/                            (bun workspace)
 ├── packages/
-│   ├── zebra/                    @zebra/zebra        facade, re-exports core
+│   ├── zebra/                    zebra               facade, re-exports core
 │   ├── core/                     @zebra/core         App, DI, Router, HTTP
 │   ├── testing/                  @zebra/testing      createTestApp, helpers
 │   ├── validation/               @zebra/validation   standard-schema adapter
@@ -110,6 +110,10 @@ const app = new Zebra({
     multipart: { limit: 16 * 1024 * 1024, maxFiles: 10, maxFileSize: 8 * 1024 * 1024 },
   },
   errors: { exposeStack: process.env.NODE_ENV !== "production" },
+  session: {
+    resolver: (req) => req.headers.get("x-session-id") ?? undefined,
+    ttl: 30 * 60 * 1000,
+  },
 });
 
 await app.listen({ port: 3000 });
@@ -181,7 +185,7 @@ container.createChildScope(kind);              // internal, for request/session
 
 Request scope: each request creates a child scope; instances cached in child; child disposed at request end (triggers `Disposable.dispose()` if present).
 
-Session scope: session id resolved by user-provided `sessionResolver(req): string | undefined`. Session-scoped instances live in a session-keyed map with TTL. `app.disposeSession(id)` triggers cleanup (used on logout). Default TTL: 30 min idle.
+Session scope: session id is resolved by `session.resolver(req): string | undefined` (the top-level `sessionResolver` alias is also accepted). Session-scoped instances live in a session-keyed map with an idle TTL. `app.disposeSession(id)` triggers cleanup (used on logout). Default TTL: 30 min idle. Requests without a session id receive an isolated, request-local session scope that is disposed at request end.
 
 ### 6.3 Route registration
 
@@ -208,7 +212,7 @@ app.post(
   "/blogs",
   { blog: BlogService },
   { body: BlogSchema, query: PaginationSchema },
-  async (req, { blog }) => blog.create(req.body),
+  async (req, { blog }) => blog.create(await req.body()),
 );
 ```
 
@@ -235,14 +239,14 @@ interface ZebraRequest<Params = unknown, Body = unknown, Query = unknown> {
   raw: Request;                  // Web Standard Request
   params: Params;                // path params, typed from route string
   query: Query;                  // parsed query string
-  body: Body;                    // lazy parsed body (read on first access)
+  body: () => Promise<Body>;     // lazy parsed body (read on first call)
   headers: Headers;
   url: URL;
   ctx: Map<symbol, unknown>;     // per-request bag for middleware → handler
 }
 ```
 
-`body` is lazy — only parsed on first access. GET requests with no body access incur zero parse cost.
+`body()` is lazy and memoized — it parses only on the first call. GET requests with no body access incur zero parse cost. Schema-aware routes introduced in v0.2 may parse before handler entry and narrow `Body`, but the v0.1 primitive remains asynchronous.
 
 ### 6.5 Middleware
 
@@ -362,7 +366,7 @@ expect(res.status).toBe(200);
 expect(await res.json()).toEqual({ id: 1, title: "..." });
 ```
 
-`app.request(path, init)` constructs a `Request` and runs it through the full middleware + DI chain, returning the `Response`. `Bun.serve` is not started. Boot-time validation still runs during `createTestApp()`.
+`app.request(path, init)` constructs a `Request` and runs it through the full middleware + DI chain, returning the `Response`. `Bun.serve` is not started. Boot handlers and dependency validation run on explicit `app.boot()` or automatically before the first `app.request()`, after the test has registered its routes and mocks.
 
 ## 7. Internal Design
 
@@ -401,7 +405,7 @@ Bun.serve receives Request
   ↓
 app dispatch(req)
   ├─ Create request-scoped child container
-  ├─ Resolve session-scoped container (if sessionResolver returns id)
+  ├─ Resolve session-scoped container (if session.resolver returns id)
   ├─ Run middleware chain (onion)
   │     ↓ each middleware can read req.ctx, inject deps
   ├─ Router matches → resolve handler deps from child container
@@ -428,7 +432,7 @@ app.post(
   "/blogs",
   { blog: BlogService },
   { body: z.object({ title: z.string(), content: z.string() }) },
-  async (req, { blog }) => blog.create(req.body),  // req.body typed
+  async (req, { blog }) => blog.create(await req.body()),  // body result typed
 );
 ```
 
@@ -451,7 +455,7 @@ app.post("/blogs", deps, schemas, handler, {
 
 - Cookie-based session middleware. Signs cookies with HMAC-SHA256.
 - Pluggable session store: in-memory (default), Redis (separate adapter package later)
-- Wires up session scope: `sessionResolver` provided by this middleware
+- Wires up session scope: `session.resolver` provided by this middleware
 - Exposes `req.ctx.session` for read/write
 
 ```typescript
@@ -505,7 +509,7 @@ Session scope is reachable from WS handlers via `ws.data.session`. WebSocket use
 
 | Version | Packages added | Done criteria |
 |---|---|---|
-| **v0.1 MVP** | `@zebra/core`, `@zebra/testing`, `@zebra/zebra` | All §6.1–§6.8 work end-to-end; full test suite; boot-time validation catches all error classes |
+| **v0.1 MVP** | `@zebra/core`, `@zebra/testing`, `zebra` | All §6.1–§6.8 work end-to-end; full test suite; boot-time validation catches all error classes |
 | **v0.2** | `@zebra/validation`, `@zebra/openapi` | Type-safe body/query/params from schema; OpenAPI document generated; Swagger UI optional import |
 | **v0.3** | `@zebra/session`, `@zebra/cors`, `@zebra/rate-limit` | Production-ready middleware suite; cookie session integrates with session scope |
 | **v0.4** | `@zebra/websocket` | WS upgrade, session scope reachable, DI in upgrade decision |

@@ -1,7 +1,7 @@
 # Zebra Implicit DI — Design Spec
 
 **Date**: 2026-05-17
-**Status**: Draft for approval
+**Status**: Implemented
 **Scope**: Add `inject*` methods to the `Zebra` class; make `Container` optional in `ZebraOptions`. Backwards-compatible sugar layer, no breaking changes.
 
 ---
@@ -376,7 +376,7 @@ Single PR, no flag, no deprecation cycle:
 3. Rewrite both examples.
 4. Update README, llms.txt, and v2 design spec cross-link.
 
-No breaking change → no major bump. Cut as `v0.2.0`.
+No breaking change → no major bump. The proposal originally targeted `v0.2.0`; it was incorporated before the initial v0.1 release, so the implemented API ships as part of `v0.1.0` instead of consuming the validation/OpenAPI roadmap version.
 
 ## 10. Open Questions
 

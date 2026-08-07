@@ -3,7 +3,7 @@ import { Zebra } from "zebra";
 
 const z = new Zebra();
 
-z.get("/hello/:name", async (req) => `hello, ${req.params.name}`);
+z.get("/hello/:name", async (req) => new Response(`hello, ${req.params.name}`));
 
 await z.listen({ port: 3000 });
 console.log("hello example listening on http://localhost:3000");
