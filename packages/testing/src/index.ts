@@ -1,3 +1,5 @@
+import { createClient, type ContractClient } from "@zebra/client";
+import type { ContractRouter } from "@zebra/contract";
 import { Zebra, type ZebraOptions } from "@zebra/core";
 
 export interface TestApp extends Zebra {
@@ -19,4 +21,17 @@ class TestZebra extends Zebra implements TestApp {
 
 export function createTestApp(opts: ZebraOptions = {}): TestApp {
   return new TestZebra(opts);
+}
+
+/**
+ * Socket-free typed client over a TestApp: contract → implement → request loop.
+ */
+export function createTestClient<R extends ContractRouter>(
+  app: TestApp,
+  router: R,
+): ContractClient<R> {
+  return createClient(router, {
+    baseUrl: "http://test.local",
+    fetch: (url, init) => app.request(url, init),
+  });
 }
