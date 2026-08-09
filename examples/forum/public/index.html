@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zebra Forum</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, sans-serif; margin: 0; background: #f6f7f9; color: #1c1e21; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+             padding: .75rem 1.5rem; background: #24292f; color: #fff; }
+    header h1 { font-size: 1.1rem; margin: 0; }
+    #user { font-size: .85rem; opacity: .9; }
+    #user input, #user button { font-size: .8rem; padding: .3rem .5rem; margin-left: .3rem;
+                                 border: 0; border-radius: 4px; }
+    main { display: grid; grid-template-columns: 300px 1fr; gap: 1rem; padding: 1rem 1.5rem;
+           max-width: 1100px; margin: 0 auto; }
+    section { background: #fff; border: 1px solid #e3e5e8; border-radius: 8px; padding: 1rem; }
+    h2 { font-size: .85rem; text-transform: uppercase; letter-spacing: .05em;
+         color: #57606a; margin: 0 0 .75rem; }
+    ul { list-style: none; margin: 0; padding: 0; }
+    li { padding: .5rem .6rem; border-radius: 6px; cursor: pointer; }
+    li:hover, li.active { background: #eef1f4; }
+    li .sub { font-size: .8rem; color: #57606a; }
+    .topic { border: 1px solid #e3e5e8; border-radius: 8px; padding: .75rem 1rem; margin-bottom: .5rem;
+             cursor: pointer; }
+    .topic h3 { margin: 0 0 .25rem; font-size: 1rem; }
+    .post { border-left: 3px solid #0969da; padding: .4rem .75rem; margin: .6rem 0; background: #f6f8fa; }
+    .post .meta { font-size: .75rem; color: #57606a; }
+    form { display: flex; gap: .5rem; margin: .75rem 0; }
+    form input { flex: 1; padding: .45rem .6rem; border: 1px solid #d0d7de; border-radius: 6px; }
+    form button { padding: .45rem 1rem; border: 0; border-radius: 6px; background: #0969da;
+                  color: #fff; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    #live { font-size: .8rem; color: #1a7f37; margin-top: .75rem; padding: .5rem; border-radius: 6px;
+            background: #dafbe1; display: none; }
+    .muted { color: #57606a; font-size: .85rem; }
+    .error { color: #cf222e; font-size: .85rem; margin-top: .5rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🦓 Zebra Forum</h1>
+    <div id="user">
+      <span id="who">not logged in</span>
+      <input id="u" placeholder="username" autocomplete="username" />
+      <input id="p" type="password" placeholder="password" autocomplete="current-password" />
+      <button id="login">Login</button>
+      <button id="register">Register</button>
+      <button id="logout" style="display:none">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>Boards</h2>
+      <ul id="boards"></ul>
+    </section>
+
+    <section>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <h2 style="margin:0" id="pane-title">Pick a board</h2>
+        <span class="muted" id="pane-sub"></span>
+      </div>
+
+      <div id="topics"></div>
+
+      <form id="topic-form" style="display:none">
+        <input id="topic-title" placeholder="New topic title" />
+        <button type="submit">Create topic</button>
+      </form>
+
+      <div id="posts" style="margin-top:.75rem"></div>
+
+      <form id="post-form" style="display:none">
+        <input id="post-content" placeholder="Write a reply…" />
+        <button type="submit">Reply</button>
+      </form>
+
+      <div id="live">● live — new posts appear in real time via WebSocket</div>
+      <div id="err" class="error"></div>
+    </section>
+  </main>
+
+  <script>
+    // Vanilla JS client for the forum API + live WebSocket feed.
+    // The routes below mirror src/contract.ts exactly.
+    const $ = (id) => document.getElementById(id);
+    const state = { user: null, boardId: null, topic: null, ws: null };
+    let sockSeq = 0;
+
+    const api = {
+      async call(method, path, body) {
+        const res = await fetch(path, {
+          method,
+          headers: body ? { "content-type": "application/json" } : undefined,
+          body: body ? JSON.stringify(body) : undefined,
+        });
+        if (!res.ok) {
+          const p = await res.json().catch(() => ({}));
+          throw new Error(p.detail || p.title || `HTTP ${res.status}`);
+        }
+        return res.status === 204 ? null : res.json();
+      },
+    };
+
+    async function refresh() {
+      $("who").textContent = "…";
+      const me = await api.call("GET", "/auth/me");
+      state.user = me;
+      $("who").textContent = me ? me.username : "not logged in";
+      $("logout").style.display = me ? "inline-block" : "none";
+      await loadBoards();
+      if (state.boardId) await loadTopics();
+      if (state.topic) await openTopic(state.topic.id);
+    }
+
+    async function loadBoards() {
+      const boards = await api.call("GET", "/boards");
+      $("boards").innerHTML = "";
+      for (const b of boards) {
+        const li = document.createElement("li");
+        li.textContent = b.name;
+        li.title = b.description;
+        li.onclick = async () => {
+          state.boardId = b.id;
+          state.topic = null;
+          closeLive();
+          $("pane-title").textContent = b.name;
+          $("pane-sub").textContent = b.description;
+          await loadTopics();
+        };
+        $("boards").append(li);
+      }
+    }
+
+    async function loadTopics() {
+      const { items, total } = await api.call("GET", `/boards/${state.boardId}/topics`);
+      $("pane-sub").textContent = `${total} topic${total === 1 ? "" : "s"}`;
+      $("topics").innerHTML = "";
+      $("posts").innerHTML = "";
+      $("topic-form").style.display = state.user ? "flex" : "none";
+      for (const t of items) {
+        const div = document.createElement("div");
+        div.className = "topic";
+        div.innerHTML = `<h3>${escapeHtml(t.title)}</h3>
+          <span class="muted">by ${escapeHtml(t.author)} · ${t.postCount} posts</span>`;
+        div.onclick = () => openTopic(t.id);
+        $("topics").append(div);
+      }
+    }
+
+    async function openTopic(id) {
+      const topic = await api.call("GET", `/topics/${id}`);
+      state.topic = topic;
+      closeLive();
+      $("pane-title").textContent = topic.title;
+      $("pane-sub").textContent = `by ${topic.author} · board #${topic.boardId}`;
+      await loadPosts();
+      openLive(id);
+    }
+
+    async function loadPosts() {
+      const posts = await api.call("GET", `/topics/${state.topic.id}/posts`);
+      $("posts").innerHTML = "";
+      $("post-form").style.display = state.user ? "flex" : "none";
+      for (const p of posts) {
+        const div = document.createElement("div");
+        div.className = "post";
+        div.innerHTML = `<div class="meta">${escapeHtml(p.author)} · ${new Date(p.createdAt).toLocaleString()}</div>
+          <div>${escapeHtml(p.content)}</div>`;
+        $("posts").append(div);
+      }
+    }
+
+    // --- WebSocket live feed: broadcasts post_created events in real time ----
+    function openLive(topicId) {
+      const proto = location.protocol === "https:" ? "wss" : "ws";
+      const ws = new WebSocket(`${proto}://${location.host}/topics/${topicId}/live`);
+      ws.onopen = () => ($("live").style.display = "block");
+      ws.onmessage = (e) => {
+        const ev = JSON.parse(e.data);
+        if (ev.type !== "post_created") return;
+        const div = document.createElement("div");
+        div.className = "post";
+        div.style.outline = "2px solid #1a7f37";
+        div.innerHTML = `<div class="meta">${escapeHtml(ev.post.author)} · live</div>
+          <div>${escapeHtml(ev.post.content)}</div>`;
+        $("posts").append(div);
+        if (state.topic && ev.topicId === state.topic.id) state.topic.postCount++;
+      };
+      state.ws = ws;
+    }
+    function closeLive() {
+      if (state.ws) { state.ws.close(); state.ws = null; }
+      $("live").style.display = "none";
+    }
+
+    // --- actions ------------------------------------------------------------
+    async function auth(mode) {
+      const username = $("u").value.trim();
+      const password = $("p").value;
+      $("err").textContent = "";
+      try {
+        await api.call("POST", `/auth/${mode}`, { username, password });
+        $("u").value = $("p").value = "";
+        await refresh();
+      } catch (e) { $("err").textContent = e.message; }
+    }
+    $("login").onclick = () => auth("login");
+    $("register").onclick = () => auth("register");
+    $("logout").onclick = async () => {
+      await api.call("POST", "/auth/logout");
+      await refresh();
+    };
+
+    $("topic-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const title = $("topic-title").value.trim();
+      if (!title || !state.boardId) return;
+      try {
+        await api.call("POST", `/boards/${state.boardId}/topics`, { title });
+        $("topic-title").value = "";
+        await loadTopics();
+      } catch (err) { $("err").textContent = err.message; }
+    };
+
+    $("post-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const content = $("post-content").value.trim();
+      if (!content || !state.topic) return;
+      try {
+        await api.call("POST", `/topics/${state.topic.id}/posts`, { content });
+        $("post-content").value = "";
+        await loadPosts();
+      } catch (err) { $("err").textContent = err.message; }
+    };
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    refresh();
+  </script>
+</body>
+</html>

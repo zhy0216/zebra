@@ -40,6 +40,17 @@
         "zod": "^3.24.0",
       },
     },
+    "examples/forum": {
+      "name": "example-forum",
+      "version": "0.0.0",
+      "dependencies": {
+        "@zebra/client": "workspace:*",
+        "@zebra/contract": "workspace:*",
+        "@zebra/session": "workspace:*",
+        "zebra": "workspace:*",
+        "zod": "^3.24.0",
+      },
+    },
     "examples/hello": {
       "name": "example-hello",
       "version": "0.0.0",
@@ -179,6 +190,8 @@
     "example-blog": ["example-blog@workspace:examples/blog"],
 
     "example-contract-blog": ["example-contract-blog@workspace:examples/contract-blog"],
+
+    "example-forum": ["example-forum@workspace:examples/forum"],
 
     "example-hello": ["example-hello@workspace:examples/hello"],
 

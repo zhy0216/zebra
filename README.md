@@ -107,6 +107,7 @@ const z = new Zebra({ container });
 - [`examples/hello`](examples/hello) — minimal Zebra app.
 - [`examples/blog`](examples/blog) — DI services, route groups, structured errors.
 - [`examples/contract-blog`](examples/contract-blog) — contract-first: shared contract, `app.implement`, typed client round-trip.
+- [`examples/forum`](examples/forum) — full-featured: contract-first API, DI, signed-cookie sessions, per-user rate limiting, CORS, WebSocket live feed, static frontend, integration tests.
 
 Run an example from the repo root:
 
@@ -115,6 +116,9 @@ bun --filter example-hello start
 bun --filter example-blog start
 bun --filter example-contract-blog start      # contract-first server
 bun --filter example-contract-blog client     # typed client round-trip
+bun --filter example-forum start              # forum: http://localhost:3002
+bun --filter example-forum client             # typed client round-trip
+bun --filter example-forum test               # in-process integration tests
 ```
 
 ## Packages
