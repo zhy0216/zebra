@@ -179,6 +179,13 @@ export class ContractProcedureImpl<Def extends ContractProcedureDef>
   }
 }
 
+/** Internal: rebuild a procedure from a (possibly modified) def. */
+export function procedureFromDef<Def extends ContractProcedureDef>(
+  def: Def,
+): ContractProcedure<Def> {
+  return ContractProcedureImpl.fromDef(def);
+}
+
 export const zc = {
   get: <const Path extends string>(path: Path) => ContractProcedureImpl.create("GET", path),
   post: <const Path extends string>(path: Path) => ContractProcedureImpl.create("POST", path),
