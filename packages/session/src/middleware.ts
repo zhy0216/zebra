@@ -40,7 +40,12 @@
 import type { Middleware } from "@zebra/core";
 
 import { type CookieSerializeOptions, parseSignedCookie, serializeCookie } from "./cookie.ts";
-import { type RequestSessionInternal, SESSION_KEY, createSession } from "./session.ts";
+import {
+  type RequestSession,
+  type RequestSessionInternal,
+  SESSION_KEY,
+  createSession,
+} from "./session.ts";
 import { sign } from "./sign.ts";
 import { MemoryStore, type SessionStore } from "./store.ts";
 
@@ -68,6 +73,25 @@ export type SessionMiddleware = Middleware & {
    * alongside when immediate container GC is wanted.
    */
   destroySession(id: string): Promise<void>;
+  /**
+   * C4: 把连接级会话句柄挂到 `ws.data.session`。
+   *
+   * 作为 core `ZebraOptions.session.wsSession` 的默认实现使用：
+   *
+   *   const mw = sessionMiddleware({ secret, store });
+   *   const app = new Zebra({ session: { resolver: mw.resolver, wsSession: mw.wsSession } });
+   *   app.ws("/chat/:room", {
+   *     open(ws, data) { const s = data.session; /* RequestSession | undefined *\/ },
+   *   });
+   *
+   * `sessionId` 是 core 在升级请求上经 `resolver` 解析并验证的结果（存活会话才
+   * 有 id，见 resolver 的 anti-fixation 检查），此处直接复用，返回一个可读写的
+   * `RequestSession`（数据按需从 store 懒加载；写入需显式 `flush()`，ws 连接
+   * 没有 HTTP 响应路径的自动持久化）。匿名连接（`sessionId` 为 `undefined`）
+   * 返回 `undefined`——升级响应无法回发 Set-Cookie，伪造新 id 只会产生客户端
+   * 拿不到的孤儿记录。
+   */
+  wsSession(req: Request, sessionId: string | undefined): Promise<RequestSession | undefined>;
 };
 
 const DEFAULT_COOKIE_NAME = "sid";
@@ -118,6 +142,15 @@ export function sessionMiddleware(options: SessionMiddlewareOptions): SessionMid
   (mw as any).resolver = resolver;
   (mw as any).destroySession = async (id: string): Promise<void> => {
     await store.destroy(id);
+  };
+  (mw as any).wsSession = async (
+    _req: Request,
+    sessionId: string | undefined,
+  ): Promise<RequestSession | undefined> => {
+    // resolver 已确认该 id 在 store 中存活（见头部 anti-fixation 注释），直接复用；
+    // 匿名连接不伪造会话（upgrade 响应无法回发 Set-Cookie，见类型注释）。
+    if (sessionId === undefined) return undefined;
+    return createSession({ id: sessionId, isNew: false, store });
   };
   return mw as SessionMiddleware;
 }

@@ -93,6 +93,7 @@ const z = new Zebra({ container });
 - **Cookie sessions** — `@zebra/session` middleware: HMAC-SHA256 signed `sid` cookies, `req.ctx.session` read/write with `getSession(req)`, pluggable `SessionStore` (in-memory default), rolling TTL renewal, and session-fixation protection (destroyed/expired ids are never revived).
 - **CORS** — `@zebra/cors` middleware: origin allowlists (string/array/RegExp/predicate), preflight handling (204 + full header set), credentials with exact-origin echo, `Vary: Origin` on dynamic matches.
 - **Rate limiting** — `@zebra/rate-limit` middleware: fixed-window per-key counters (lazy window rotation, atomic increments), pluggable `RateLimitStore` (in-memory default), 429 Problem+Json with `X-RateLimit-*` / `Retry-After` headers.
+- **WebSocket** — `app.ws(path, handler)`: upgrade path wired into `Bun.serve` with radix-router params, DI-resolved upgrade decision (`onUpgrade` + `upgrade()` → 401/500 on rejection), `open`/`message`/`close` aligned to Bun semantics, `ws.data.session` reachable via the session middleware's `wsSession` hook. Note: upgrade requests bypass `app.use` global middleware (upgrade runs before the composed middleware chain).
 - **Testing** — `@zebra/testing` `createTestApp` runs requests in-process without opening sockets; `createTestClient` gives a typed contract client over that app.
 - **Contract-first** — `@zebra/contract` (Standard Schema V1 builder + protocol), `app.implement` with input/output validation, `@zebra/client` (derived typed client, zero deps).
 
@@ -126,7 +127,7 @@ bun --filter example-contract-blog client     # typed client round-trip
 
 ## Status
 
-v0.2.0 is released: core (DI, radix router, middleware, lifecycle, static files) + contract-first (`@zebra/contract`, `app.implement`, `@zebra/client`, `createTestClient`) + testing helpers + examples. v0.3 in progress: `@zebra/session`, `@zebra/cors`, and `@zebra/rate-limit` (fixed-window, pluggable store, 429 Problem+Json) are implemented with tests — the v0.3 middleware suite is complete; WebSocket follows for v0.4.
+v0.2.0 is released: core (DI, radix router, middleware, lifecycle, static files) + contract-first (`@zebra/contract`, `app.implement`, `@zebra/client`, `createTestClient`) + testing helpers + examples. v0.3 is complete: `@zebra/session`, `@zebra/cors`, and `@zebra/rate-limit` middleware shipped with tests. v0.4 in progress: WebSocket (`app.ws()` with DI upgrade decision and session-scope integration) is implemented in core with end-to-end tests; v1.0 tracks API freeze, docs site, and benchmarks.
 
 ## License
 

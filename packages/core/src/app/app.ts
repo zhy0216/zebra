@@ -1,3 +1,4 @@
+import type { WebSocketHandler as BunWebSocketHandler, Server } from "bun";
 import { buildContractHandler } from "../contract/implement.ts";
 import { type ContractProcedureDef, isContractProcedure } from "../contract/protocol.ts";
 import {
@@ -22,6 +23,10 @@ import { errorMiddleware } from "../middleware/error.ts";
 import { getMiddlewareDeps } from "../middleware/helper.ts";
 import type { Middleware } from "../middleware/types.ts";
 import { Router } from "../router/radix.ts";
+import { buildBunWebSocketHandler, buildWsData, buildWsDataWithUpgrade } from "../ws/handler.ts";
+import { WsRegistry } from "../ws/registry.ts";
+import type { WsData, WsHandler } from "../ws/types.ts";
+import { isWebSocketUpgrade, wsProblemResponse } from "../ws/upgrade.ts";
 import { validateGraph } from "./boot-validation.ts";
 import { Group, type GroupApi } from "./group.ts";
 import type { LifecycleEvent, LifecycleHandler } from "./lifecycle.ts";
@@ -60,6 +65,7 @@ interface RequestScopes {
 export class Zebra {
   protected container: Container;
   protected router = new Router<RegisteredRoute>();
+  protected wsRegistry = new WsRegistry();
   protected middlewares: Middleware[] = [];
   protected routes: RegisteredRoute[] = [];
   protected bodyOpts: BodyOptions;
@@ -70,9 +76,10 @@ export class Zebra {
     ready: [],
     shutdown: [],
   };
-  protected server: ReturnType<typeof Bun.serve> | null = null;
+  protected server: Server<WsData> | null = null;
   private readonly errorMw: Middleware;
   private readonly sessionResolver: NonNullable<ZebraOptions["session"]>["resolver"];
+  private readonly wsSession: NonNullable<ZebraOptions["session"]>["wsSession"];
   private readonly sessionTtl: number;
   private readonly gracePeriod: number;
   private readonly sessions = new Map<string, SessionScopeRecord>();
@@ -95,6 +102,7 @@ export class Zebra {
     this.exposeStack = opts.errors?.exposeStack ?? false;
     this.errorMw = errorMiddleware({ exposeStack: this.exposeStack });
     this.sessionResolver = opts.sessionResolver ?? opts.session?.resolver;
+    this.wsSession = opts.session?.wsSession;
     this.sessionTtl = opts.sessionTtl ?? opts.session?.ttl ?? DEFAULT_SESSION_TTL;
     this.gracePeriod = opts.gracePeriod ?? DEFAULT_GRACE_PERIOD;
     if (this.sessionTtl <= 0) throw new RangeError("session.ttl must be greater than zero");
@@ -137,10 +145,12 @@ export class Zebra {
     const serveOpts: {
       port: number;
       hostname?: string;
-      fetch: (req: Request) => Promise<Response>;
+      fetch: (req: Request, server: Server<WsData>) => Promise<Response>;
+      websocket: BunWebSocketHandler<WsData>;
     } = {
       port: opts.port,
-      fetch: (req) => this.dispatch(req),
+      fetch: (req, server) => this.handleFetch(req, server),
+      websocket: buildBunWebSocketHandler(),
     };
     if (opts.hostname !== undefined) serveOpts.hostname = opts.hostname;
     this.server = Bun.serve(serveOpts);
@@ -493,6 +503,16 @@ export class Zebra {
     else this.register("DELETE", path, a, b);
   }
 
+  ws<
+    const Path extends string,
+    D extends DepsSpec = never,
+    Up extends Record<string, unknown> = Record<string, unknown>,
+  >(path: Path, handler: WsHandler<D, Up>): this {
+    this.assertNotFrozen("ws routes");
+    this.wsRegistry.add(path, handler);
+    return this;
+  }
+
   static(routPath: string, root: string, opts: Partial<StaticOptions> = {}): void {
     const o: StaticOptions = {
       index: opts.index ?? "index.html",
@@ -513,6 +533,69 @@ export class Zebra {
     for (const r of g.routes) {
       this.register(r.method, r.path, r.deps, r.handler, r.groupMiddlewares);
     }
+  }
+
+  /** fetch 包装层：先做 WebSocket upgrade 检测，再走正常 HTTP dispatch。 */
+  private async handleFetch(req: Request, server: Server<WsData>): Promise<Response> {
+    if (!isWebSocketUpgrade(req)) return this.dispatch(req);
+
+    const url = new URL(req.url);
+    const matched = this.wsRegistry.find(url.pathname);
+    if (matched === null) {
+      return wsProblemResponse(
+        404,
+        "not_found",
+        `No WebSocket route for ${url.pathname}`,
+        url.pathname,
+      );
+    }
+
+    // C2+C4: 升级决策链。
+    // scope 取舍：upgrade 与 wsSession 都是单次请求决策，与 HTTP dispatch 一致走
+    // createRequestScopes()（session resolver 在本次升级请求上解析出 sessionId）；
+    // 决策完成后立即 dispose，因此 request-scoped 依赖只在钩子执行期间可用，
+    // 不要把它们挂在 ws.data 上跨连接使用。会话句柄（C4）是连接级对象，
+    // 由 wsSession 钩子构造后随 ws.data 缓存到连接生命周期。
+    // 异常路径取舍：upgrade() 抛错 / 依赖解析失败 / wsSession 抛错均视为内部错误
+    // → 500 upgrade_error；返回 false 才是客户端显式拒绝 → 401 upgrade_rejected
+    // （区别于传输层失败 401 upgrade_failed）。
+    const handler = matched.handler;
+    let data = buildWsData(handler, matched.params);
+    try {
+      const scopes = await this.createRequestScopes(req);
+      try {
+        if (handler.upgrade) {
+          const deps = this.resolveDeps(handler.onUpgrade ?? null, scopes.request);
+          const zebraReq = buildRequest<Record<string, string>>(req, matched.params, this.bodyOpts);
+          const result = await handler.upgrade(zebraReq, deps as never, matched.params);
+          if (result === false) {
+            return wsProblemResponse(
+              401,
+              "upgrade_rejected",
+              "Upgrade rejected by route handler",
+              url.pathname,
+            );
+          }
+          if (result) {
+            data = buildWsDataWithUpgrade(handler, matched.params, result);
+          }
+        }
+        // C4: sessionId 复用 createRequestScopes 的解析结果；最后写入，upgrade()
+        // 的展开数据不能覆盖 session（session 为保留字段）。
+        if (this.wsSession) {
+          const session = await this.wsSession(req, scopes.sessionId);
+          if (session !== undefined) data.session = session;
+        }
+      } finally {
+        await this.disposeScopes(scopes);
+      }
+    } catch {
+      return wsProblemResponse(500, "upgrade_error", "WebSocket upgrade hook failed", url.pathname);
+    }
+    if (!server.upgrade(req, { data })) {
+      return wsProblemResponse(401, "upgrade_failed", "WebSocket upgrade failed", url.pathname);
+    }
+    return new Response(null, { status: 101 });
   }
 
   async dispatch(raw: Request): Promise<Response> {

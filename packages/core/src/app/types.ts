@@ -41,6 +41,18 @@ export type RouteHandler<
 export interface SessionOptions {
   ttl?: number;
   resolver?: (req: Request) => string | undefined | Promise<string | undefined>;
+  /**
+   * C4: 可选 ws 会话钩子 —— ws 升级时把会话句柄挂到 `ws.data.session`。
+   *
+   * core 不依赖 @zebra/session：此钩子在构造期传入（通常是 session 包的 helper，
+   * 如 `sessionMiddleware()` 返回对象的 `wsSession` 方法），签名
+   * `(req, sessionId) => unknown`。`sessionId` 是 `resolver` 在本次升级请求上的
+   * 解析结果（未配置 resolver / 无存活会话时为 `undefined`）。返回值非 `undefined`
+   * 时写入 `ws.data.session`（open/message/close 均可访问）；返回 `undefined` 或
+   * 未配置钩子时 `ws.data.session` 为 `undefined`，升级与消息处理不报错。
+   * 钩子抛错按升级决策内部错误处理 → 500 upgrade_error。
+   */
+  wsSession?: (req: Request, sessionId: string | undefined) => unknown | Promise<unknown>;
 }
 
 export interface ZebraOptions {
