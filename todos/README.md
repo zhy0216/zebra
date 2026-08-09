@@ -13,7 +13,7 @@ Zebra v0.3 → v1.0 路线图（**不含 OpenAPI**，用户明确排除）。
 | P0 | v0.3 | ✅ [03-rate-limit.md](done/03-rate-limit.md) |
 | P1 | v0.4 | ✅ [04-websocket.md](done/04-websocket.md) |
 | P2 | v1.0 | ✅ [05-v1-release.md](done/05-v1-release.md) |
-| P3 | 推迟 | [06-deferred.md](06-deferred.md) |
+| P3 | 推迟 | ✅ [06-deferred.md](done/06-deferred.md) — 全部 deferred，记录决策 |
 
 ## 文件
 
@@ -22,7 +22,7 @@ Zebra v0.3 → v1.0 路线图（**不含 OpenAPI**，用户明确排除）。
 - [✅ 03-rate-limit.md](done/03-rate-limit.md) — `@zebra/rate-limit`：滑动窗口限流 + 可插拔 store
 - [✅ 04-websocket.md](done/04-websocket.md) — `@zebra/websocket`：`app.ws()`，Bun.serve upgrade 路径 + DI
 - [✅ 05-v1-release.md](done/05-v1-release.md) — v1.0：API 冻结、文档站点、benchmark、发布流程
-- [06-deferred.md](06-deferred.md) — 推迟项：CLI、Plugin 接口、session-redis、Bun macro 校验
+- [✅ 06-deferred.md](done/06-deferred.md) — 推迟项：CLI、Plugin 接口、session-redis、Bun macro 校验（全部 deferred，无代码变更）
 
 ## 校验命令
 
