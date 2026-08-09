@@ -36,3 +36,10 @@ test("concurrent body calls share one memoized parse", async () => {
   expect(second).toBe(first);
   expect(await first).toEqual({ k: 1 });
 });
+
+test("ip is undefined by default and carried when passed", () => {
+  expect(buildRequest(new Request("http://x/"), {}).ip).toBeUndefined();
+  expect(buildRequest(new Request("http://x/"), {}, undefined, "203.0.113.7").ip).toBe(
+    "203.0.113.7",
+  );
+});

@@ -1,5 +1,8 @@
-import { Zebra } from "zebra";
+import { join } from "node:path";
+import { Zebra, token } from "zebra";
 import { type BenchServer, JSON_PAYLOAD, MIDDLEWARE_LAYERS } from "./scenarios.ts";
+
+const STATIC_ROOT = join(import.meta.dir, "fixtures/static");
 
 export async function start(): Promise<BenchServer> {
   const app = new Zebra();
@@ -27,6 +30,13 @@ export async function start(): Promise<BenchServer> {
       () => new Response("middleware ok", { headers: { "content-type": "text/plain" } }),
     );
   });
+
+  // DI scenario: route deps resolved from the container per request.
+  const DiToken = token<{ ok: string }>("bench.di");
+  app.injectValue(DiToken, { ok: "ok" });
+  app.get("/di", { di: DiToken }, (_req, { di }) => ({ di: di.ok }));
+
+  app.static("/static", STATIC_ROOT, { maxAge: 60 });
 
   const { port } = await app.listen({ port: 0 });
   return { baseUrl: `http://localhost:${port}`, stop: () => app.stop() };

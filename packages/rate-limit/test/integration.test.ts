@@ -8,7 +8,8 @@
 //   Problem+Json body and the rate-limit headers
 // - after the window slides (real time, short MemoryStore window) the key
 //   recovers and counts from a fresh window
-// - different x-forwarded-for values get isolated budgets
+// - with `trustProxy` different x-forwarded-for values get isolated budgets;
+//   without it (the default) a spoofed header does NOT create per-IP buckets
 // - Limit/Remaining/Reset header values are correct, with Reset derived from
 //   the store's resetAt (epoch seconds)
 // - the 429 carries a plausible Retry-After
@@ -21,7 +22,7 @@
 import { describe, expect, test } from "bun:test";
 import { createTestApp, type TestApp } from "@zebra/testing";
 
-import { rateLimit } from "../src/index.ts";
+import { rateLimit, type RateLimitOptions } from "../src/index.ts";
 import type { IncrementResult, RateLimitStore } from "../src/store.ts";
 
 const WINDOW_MS = 60_000;
@@ -58,9 +59,16 @@ function makeApp(opts: {
   windowMs: number;
   max: number;
   store?: RateLimitStore;
+  trustProxy?: boolean;
 }): TestApp {
   const app = createTestApp();
-  app.use(rateLimit(opts));
+  const rlOptions: RateLimitOptions = {
+    windowMs: opts.windowMs,
+    max: opts.max,
+    trustProxy: opts.trustProxy ?? true,
+    ...(opts.store === undefined ? {} : { store: opts.store }),
+  };
+  app.use(rateLimit(rlOptions));
   app.get("/", async () => Response.json({ ok: true }));
   return app;
 }
@@ -126,6 +134,19 @@ describe("rateLimit integration · enforcement", () => {
     // ...and is limited independently of A's exhaustion.
     expect((await app.request("/", CLIENT_B)).status).toBe(429);
     expect((await app.request("/", CLIENT_A)).status).toBe(429);
+  });
+
+  test("spoofed x-forwarded-for does NOT create per-IP buckets by default (trustProxy off)", async () => {
+    const app = makeApp({ windowMs: WINDOW_MS, max: 1, trustProxy: false });
+
+    expect((await app.request("/", CLIENT_A)).status).toBe(200);
+    expect((await app.request("/", CLIENT_A)).status).toBe(429);
+
+    // Client B spoofs a different XFF, but without trustProxy every request
+    // shares one budget — B inherits A's exhaustion instead of a fresh bucket.
+    const spoofed = await app.request("/", CLIENT_B);
+    expect(spoofed.status).toBe(429);
+    expect(spoofed.headers.get("x-rate-limit-remaining")).toBe("0");
   });
 });
 

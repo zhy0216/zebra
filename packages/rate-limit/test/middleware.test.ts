@@ -17,8 +17,8 @@ import { rateLimit } from "../src/index.ts";
 
 const WINDOW_MS = 60_000;
 
-function makeReq(path = "/", init: RequestInit = {}): ZebraRequest {
-  return buildRequest(new Request(`http://test.local${path}`, init), {});
+function makeReq(path = "/", init: RequestInit = {}, ip?: string): ZebraRequest {
+  return buildRequest(new Request(`http://test.local${path}`, init), {}, undefined, ip);
 }
 
 /** `next` returning a canned success response. */
@@ -27,7 +27,7 @@ const okNext = async (): Promise<Response> => new Response("ok", { status: 200 }
 describe("rateLimit middleware · within window", () => {
   test("passes requests through and injects Limit/Remaining/Reset headers", async () => {
     const mw = rateLimit({ windowMs: WINDOW_MS, max: 2 });
-    const res = await mw(makeReq("/", { headers: { "x-forwarded-for": "1.2.3.4" } }), okNext);
+    const res = await mw(makeReq("/", {}, "1.2.3.4"), okNext);
     expect(res.status).toBe(200);
     expect(res.headers.get("x-rate-limit-limit")).toBe("2");
     expect(res.headers.get("x-rate-limit-remaining")).toBe("1");
@@ -40,7 +40,7 @@ describe("rateLimit middleware · within window", () => {
     const mw = rateLimit({ windowMs: WINDOW_MS, max: 3 });
     const remaining = [];
     for (let i = 0; i < 3; i++) {
-      const res = await mw(makeReq("/", { headers: { "x-forwarded-for": "1.2.3.4" } }), okNext);
+      const res = await mw(makeReq("/", {}, "1.2.3.4"), okNext);
       remaining.push(Number(res.headers.get("x-rate-limit-remaining")));
     }
     expect(remaining).toEqual([2, 1, 0]);
@@ -73,11 +73,9 @@ describe("rateLimit middleware · within window", () => {
 describe("rateLimit middleware · over the limit", () => {
   test("(max+1)-th request throws HttpError 429 with Retry-After and rate-limit headers", async () => {
     const mw = rateLimit({ windowMs: WINDOW_MS, max: 2 });
-    await mw(makeReq("/", { headers: { "x-forwarded-for": "1.2.3.4" } }), okNext);
-    await mw(makeReq("/", { headers: { "x-forwarded-for": "1.2.3.4" } }), okNext);
-    await expect(
-      mw(makeReq("/", { headers: { "x-forwarded-for": "1.2.3.4" } }), okNext),
-    ).rejects.toMatchObject({
+    await mw(makeReq("/", {}, "1.2.3.4"), okNext);
+    await mw(makeReq("/", {}, "1.2.3.4"), okNext);
+    await expect(mw(makeReq("/", {}, "1.2.3.4"), okNext)).rejects.toMatchObject({
       name: "HttpError",
       status: 429,
       code: "rate_limit_exceeded",
@@ -85,7 +83,7 @@ describe("rateLimit middleware · over the limit", () => {
     });
     let err: HttpError | undefined;
     try {
-      await mw(makeReq("/", { headers: { "x-forwarded-for": "1.2.3.4" } }), okNext);
+      await mw(makeReq("/", {}, "1.2.3.4"), okNext);
     } catch (e) {
       err = e as HttpError;
     }
@@ -116,29 +114,44 @@ describe("rateLimit middleware · over the limit", () => {
 });
 
 describe("rateLimit middleware · key derivation", () => {
-  test("keeps different x-forwarded-for clients isolated", async () => {
+  test("default key is the socket ip (req.ip); different ips are isolated", async () => {
     const mw = rateLimit({ windowMs: WINDOW_MS, max: 1 });
-    await mw(makeReq("/", { headers: { "x-forwarded-for": "1.2.3.4" } }), okNext);
-    const other = await mw(makeReq("/", { headers: { "x-forwarded-for": "5.6.7.8" } }), okNext);
+    await mw(makeReq("/", {}, "1.2.3.4"), okNext);
+    const other = await mw(makeReq("/", {}, "5.6.7.8"), okNext);
     expect(other.status).toBe(200);
     expect(other.headers.get("x-rate-limit-remaining")).toBe("0");
+    await expect(mw(makeReq("/", {}, "1.2.3.4"), okNext)).rejects.toMatchObject({ status: 429 });
+  });
+
+  test("spoofed x-forwarded-for is NOT trusted by default: same socket ip shares one budget", async () => {
+    const mw = rateLimit({ windowMs: WINDOW_MS, max: 1 });
+    await mw(makeReq("/", { headers: { "x-forwarded-for": "1.2.3.4" } }, "9.9.9.9"), okNext);
+    // A different spoofed header must not create a fresh bucket for the same peer.
     await expect(
-      mw(makeReq("/", { headers: { "x-forwarded-for": "1.2.3.4" } }), okNext),
+      mw(makeReq("/", { headers: { "x-forwarded-for": "5.6.7.8" } }, "9.9.9.9"), okNext),
     ).rejects.toMatchObject({ status: 429 });
   });
 
-  test("leftmost x-forwarded-for entry wins (client as seen by the edge)", async () => {
+  test("without a socket ip (direct dispatch in tests) requests share the anonymous key", async () => {
     const mw = rateLimit({ windowMs: WINDOW_MS, max: 1 });
+    await mw(makeReq("/", { headers: { "x-forwarded-for": "1.2.3.4" } }), okNext);
+    await expect(mw(makeReq("/"), okNext)).rejects.toMatchObject({ status: 429 });
+  });
+
+  test("leftmost x-forwarded-for entry wins when trustProxy is set", async () => {
+    const mw = rateLimit({ windowMs: WINDOW_MS, max: 1, trustProxy: true });
     await mw(makeReq("/", { headers: { "x-forwarded-for": "1.2.3.4, 9.9.9.9" } }), okNext);
     await expect(
       mw(makeReq("/", { headers: { "x-forwarded-for": "1.2.3.4, 8.8.8.8" } }), okNext),
     ).rejects.toMatchObject({ status: 429 });
   });
 
-  test("requests without x-forwarded-for share the anonymous key", async () => {
-    const mw = rateLimit({ windowMs: WINDOW_MS, max: 1 });
-    await mw(makeReq("/"), okNext);
-    await expect(mw(makeReq("/"), okNext)).rejects.toMatchObject({ status: 429 });
+  test("trustProxy prefers x-forwarded-for over the socket ip", async () => {
+    const mw = rateLimit({ windowMs: WINDOW_MS, max: 1, trustProxy: true });
+    await mw(makeReq("/", { headers: { "x-forwarded-for": "1.2.3.4" } }, "9.9.9.9"), okNext);
+    await expect(
+      mw(makeReq("/", { headers: { "x-forwarded-for": "1.2.3.4" } }, "8.8.8.8"), okNext),
+    ).rejects.toMatchObject({ status: 429 });
   });
 
   test("honors a custom keyBy", async () => {

@@ -74,6 +74,22 @@ test("non-preflight OPTIONS passes through untouched", async () => {
   expect(await res.text()).toBe("opts");
 });
 
+test("non-preflight OPTIONS on a known route gets the auto-204 with Allow plus CORS headers", async () => {
+  const app = new Zebra();
+  app.use(cors({}));
+  app.get("/api", async () => new Response("ok"));
+  const res = await app.dispatch(
+    new Request("http://test.local/api", {
+      method: "OPTIONS",
+      headers: { origin: "https://example.com" },
+    }),
+  );
+  expect(res.status).toBe(204);
+  expect(res.headers.get("allow")).toBe("GET, HEAD");
+  expect(res.headers.get("access-control-allow-origin")).toBe("*");
+  expect(await res.text()).toBe("");
+});
+
 test("regular request without Origin passes through untouched", async () => {
   const app = makeApp({});
   const res = await app.dispatch(new Request("http://test.local/api"));

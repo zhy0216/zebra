@@ -36,6 +36,15 @@ Decorator support is required in your `tsconfig.json`:
 
 Import `reflect-metadata` once at your entry point, before anything else.
 
+## Requirements
+
+- **Bun ≥ 1.1.30** at runtime (tested on 1.3.x). The repository's test suite
+  uses `bun:test` APIs added in Bun 1.3 (`expectTypeOf`, WebSocket client
+  helpers), so tests and CI run on Bun ≥ 1.3.
+- **TypeScript ≥ 5.6** (root devDependency).
+- `reflect-metadata` imported once at the entry point, and
+  `experimentalDecorators` + `emitDecoratorMetadata` enabled (see Install).
+
 ## Quick start
 
 ```ts
@@ -91,13 +100,13 @@ const z = new Zebra({ container });
 - **Routing** — radix-tree router with params (`/:id`) and wildcards; `app.get` / `post` / `put` / `patch` / `delete`.
 - **Groups** — `app.group("/blogs", g => { ... })` with prefix and per-group middleware scoping.
 - **Middleware** — Koa-style compose, dep-aware `middleware()` helper, default Problem+Json error middleware.
-- **HTTP** — `ZebraRequest` with lazy body parsing, content-type-aware body parser with size limits, `HttpError` for structured failures.
-- **Static files** — `app.static()` with path-traversal defense, weak ETags, conditional requests, and byte ranges.
+- **HTTP** — `ZebraRequest` with lazy body parsing, content-type-aware body parser with size limits, request helpers (`json()` / `text()` / `form()` / `stream()`), response helpers (`json` / `text` / `html` / `redirect` / `stream`), `HttpError` for structured failures.
+- **Static files** — `app.static()` with path-traversal and symlink-escape defense (realpath containment), weak ETags, conditional requests, and byte ranges.
 - **Lifecycle** — boot/ready/shutdown hooks, graceful draining, and disposable cleanup wired to `Bun.serve`.
 - **Session-scoped DI** — session-id resolution, idle TTL, explicit `disposeSession()`, and request-local anonymous sessions.
-- **Cookie sessions** — `@zebra/session` middleware: HMAC-SHA256 signed `sid` cookies, `req.ctx.session` read/write with `getSession(req)`, pluggable `SessionStore` (in-memory default), rolling TTL renewal, and session-fixation protection (destroyed/expired ids are never revived).
+- **Cookie sessions** — `@zebra/session` middleware: HMAC-SHA256 signed `sid` cookies, `req.ctx.session` read/write with `getSession(req)`, pluggable `SessionStore` (in-memory default), rolling TTL renewal, and session-fixation protection (destroyed/expired ids are never revived). Opt-in `cookie: { preset: "secure" }` (or `SECURE_COOKIE`) for `HttpOnly` + `SameSite=Lax`; the default plain cookie is frozen v1 behavior.
 - **CORS** — `@zebra/cors` middleware: origin allowlists (string/array/RegExp/predicate), preflight handling (204 + full header set), credentials with exact-origin echo, `Vary: Origin` on dynamic matches.
-- **Rate limiting** — `@zebra/rate-limit` middleware: fixed-window per-key counters (lazy window rotation, atomic increments), pluggable `RateLimitStore` (in-memory default), 429 Problem+Json with `X-RateLimit-*` / `Retry-After` headers.
+- **Rate limiting** — `@zebra/rate-limit` middleware: fixed-window per-key counters (lazy window rotation, atomic increments), pluggable `RateLimitStore` (in-memory default), 429 Problem+Json with `X-RateLimit-*` / `Retry-After` headers. Keys default to the socket peer IP (`req.ip`); `x-forwarded-for` is only trusted with `trustProxy: true` (required behind a proxy that overwrites it — otherwise clients can spoof their own budget).
 - **WebSocket** — `app.ws(path, handler)`: upgrade path wired into `Bun.serve` with radix-router params, DI-resolved upgrade decision (`onUpgrade` + `upgrade()` → 401/500 on rejection), `open`/`message`/`close` aligned to Bun semantics, `ws.data.session` reachable via the session middleware's `wsSession` hook. Note: upgrade requests bypass `app.use` global middleware (upgrade runs before the composed middleware chain).
 - **Testing** — `@zebra/testing` `createTestApp` runs requests in-process without opening sockets; `createTestClient` gives a typed contract client over that app.
 - **Contract-first** — `@zebra/contract` (Standard Schema V1 builder + protocol), `app.implement` with input/output validation, `@zebra/client` (derived typed client, zero deps).
@@ -150,6 +159,29 @@ upgrade decision), contract-first (`@zebra/contract`, `app.implement`,
 `@zebra/client`, `createTestClient`), cookie sessions, CORS, rate limiting, and
 testing helpers. Final v1.0.0 release tracks the remaining C2–C4 items (docs
 site, benchmarks, release pipeline).
+
+## Release & packaging
+
+All packages publish `src` **directly**: `main`, `types`, and `exports["."]`
+point at `./src/index.ts`, and the tarball ships only `src/` (`files: ["src"]`).
+No build step runs on publish — consumers get the TypeScript sources and Bun's
+native TS support runs them directly (bundler-resolution consumers get the
+same files).
+
+`bun run build` produces `dist/` bundles (`--target bun --packages external`)
+for bundler/edge consumers who prefer prebuilt artifacts, but `dist/` is **not
+part of the published tarball** (`files: ["src"]` excludes it).
+
+`bun run verify:packages` packs every publishable package into a tarball and
+smoke-tests each one from a fresh install: contents (`src/index.ts` present,
+no `dist/` leakage), exports/types resolution, runtime imports, and a tsc
+typecheck of the installed packages. It guards the src-direct strategy above.
+
+Versions are bumped in lockstep across all packages by
+[`scripts/release.ts`](scripts/release.ts) (`bun run release -- --version X.Y.Z`),
+which also writes the [CHANGELOG](CHANGELOG.md) section from Conventional
+Commits. See [CONTRIBUTING.md](CONTRIBUTING.md) and
+[SECURITY.md](SECURITY.md).
 
 ## License
 

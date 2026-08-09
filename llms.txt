@@ -34,12 +34,12 @@ Core principles:
 
 The complete frozen export list for every package is in [`docs/api-freeze.md`](docs/api-freeze.md) — the authoritative v1 surface (stability promise + SemVer policy + per-package export lists). Summary of the core package surface (`packages/core/src/index.ts`):
 
-- App: `Zebra`, `ZebraOptions`, `RouteHandler`, `DepsSpec`, `ResolvedDeps`, `RegisteredRoute`, `GroupApi`, `LifecycleEvent`, `LifecycleHandler`, `PathParams`, `JoinPath`, `SessionOptions`, `validateGraph`, `VERSION`
+- App: `Zebra`, `ZebraOptions`, `ListenOptions`, `RouteHandler`, `DepsSpec`, `ResolvedDeps`, `RegisteredRoute`, `GroupApi`, `LifecycleEvent`, `LifecycleHandler`, `PathParams`, `JoinPath`, `SessionOptions`, `validateGraph`, `VERSION`
 - Contract (core): `implement` (on `Zebra`), `routeTable` (on `Zebra`), `ContractHandler`, `ContractProcedure`, `RouterImpl`, `ImplementOptions`, `isContractProcedure`
 - Contract (shared): `zc` chain (`@zebra/contract`), `prefix`, `StandardSchemaV1`, `InferParams/Query/Body/Output`
 - Client: `createClient`, `ClientError`, `ContractClient`, `ClientOptions` (`@zebra/client`)
 - DI: `Container`, `token`, `Token`, `injectable`, `inject`, `ScopeKind`, `Disposable`, `CircularDependencyError`, `UnboundTokenError`, `ScopeMismatchError`
-- HTTP: `ZebraRequest`, `buildRequest`, `HttpError`, `ValidationError`, `toProblemJson`, `ProblemJson`
+- HTTP: `ZebraRequest` (`body`/`json`/`text`/`form`/`stream` members), `buildRequest`, response helpers `json`, `text`, `html`, `redirect`, `stream`, `HttpError`, `ValidationError`, `toProblemJson`, `ProblemJson`
 - Middleware: `Middleware`, `middleware`, `getMiddlewareDeps`
 - WebSocket: `WsHandler`, `WsData`, `WsRoute`
 
@@ -47,7 +47,7 @@ The complete frozen export list for every package is in [`docs/api-freeze.md`](d
 
 - `app/` — `app.ts` (Zebra class), `boot-validation.ts`, `group.ts`, `lifecycle.ts`, `types.ts`
 - `di/` — `container.ts`, `binding.ts`, `decorators.ts`, `disposable.ts`, `errors.ts`, `key.ts`, `scope.ts`, `token.ts`
-- `http/` — `request.ts`, `body.ts`, `errors.ts`, `static.ts`
+- `http/` — `request.ts`, `body.ts`, `response.ts`, `errors.ts`, `static.ts`
 - `middleware/` — `compose.ts` (Koa-style), `error.ts` (Problem+Json), `helper.ts`, `types.ts`
 - `router/` — `radix.ts` (radix-tree router), `path.ts`
 

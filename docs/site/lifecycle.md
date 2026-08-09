@@ -41,3 +41,38 @@ the process is stopping.
   call `z.on` once the app is running.
 - `z.stop()` triggers graceful draining: in-flight requests finish, shutdown
   hooks run, disposables are cleaned up.
+
+## Listen options
+
+`z.listen()` accepts the Bun transport options listed below; everything else
+flows straight through to `Bun.serve` as-is.
+
+```ts
+await z.listen({
+  port: 3000,
+  hostname: "0.0.0.0",
+  idleTimeout: 30,          // seconds before an idle connection is closed (Bun default 10)
+  maxRequestBodySize: 4_096, // transport-level body cap in bytes (Bun default 128MB)
+  reusePort: true,          // SO_REUSEPORT for multi-process load balancing
+  tls: { key: Bun.file("key.pem"), cert: Bun.file("cert.pem") }, // HTTPS
+});
+```
+
+- **`idleTimeout`** — seconds of inactivity before the connection is closed.
+- **`maxRequestBodySize`** — Bun rejects oversized requests at the transport
+  level, *before* any handler runs, with a bare 413. Keep it at least as large
+  as the largest app-level body limit (see
+  [routing → request body limits](routing.md#request-body-limits)) so the app
+  parser's more specific per-type limits stay authoritative.
+- **`reusePort` / `tls`** — passed through unchanged.
+
+## Request timeout
+
+Set `new Zebra({ requestTimeout: 5_000 })` to give every request a deadline in
+milliseconds. When the pipeline (body parsing, session resolution, middleware,
+handler) has not answered in time, the client gets a 504 Problem+Json
+(`request_timeout`) and the abort is visible to the handler on `req.signal`
+(see [routing → timeouts and cancellation](routing.md#timeouts-and-cancellation)).
+Opt-in: without it no deadline or cancellation wiring is installed.
+`requestTimeout` must be a positive number; `gracePeriod` remains the backstop
+for draining in-flight requests during shutdown.

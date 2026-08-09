@@ -1,4 +1,4 @@
-export { sessionMiddleware } from "./middleware.ts";
+export { SECURE_COOKIE, sessionMiddleware } from "./middleware.ts";
 export type {
   SessionCookieOptions,
   SessionMiddleware,

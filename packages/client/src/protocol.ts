@@ -1,6 +1,6 @@
 import type { StandardSchemaV1 } from "./standard-schema.ts";
 
-export const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
+export const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] as const;
 export type Method = (typeof METHODS)[number];
 
 export interface ErrorSpec {

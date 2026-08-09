@@ -111,14 +111,16 @@ import them from their own packages.
 
 ### `@zebra/core`
 
-- App: `Zebra`, type `ZebraOptions`, `RouteHandler`, `DepsSpec`, `ResolvedDeps`,
-  `RegisteredRoute`, `GroupApi`, `LifecycleEvent`, `LifecycleHandler`,
-  `PathParams`, `JoinPath`, `SessionOptions`, `validateGraph`, `VERSION`.
+- App: `Zebra`, type `ZebraOptions`, `ListenOptions`, `RouteHandler`, `DepsSpec`,
+  `ResolvedDeps`, `RegisteredRoute`, `GroupApi`, `LifecycleEvent`,
+  `LifecycleHandler`, `PathParams`, `JoinPath`, `SessionOptions`, `validateGraph`,
+  `VERSION`.
   `Zebra` instance members: `use`, `on`, `listen`, `stop`, `disposeSession`,
   `injectValue`, `injectSingleton`, `injectRequest`, `injectTransient`,
   `injectSession`, `injectFactorySingleton`, `injectFactoryRequest`,
-  `injectFactoryTransient`, `injectFactorySession`, `implement`, `get`, `post`,
-  `put`, `patch`, `delete`, `group`, `static`, `ws`, `dispatch`, `routeTable`.
+  `injectFactoryTransient`, `injectFactorySession`, `implement`, `route`, `get`,
+  `post`, `put`, `patch`, `delete`, `head`, `options`, `group`, `static`, `ws`,
+  `dispatch`, `routeTable`.
 - Contract (implement): `isContractProcedure`, types `ContractProcedureDef`,
   `ContractHandler`, `ContractRequest`, `ContractParams`, `ContractQuery`,
   `ContractBody`, `ContractReturn`, `ContractProcedure`, `ContractRouter`,
@@ -130,7 +132,9 @@ import them from their own packages.
   `ScopeMismatchError`, types `Token`, `Identifier`, `ClassConstructor`,
   `AbstractConstructor`.
 - HTTP: `ZebraRequest`, `buildRequest`, `HttpError`, `ValidationError`,
-  `toProblemJson`, types `ProblemJson`, `ValidationIssue`.
+  `toProblemJson`, types `ProblemJson`, `ValidationIssue`. Response helpers
+  `json`, `text`, `html`, `redirect`, `stream`. `ZebraRequest` members:
+  `body`, `json`, `text`, `form`, `stream`, `ctx`, `ip?`, `signal`.
 - Middleware: `middleware`, `getMiddlewareDeps`, type `Middleware`.
 - WebSocket: types `WsHandler`, `WsData`, `WsRoute` (upgrade/handler surface
   wired to `app.ws`).
@@ -156,7 +160,8 @@ import them from their own packages.
 ### `@zebra/session`
 
 `sessionMiddleware`, `createSession`, `getSession`, `SESSION_KEY`, `MemoryStore`,
-`sign`, `verify`, `parseCookies`, `parseSignedCookie`, `serializeCookie`, types
+`sign`, `verify`, `parseCookies`, `parseSignedCookie`, `serializeCookie`,
+`SECURE_COOKIE`, types
 `SessionCookieOptions`, `SessionMiddleware`, `SessionMiddlewareOptions`,
 `SessionResolver`, `RequestSession`, `MemoryStoreOptions`, `SessionStore`,
 `CookieSerializeOptions`.
@@ -202,3 +207,96 @@ dependency-package names (rate-limit `MemoryStore` collision, §3 `zebra`).
 - Bumped all seven publishable packages from `0.2.0`/`0.3.0` to `1.0.0`.
 - Updated `README.md` (Status + link) and `llms.txt` (surface + package list).
 - No other gaps, collisions, or unstable exports found.
+
+## 6. Audit record (07 · security defaults, 2026-08-09)
+
+Additive changes (allowed in `1.x` minors) plus one security fix that
+intentionally changes an under-documented default. No frozen semantics were
+silently changed.
+
+- **`@zebra/session` — additive.** New optional `SessionCookieOptions.preset:
+  "secure"` (applies `HttpOnly` + `SameSite=Lax`, explicit per-attribute
+  options win) and new exported constant `SECURE_COOKIE`. The v1 default
+  cookie (no flags) is unchanged and frozen.
+- **`@zebra/core` — additive.** `ZebraOptions.trustProxy?: boolean` (default
+  false) exposed as the public `Zebra.trustProxy` member, and `ZebraRequest.ip?:
+  string` (the socket peer address from Bun's `server.requestIP(req)`, never
+  header-derived). `dispatch(raw, ip?)` and `buildRequest(raw, params,
+  bodyOpts?, ip?)` gained optional parameters. Core never reads
+  `x-forwarded-for`; trusting it is opt-in at the consumer (see rate-limit).
+- **`@zebra/rate-limit` — security fix in a minor, documented here on
+  purpose.** The default key derivation changed from "leftmost
+  `x-forwarded-for` entry" (client-spoofable when no edge proxy overwrites
+  the header) to "socket IP (`req.ip`), falling back to the shared
+  `anonymous` key". The old behavior is opt-in via the new
+  `RateLimitOptions.trustProxy?: boolean` (default false). Requests without a
+  socket (direct `dispatch` in tests) already shared the `anonymous` key, so
+  the observable change is limited to deployments behind non-header-setting
+  proxies. This is a security hardening of an under-specified default, not a
+  documented-semantics break.
+- **`@zebra/core` static files — bug fix.** `serveStatic` now verifies the
+  `realpath` of the final target stays inside the realpath of root, closing
+  the symlink-escape hole (a symlink inside root pointing outside root used
+  to pass the lexical boundary check). Previously-broken behavior (serving
+  files outside root via symlink) is now 403/404; all documented behavior is
+  unchanged.
+
+## 7. Audit record (timeouts, cancellation, transport options, 2026-08-09)
+
+Additive changes only; no frozen semantics changed. `{ port, hostname? }`
+listens keep working unchanged.
+
+- **`@zebra/core` — `ListenOptions` (new exported type).** `listen()` gained
+  additive passthrough fields for `Bun.serve`: `idleTimeout?` (seconds),
+  `maxRequestBodySize?` (bytes, transport-level 413 before handlers),
+  `reusePort?`, `tls?` (`TLSOptions | TLSOptions[]`). Return type
+  `Promise<{ port: number }>` unchanged.
+- **`@zebra/core` — `ZebraOptions.requestTimeout?: number` (additive).**
+  Opt-in per-request deadline in ms: on expiry the dispatch answers 504
+  Problem+Json (`request_timeout`) and the handler's `req.signal` aborts.
+  Must be positive; unset = no deadline (previous behavior). `ZebraRequest`
+  gained the additive `signal: AbortSignal` member — Bun's raw
+  `Request.signal` when no timeout is configured, otherwise a combined
+  signal (client disconnect + deadline; `signal.reason` is the 504
+  `HttpError` on timeout). `buildRequest(raw, params, bodyOpts?, ip?, signal?)`
+  gained an optional trailing parameter.
+- **`@zebra/core` — body limit semantics (docs + tests only).** Transport
+  `maxRequestBodySize` vs app-level `body` limits documented in the body
+  module and site docs: both answer 413; keep transport ≥ app limits so the
+  parser's per-type limits stay authoritative.
+
+## 8. Audit record (request/response helpers, 2026-08-09)
+
+Additive changes only; no frozen semantics changed. `req.body()` and
+`Zebra.toResponse` behave exactly as before.
+
+- **`@zebra/core` — request helpers (additive `ZebraRequest` members).**
+  `req.json()`, `req.text()`, `req.form()`, `req.stream()` added. Lazy +
+  memoized: the body is buffered once (same per-content-type `body` limits
+  enforced) and `json` / `text` / `form` derive from the shared bytes;
+  `req.body()` is unchanged. `req.form()` returns a `FormData` for multipart
+  (with `File` entries, `maxFiles` / `maxFileSize` enforced) and urlencoded
+  bodies, and an empty `FormData` otherwise. `req.stream()` is the
+  non-buffering path for large uploads: the raw body stream piped through
+  the same app-level size limit; it is inherently non-memoizable (it
+  consumes the stream) and cannot be combined with the buffering helpers or
+  `req.body()`.
+- **`@zebra/core` — response helpers (new exports).** `json`, `text`,
+  `html`, `redirect`, `stream` with documented defaults: `application/json`,
+  `text/plain`, `text/html` (each with `; charset=utf-8`),
+  `application/octet-stream` for `stream()`, and `redirect()` → 302 +
+  `Location` (override with `init.status`). `init.headers` always wins over
+  the default `content-type`; `Location` always comes from the `url`
+  argument.
+- **`@zebra/core` — documented (not changed) value-return rules.** A handler
+  returning a non-`Response` value is `JSON.stringify`d — including plain
+  strings and `null` — with 200 (frozen `toResponse`); `undefined` → empty
+  204; a raw `Response` passes through unchanged. The new helpers are the
+  explicit ways to return text/html/binary/redirects.
+- **`@zebra/core` — internal streaming fix (no frozen-surface change).**
+  `limitStream` errors the stream with the 413 `HttpError` (a throw from its
+  transform, spec-equal to `controller.error`), so over-limit bodies reject
+  the consumer's `read()` with the `HttpError` — the buffered multipart path
+  surfaces it as the same 413 Problem+Json as before, and direct `stream()`
+  consumers get a clean rejection instead of a raw error escaping the
+  transform callback.

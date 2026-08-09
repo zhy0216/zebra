@@ -1,7 +1,7 @@
 import type { PathParams } from "./path.ts";
 import type { StandardSchemaV1 } from "./standard-schema.ts";
 
-export const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
+export const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] as const;
 export type Method = (typeof METHODS)[number];
 
 export interface ErrorSpec {
@@ -38,7 +38,7 @@ export interface ContractProcedure<Def extends ContractProcedureDef = ContractPr
     schema: S,
   ): ContractProcedure<Omit<Def, "query"> & { query: S }>;
   body<S extends StandardSchemaV1>(
-    schema: Def["method"] extends "GET" ? never : S,
+    schema: Def["method"] extends "GET" | "HEAD" ? never : S,
   ): ContractProcedure<Omit<Def, "body"> & { body: S }>;
   output<S extends StandardSchemaV1>(
     schema: S,

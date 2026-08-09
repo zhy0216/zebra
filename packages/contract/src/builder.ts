@@ -88,10 +88,10 @@ export class ContractProcedureImpl<Def extends ContractProcedureDef>
   }
 
   body<S extends StandardSchemaV1>(
-    schema: Def["method"] extends "GET" ? never : S,
+    schema: Def["method"] extends "GET" | "HEAD" ? never : S,
   ): ContractProcedure<Next<Def, "body", S>> {
-    if (this.def.method === "GET") {
-      throw new Error("Contract .body() is not allowed on GET procedures");
+    if (this.def.method === "GET" || this.def.method === "HEAD") {
+      throw new Error("Contract .body() is not allowed on GET/HEAD procedures");
     }
     const next = {
       version: 1,
@@ -188,4 +188,6 @@ export const zc = {
   put: <const Path extends string>(path: Path) => ContractProcedureImpl.create("PUT", path),
   patch: <const Path extends string>(path: Path) => ContractProcedureImpl.create("PATCH", path),
   delete: <const Path extends string>(path: Path) => ContractProcedureImpl.create("DELETE", path),
+  head: <const Path extends string>(path: Path) => ContractProcedureImpl.create("HEAD", path),
+  options: <const Path extends string>(path: Path) => ContractProcedureImpl.create("OPTIONS", path),
 };

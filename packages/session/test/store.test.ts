@@ -112,6 +112,26 @@ describe("MemoryStore", () => {
     expect(entries.size).toBe(0);
   });
 
+  test("sweep is budget-bounded per call for large stores", async () => {
+    const store = new MemoryStore({ ttl: 50 });
+    const entries = (store as unknown as { entries: Map<string, unknown> }).entries;
+
+    // 1200 expired entries: one access sweeps only the first 512 (the sweep
+    // budget), not the whole store — no single access pays an O(n) scan.
+    for (let i = 0; i < 1200; i++) await store.set(`k${i}`, i);
+    expect(entries.size).toBe(1200);
+    await Bun.sleep(80);
+    await store.get("missing");
+    expect(entries.size).toBe(1200 - 512);
+
+    // Correctness never depends on the sweep: expired ids still read as missing.
+    expect(await store.get("k0")).toBeUndefined();
+    expect(await store.get("k1199")).toBeUndefined();
+    // Repeated accesses drain the rest of the store in bounded passes.
+    await store.get("missing");
+    expect(entries.size).toBe(0);
+  });
+
   test("set resets the expiry for an existing id", async () => {
     const store = new MemoryStore({ ttl: 50 });
     await store.set("s", "old");

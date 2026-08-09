@@ -51,7 +51,21 @@ import { MemoryStore, type SessionStore } from "./store.ts";
 
 export interface SessionCookieOptions extends CookieSerializeOptions {
   name?: string;
+  /**
+   * Opt-in hardened cookie preset: applies `HttpOnly` + `SameSite=Lax`.
+   * Explicit per-attribute options (e.g. `httpOnly: false` or
+   * `sameSite: "strict"`) override the preset. Off by default — the v1
+   * default (a plain unsigned-of-HMAC cookie, no flags) is frozen and
+   * unchanged.
+   */
+  preset?: "secure";
 }
+
+/** Secure session cookie attributes: `HttpOnly` + `SameSite=Lax`. */
+export const SECURE_COOKIE: CookieSerializeOptions = Object.freeze({
+  httpOnly: true,
+  sameSite: "lax",
+});
 
 export interface SessionMiddlewareOptions {
   secret: string;
@@ -103,9 +117,11 @@ export function sessionMiddleware(options: SessionMiddlewareOptions): SessionMid
   const secret = options.secret;
   const store = options.store ?? new MemoryStore({ ttl: DEFAULT_STORE_TTL });
   const cookieName = options.cookie?.name ?? DEFAULT_COOKIE_NAME;
+  const { preset, ...cookieAttrs } = options.cookie ?? {};
   const cookieOptions: CookieSerializeOptions = {
     path: DEFAULT_COOKIE_PATH,
-    ...(options.cookie ?? {}),
+    ...(preset === "secure" ? SECURE_COOKIE : {}),
+    ...cookieAttrs,
   };
 
   const resolver: SessionResolver = async (raw) => {

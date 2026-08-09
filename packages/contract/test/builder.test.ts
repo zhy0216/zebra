@@ -26,6 +26,11 @@ test("all five methods produce the right method + path", () => {
   expect(zc.get("/x").def.method).toBe("GET");
 });
 
+test("head and options methods produce the right method + path", () => {
+  expect(zc.head("/x").def.method).toBe("HEAD");
+  expect(zc.options("/x").def.method).toBe("OPTIONS");
+});
+
 test("chained calls accumulate schema slots and defaults stay", () => {
   const create = zc
     .post("/blogs")
@@ -73,6 +78,13 @@ test("GET .body() throws at runtime", () => {
     // @ts-expect-error body is not allowed on GET procedures
     zc.get("/x").body(z.object({}));
   }).toThrow(/not allowed on GET/);
+});
+
+test("HEAD .body() throws at runtime", () => {
+  expect(() => {
+    // @ts-expect-error body is not allowed on HEAD procedures
+    zc.head("/x").body(z.object({}));
+  }).toThrow(/not allowed on GET\/HEAD/);
 });
 
 test("POST .body() does not throw", () => {

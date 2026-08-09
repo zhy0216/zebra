@@ -46,4 +46,20 @@ export const SCENARIOS: Scenario[] = [
       }
     },
   },
+  // DI scenario: route deps resolved from the container (zebra), plain JSON
+  // response in frameworks without DI — the body must be identical.
+  {
+    name: "di",
+    path: "/di",
+    verify: (b) => {
+      try {
+        return JSON.parse(b).di === "ok";
+      } catch {
+        return false;
+      }
+    },
+  },
+  // Static-file scenario: serve a real file from disk via each framework's
+  // static handling (zebra: app.static()).
+  { name: "static-file", path: "/static/hello.txt", verify: (b) => b === "static hello\n" },
 ];

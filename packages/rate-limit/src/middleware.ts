@@ -3,16 +3,20 @@
 // RFC 9457 Problem+Json via `HttpError`) on top of the C2 fixed-window
 // counting.
 //
-// Default key derivation (client IP). Trade-off: core's `ZebraRequest`
-// exposes no socket/peer address (`packages/core/src/http/request.ts` only
-// carries `raw: Request` plus parsed fields), so the client IP can only come
-// from the `x-forwarded-for` header — `req.remoteAddress` does not exist.
-// That header is client-spoofable unless the deployment's edge proxy
-// (reverse proxy / CDN / load balancer) overwrites it, so the default is only
-// safe behind a trusted proxy that sets `x-forwarded-for`; it takes the
-// leftmost entry (the address appended by the client's first hop, i.e. the
-// peer as seen by the edge). Requests without the header share the
-// `anonymous` key rather than being exempt from limiting.
+// Default key derivation (client IP) — hardened in 07: core's
+// `ZebraRequest.ip` carries the real socket peer address from Bun's
+// `server.requestIP(req)` (never derived from headers), so by default the
+// key is that socket IP, falling back to the shared `anonymous` key when no
+// server socket is involved (e.g. `app.dispatch()` in tests).
+//
+// The `x-forwarded-for` header is only consulted with `trustProxy: true` —
+// it is client-spoofable unless the deployment's edge proxy (reverse proxy /
+// CDN / load balancer) overwrites it. When trusted, the leftmost entry wins
+// (the address appended by the client's first hop, i.e. the peer as seen by
+// the edge); requests without the header share the `anonymous` key rather
+// than being exempt from limiting. WARNING: with `trustProxy: false`
+// (default), spoofed `x-forwarded-for` values do NOT create per-IP buckets —
+// every request from the same socket shares one budget.
 
 import { HttpError, type Middleware, type ZebraRequest } from "@zebra/core";
 
@@ -26,21 +30,35 @@ export interface RateLimitOptions {
   max: number;
   /**
    * Derives the rate-limit key for a request. May be async. Default: the
-   * client IP from `x-forwarded-for` (see module comment for the trade-off).
+   * socket peer IP (`req.ip`), falling back to the shared `anonymous` key —
+   * or the leftmost `x-forwarded-for` entry when `trustProxy` is set.
    */
   keyBy?: (req: ZebraRequest) => string | Promise<string>;
   /** Pluggable counter storage. Defaults to `MemoryStore({ windowMs })` (C2). */
   store?: RateLimitStore;
+  /**
+   * Trust the `x-forwarded-for` header, using its leftmost entry as the
+   * client address. Only set when the deployment's edge proxy overwrites the
+   * header (reverse proxy / CDN / load balancer); otherwise clients can
+   * spoof it to carve out their own unlimited budget. Default: false — the
+   * socket IP (`req.ip`) is used instead.
+   */
+  trustProxy?: boolean;
 }
 
 const DEFAULT_KEY = "anonymous";
 
-/** Leftmost entry of `x-forwarded-for` (the client as seen by the edge proxy). */
-function clientIp(req: { headers: Headers }): string {
+/** Leftmost entry of `x-forwarded-for` — only valid behind a trusted proxy that overwrites the header. */
+function forwardedIp(req: ZebraRequest): string {
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded === null || forwarded === "") return DEFAULT_KEY;
   const first = forwarded.split(",")[0]?.trim();
   return first === undefined || first === "" ? DEFAULT_KEY : first;
+}
+
+/** Real socket peer address (`server.requestIP` via `ZebraRequest.ip`), else anonymous. */
+function socketIp(req: ZebraRequest): string {
+  return req.ip ?? DEFAULT_KEY;
 }
 
 // C3: fixed-window enforcement.
@@ -101,7 +119,8 @@ export function rateLimit(options: RateLimitOptions): Middleware {
   }
   const windowMs = options.windowMs;
   const max = options.max;
-  const keyBy = options.keyBy ?? clientIp;
+  const trustProxy = options.trustProxy ?? false;
+  const keyBy = options.keyBy ?? (trustProxy ? forwardedIp : socketIp);
   const store = options.store ?? new MemoryStore({ windowMs });
 
   return async (req, next) => {

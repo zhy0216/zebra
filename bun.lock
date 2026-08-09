@@ -102,11 +102,29 @@
         "@zebra/testing": "workspace:*",
       },
     },
+    "packages/observability": {
+      "name": "@zebra/observability",
+      "version": "1.0.0",
+      "devDependencies": {
+        "@zebra/core": "workspace:*",
+        "@zebra/testing": "workspace:*",
+      },
+    },
     "packages/rate-limit": {
       "name": "@zebra/rate-limit",
       "version": "1.0.0",
       "devDependencies": {
         "@zebra/core": "workspace:*",
+        "@zebra/testing": "workspace:*",
+      },
+    },
+    "packages/redis": {
+      "name": "@zebra/redis",
+      "version": "1.0.0",
+      "devDependencies": {
+        "@zebra/core": "workspace:*",
+        "@zebra/rate-limit": "workspace:*",
+        "@zebra/session": "workspace:*",
         "@zebra/testing": "workspace:*",
       },
     },
@@ -206,7 +224,11 @@
 
     "@zebra/cors": ["@zebra/cors@workspace:packages/cors"],
 
+    "@zebra/observability": ["@zebra/observability@workspace:packages/observability"],
+
     "@zebra/rate-limit": ["@zebra/rate-limit@workspace:packages/rate-limit"],
+
+    "@zebra/redis": ["@zebra/redis@workspace:packages/redis"],
 
     "@zebra/session": ["@zebra/session@workspace:packages/session"],
 

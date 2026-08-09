@@ -1,9 +1,38 @@
+import type { TLSOptions } from "bun";
 import type { ContractProcedureDef } from "../contract/protocol.ts";
 import type { Container } from "../di/container.ts";
 import type { Identifier } from "../di/token.ts";
 import type { BodyOptions } from "../http/body.ts";
 import type { ZebraRequest } from "../http/request.ts";
 import type { Middleware } from "../middleware/types.ts";
+
+/**
+ * Options for `Zebra.listen`, passed through to `Bun.serve` as-is.
+ *
+ * `port` and `hostname` are Zebra's own; the rest are Bun transport options
+ * that flow straight into `Bun.serve` when set. Other `Bun.serve` options can
+ * be added additively in future minors on request.
+ */
+export interface ListenOptions {
+  port: number;
+  hostname?: string;
+  /**
+   * Seconds to wait before timing out a connection due to inactivity.
+   * Passed through to Bun; default is Bun's (10s).
+   */
+  idleTimeout?: number;
+  /**
+   * Maximum request body size in bytes enforced by Bun at the transport
+   * level (before any handler runs). Default is Bun's (128MB). The
+   * app-level `body` limits are enforced inside the body parser and are
+   * independent of this — see the body module docs for the composition.
+   */
+  maxRequestBodySize?: number;
+  /** Whether the `SO_REUSEPORT` flag should be set (multi-process load balancing). Default false. */
+  reusePort?: boolean;
+  /** TLS options (key/cert chains) for serving HTTPS. */
+  tls?: TLSOptions | TLSOptions[];
+}
 
 type SegmentParam<S extends string> = S extends `:${infer Name}`
   ? Name
@@ -63,6 +92,25 @@ export interface ZebraOptions {
   sessionResolver?: SessionOptions["resolver"];
   sessionTtl?: number;
   gracePeriod?: number;
+  /**
+   * Per-request deadline in milliseconds. When the dispatch pipeline
+   * (middleware + handler, including body parsing and session resolution)
+   * has not produced a response within the deadline, the request is aborted
+   * and the client receives a 504 Problem+Json (`request_timeout`).
+   * Handlers observe the cancellation on `req.signal` (which also aborts on
+   * client disconnect, via Bun's raw `Request.signal`). Opt-in: when unset,
+   * no deadline is applied and no abort wiring happens.
+   */
+  requestTimeout?: number;
+  /**
+   * App-level statement that the `x-forwarded-for` header may be trusted
+   * (the deployment's edge proxy / CDN / load balancer overwrites it).
+   * Core itself never reads `x-forwarded-for` — it only exposes the socket
+   * peer address as `ZebraRequest.ip` — so this flag is the documented knob
+   * that middleware such as `@zebra/rate-limit`'s `trustProxy` mirrors.
+   * Default: false.
+   */
+  trustProxy?: boolean;
 }
 
 export interface RegisteredRoute {

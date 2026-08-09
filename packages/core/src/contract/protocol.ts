@@ -57,7 +57,7 @@ export declare namespace StandardSchemaV1 {
   >["output"];
 }
 
-export const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
+export const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] as const;
 export type Method = (typeof METHODS)[number];
 
 export interface ErrorSpec {

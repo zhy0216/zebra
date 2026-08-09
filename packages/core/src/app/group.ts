@@ -3,6 +3,17 @@ import type { DepsSpec, JoinPath, PathParams, ResolvedDeps, RouteHandler } from 
 
 export interface GroupApi<Prefix extends string = string> {
   use(mw: Middleware): this;
+  route<const Path extends string>(
+    method: string,
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  route<const Path extends string, D extends DepsSpec>(
+    method: string,
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
   get<const Path extends string>(
     path: Path,
     handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
@@ -44,6 +55,24 @@ export interface GroupApi<Prefix extends string = string> {
     handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
   ): void;
   delete<const Path extends string, D extends DepsSpec>(
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  head<const Path extends string>(
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  head<const Path extends string, D extends DepsSpec>(
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  options<const Path extends string>(
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  options<const Path extends string, D extends DepsSpec>(
     path: Path,
     deps: D,
     handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
@@ -94,6 +123,21 @@ export class Group<Prefix extends string = string> implements GroupApi<Prefix> {
     });
   }
 
+  route<const Path extends string>(
+    method: string,
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  route<const Path extends string, D extends DepsSpec>(
+    method: string,
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  route(method: string, path: string, a: any, b?: any): void {
+    if (b === undefined) this.register(method, path, null, a);
+    else this.register(method, path, a, b);
+  }
   get<const Path extends string>(
     path: Path,
     handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
@@ -158,6 +202,32 @@ export class Group<Prefix extends string = string> implements GroupApi<Prefix> {
   delete(path: string, a: any, b?: any): void {
     if (b === undefined) this.register("DELETE", path, null, a);
     else this.register("DELETE", path, a, b);
+  }
+  head<const Path extends string>(
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  head<const Path extends string, D extends DepsSpec>(
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  head(path: string, a: any, b?: any): void {
+    if (b === undefined) this.register("HEAD", path, null, a);
+    else this.register("HEAD", path, a, b);
+  }
+  options<const Path extends string>(
+    path: Path,
+    handler: RouteHandler<never, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  options<const Path extends string, D extends DepsSpec>(
+    path: Path,
+    deps: D,
+    handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
+  ): void;
+  options(path: string, a: any, b?: any): void {
+    if (b === undefined) this.register("OPTIONS", path, null, a);
+    else this.register("OPTIONS", path, a, b);
   }
 
   group<const ChildPrefix extends string>(

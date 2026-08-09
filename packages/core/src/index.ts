@@ -46,6 +46,7 @@ export {
   type ValidationIssue,
 } from "./http/errors.ts";
 export { type ZebraRequest, buildRequest } from "./http/request.ts";
+export { html, json, redirect, stream, text } from "./http/response.ts";
 export type { Middleware } from "./middleware/types.ts";
 export { middleware, getMiddlewareDeps } from "./middleware/helper.ts";
 export type {
@@ -55,6 +56,7 @@ export type {
   PathParams,
   JoinPath,
   ZebraOptions,
+  ListenOptions,
   SessionOptions,
   RegisteredRoute,
 } from "./app/types.ts";

@@ -89,3 +89,28 @@ test("multipart enforces maxFiles and maxFileSize", async () => {
     }),
   ).rejects.toMatchObject({ status: 413, code: "too_many_files" });
 });
+
+test("multipart over the total size limit rejects with 413 (streaming path)", async () => {
+  // Chunked multipart body with no Content-Length, so the limit is enforced
+  // inside limitStream while piping rather than by the declared-size check.
+  const boundary = "Xtest";
+  const body = `--${boundary}\r\ncontent-disposition: form-data; name="f"; filename="a.txt"\r\ncontent-type: text/plain\r\n\r\n${"x".repeat(2048)}\r\n--${boundary}--\r\n`;
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode(body));
+      controller.close();
+    },
+  });
+  const req = new Request("http://x", {
+    method: "POST",
+    headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
+    body: stream,
+  });
+  await expect(
+    parseBody(req, {
+      ...defaultOpts,
+      maxSize: 4096,
+      multipart: { limit: 1024, maxFiles: 4, maxFileSize: 512 },
+    }),
+  ).rejects.toMatchObject({ status: 413, code: "payload_too_large" });
+});

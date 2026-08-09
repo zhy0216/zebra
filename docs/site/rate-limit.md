@@ -23,8 +23,18 @@ z.use(rateLimit({ windowMs: 60_000, max: 100 }));
 | ------ | ------- | ----------- |
 | `windowMs` | required | Window length in milliseconds |
 | `max` | required | Maximum requests per key per window |
-| `keyBy` | client IP from `x-forwarded-for` (leftmost entry) | Derives the per-request key; may be async |
+| `keyBy` | socket peer IP (`req.ip`), else the shared `anonymous` key | Derives the per-request key; may be async |
 | `store` | `MemoryStore({ windowMs })` | Pluggable counter storage |
+| `trustProxy` | `false` | When `true`, the leftmost `x-forwarded-for` entry is used as the key |
+
+> **WARNING — `x-forwarded-for` spoofing.** By default the key is the real
+> socket peer address (`req.ip`, from Bun's `server.requestIP`), never a
+> header. Only set `trustProxy: true` when your edge proxy (reverse proxy /
+> CDN / load balancer) **overwrites** `x-forwarded-for`; otherwise clients can
+> spoof the header to carve out their own unlimited budget. Behind a trusted
+> proxy, the leftmost entry is used (the peer as seen by the edge). Requests
+> without any usable address share the `anonymous` key rather than being
+> exempt from limiting.
 
 ## Behavior
 

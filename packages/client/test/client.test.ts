@@ -194,3 +194,21 @@ test("client is a plain recursive object (no Proxy)", async () => {
   expect(api.get).toBeTypeOf("function");
   expect(Object.keys(api)).toEqual(["list", "get", "files", "create", "remove"]);
 });
+
+test("HEAD/OPTIONS procedures send the declared method", async () => {
+  const seen: Array<{ url: string; init: RequestInit }> = [];
+  const api = createClient(
+    { ping: zc.head("/ping"), caps: zc.options("/caps") },
+    {
+      baseUrl: "http://x",
+      fetch: fakeFetch((url, init) => {
+        seen.push({ url, init });
+        return new Response("", { status: 204 });
+      }),
+    },
+  );
+  await api.ping();
+  await api.caps();
+  expect(seen[0]!.init.method).toBe("HEAD");
+  expect(seen[1]!.init.method).toBe("OPTIONS");
+});

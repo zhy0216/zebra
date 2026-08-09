@@ -22,8 +22,22 @@ Options:
 | Option | Default | Description |
 | ------ | ------- | ----------- |
 | `secret` | required | HMAC key used to sign the `sid` cookie |
-| `cookie` | — | `{ name?: "sid", ...CookieSerializeOptions }` — cookie name + attributes |
+| `cookie` | — | `{ name?: "sid", preset?: "secure", ...CookieSerializeOptions }` — cookie name + attributes |
 | `store` | `MemoryStore({ ttl: 30min })` | Pluggable session data store |
+
+### Secure cookie preset
+
+Session cookies are **plain by default** (no `HttpOnly` / `SameSite` — frozen
+v1 behavior). For production, opt in to a hardened cookie:
+
+```ts
+const mw = sessionMiddleware({ secret: "change-me", cookie: { preset: "secure" } });
+// equivalent: { ...SECURE_COOKIE } → HttpOnly + SameSite=Lax
+```
+
+`preset: "secure"` applies `HttpOnly` + `SameSite=Lax`; explicit per-attribute
+options (e.g. `sameSite: "strict"` or `httpOnly: false`) override the preset.
+The `SECURE_COOKIE` constant is exported for spreading into your own options.
 
 ## Reading / writing the session
 

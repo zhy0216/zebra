@@ -46,8 +46,11 @@ interface Entry {
 
 /**
  * Default in-memory implementation backed by a `Map`. Expired entries are
- * removed lazily: every `get`/`set`/`touch` first sweeps already-expired keys.
- * No timers are used, so nothing can leak. TTL is in milliseconds.
+ * removed lazily: `get`/`set`/`touch` sweep already-expired keys in bounded
+ * passes (at most `SWEEP_BUDGET` per call, oldest first) so a single access
+ * never pays an O(n) scan over a large store. Correctness never depends on
+ * the sweep — every read re-checks its entry's expiry. No timers are used,
+ * so nothing can leak. TTL is in milliseconds.
  */
 export class MemoryStore implements SessionStore {
   private readonly ttl: number;
@@ -89,11 +92,22 @@ export class MemoryStore implements SessionStore {
     this.entries.set(id, { data: undefined, expiresAt: until, tombstoneUntil: until });
   }
 
-  /** Removes already-expired entries; bounded by the number of known ids. */
+  /**
+   * Removes already-expired entries, scanning at most `SWEEP_BUDGET` per call.
+   * Entries are inserted in creation order, so the head of the Map holds the
+   * oldest (most likely expired) ids first; entries behind the budget are
+   * reclaimed by later accesses or on direct `get`. Small stores (≤ budget)
+   * are fully swept, identical to the historical behavior.
+   */
   private sweep(): void {
     const now = Date.now();
+    let scanned = 0;
     for (const [id, entry] of this.entries) {
+      if (++scanned > SWEEP_BUDGET) break;
       if (now >= entry.expiresAt) this.entries.delete(id);
     }
   }
 }
+
+/** Max entries scanned per `sweep()` call; keeps per-access cost bounded. */
+const SWEEP_BUDGET = 512;

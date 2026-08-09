@@ -1,5 +1,24 @@
 import { HttpError } from "./errors.ts";
 
+/**
+ * App-level request body limits, enforced inside the body parser when
+ * `req.body()` is read. These are independent of — and composed with — Bun's
+ * transport-level `maxRequestBodySize` (`listen({ maxRequestBodySize })`):
+ *
+ * - Transport (Bun): rejects the request *before* any handler runs when the
+ *   declared/streamed size exceeds `maxRequestBodySize`; the response is a
+ *   bare 413 without a Problem+Json body. Default 128MB.
+ * - App (here): rejects inside `parseBody` with a 413 Problem+Json
+ *   (`payload_too_large`), enforced per content-type (`json.limit`,
+ *   `form.limit`, `multipart.limit`/`maxFiles`/`maxFileSize`) and capped by
+ *   `maxSize`, via content-length and while streaming.
+ *
+ * Both layers answer 413. Keep `maxRequestBodySize` ≥ the largest app limit
+ * so the app parser's more specific per-type limits stay authoritative;
+ * otherwise the transport limit wins first and truncates large uploads into
+ * a bare 413 before the parser can produce its structured error. App limits
+ * work regardless of the transport limit.
+ */
 export interface BodyOptions {
   maxSize: number;
   json: { limit: number };
@@ -9,7 +28,7 @@ export interface BodyOptions {
 
 const decoder = new TextDecoder();
 
-function effectiveLimit(opts: BodyOptions, contentType: string): number {
+export function effectiveLimit(opts: BodyOptions, contentType: string): number {
   if (contentType.startsWith("application/json")) return Math.min(opts.maxSize, opts.json.limit);
   if (contentType.startsWith("application/x-www-form-urlencoded")) {
     return Math.min(opts.maxSize, opts.form.limit);
@@ -32,7 +51,7 @@ function assertDeclaredSize(req: Request, limit: number): void {
   }
 }
 
-async function readBody(req: Request, limit: number): Promise<Uint8Array> {
+export async function readBody(req: Request, limit: number): Promise<Uint8Array> {
   assertDeclaredSize(req, limit);
   if (!req.body) return new Uint8Array();
 
@@ -100,23 +119,7 @@ async function parseMultipart(req: Request, opts: BodyOptions) {
       body,
     });
     const form = await parsedRequest.formData();
-    let files = 0;
-    for (const value of form.values()) {
-      if (value instanceof File) {
-        files++;
-        if (files > opts.multipart.maxFiles) {
-          throw new HttpError(413, "too_many_files", "Too many uploaded files", {
-            limit: opts.multipart.maxFiles,
-          });
-        }
-        if (value.size > opts.multipart.maxFileSize) {
-          throw new HttpError(413, "file_too_large", "Uploaded file is too large", {
-            limit: opts.multipart.maxFileSize,
-            file: value.name,
-          });
-        }
-      }
-    }
+    checkForm(form, opts);
     return form;
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -124,14 +127,77 @@ async function parseMultipart(req: Request, opts: BodyOptions) {
   }
 }
 
-function limitStream(limit: number): TransformStream<Uint8Array, Uint8Array> {
+/**
+ * Parses already-buffered body bytes into a `FormData`: multipart bodies are
+ * re-parsed via `Request.formData()` (the buffered bytes preserve the
+ * boundary in the content-type; `maxFiles` / `maxFileSize` still apply),
+ * urlencoded bodies become string entries, anything else yields an empty
+ * `FormData`. Used by `req.form()`; the size limits were already enforced
+ * while buffering.
+ */
+export async function parseForm(
+  bytes: Uint8Array,
+  opts: BodyOptions,
+  contentType: string,
+): Promise<FormData> {
+  const ct = contentType.toLowerCase();
+  if (ct.startsWith("multipart/form-data")) {
+    if (bytes.byteLength === 0) return new FormData();
+    try {
+      const parsedRequest = new Request("http://x", {
+        method: "POST",
+        headers: { "content-type": contentType },
+        body: bytes,
+      });
+      const form = await parsedRequest.formData();
+      checkForm(form, opts);
+      return form as FormData;
+    } catch (error) {
+      if (error instanceof HttpError) throw error;
+      throw new HttpError(400, "invalid_multipart", "Body is not valid multipart form data");
+    }
+  }
+  if (ct.startsWith("application/x-www-form-urlencoded")) {
+    const params = new URLSearchParams(decoder.decode(bytes));
+    const form = new FormData();
+    for (const [key, value] of params) form.append(key, value);
+    return form;
+  }
+  return new FormData();
+}
+
+function checkForm(form: { values(): IterableIterator<unknown> }, opts: BodyOptions): void {
+  let files = 0;
+  for (const value of form.values()) {
+    // `Request.formData()` yields undici's `FormDataEntryValue`; the runtime
+    // value is Bun's global `File`, so the instanceof check applies.
+    if (value !== null && typeof value === "object" && value instanceof File) {
+      files++;
+      if (files > opts.multipart.maxFiles) {
+        throw new HttpError(413, "too_many_files", "Too many uploaded files", {
+          limit: opts.multipart.maxFiles,
+        });
+      }
+      if (value.size > opts.multipart.maxFileSize) {
+        throw new HttpError(413, "file_too_large", "Uploaded file is too large", {
+          limit: opts.multipart.maxFileSize,
+          file: value.name,
+        });
+      }
+    }
+  }
+}
+
+export function limitStream(limit: number): TransformStream<Uint8Array, Uint8Array> {
   let size = 0;
   return new TransformStream<Uint8Array, Uint8Array>({
     transform(chunk, controller) {
       size += chunk.byteLength;
       if (size > limit) {
-        controller.error(new HttpError(413, "payload_too_large", "Payload too large", { limit }));
-        return;
+        // Erroring the stream with the HttpError (spec-equal to
+        // `controller.error`) delivers the 413 to the consumer's read()
+        // as a clean rejection.
+        throw new HttpError(413, "payload_too_large", "Payload too large", { limit });
       }
       controller.enqueue(chunk);
     },

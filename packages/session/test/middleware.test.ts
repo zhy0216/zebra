@@ -1,7 +1,13 @@
 import { expect, test } from "bun:test";
 import { Zebra, type ZebraRequest } from "@zebra/core";
 
-import { MemoryStore, getSession, sessionMiddleware, sign } from "../src/index.ts";
+import {
+  SECURE_COOKIE,
+  MemoryStore,
+  getSession,
+  sessionMiddleware,
+  sign,
+} from "../src/index.ts";
 import type { SessionStore } from "../src/store.ts";
 import { verify } from "../src/sign.ts";
 
@@ -204,4 +210,51 @@ test("verified sessions enter core's non-ephemeral session scope (injectSession 
 
 test("missing secret throws at construction", () => {
   expect(() => sessionMiddleware({ secret: "" })).toThrow(/secret is required/);
+});
+
+test("SECURE_COOKIE preset carries HttpOnly + SameSite=Lax", () => {
+  expect(SECURE_COOKIE).toEqual({ httpOnly: true, sameSite: "lax" });
+});
+
+test("preset: secure cookie adds HttpOnly and SameSite=Lax to Set-Cookie", async () => {
+  const store = new MemoryStore({ ttl: 30_000 });
+  const mw = sessionMiddleware({ secret: SECRET, cookie: { preset: "secure" }, store });
+  const app = new Zebra({ session: { resolver: mw.resolver, ttl: 30_000 } });
+  app.use(mw);
+  app.get("/", async () => new Response("hi"));
+
+  const res = await app.dispatch(new Request("http://test.local/"));
+  const setCookie = res.headers.get("set-cookie");
+  expect(setCookie).toContain("HttpOnly");
+  expect(setCookie).toContain("SameSite=Lax");
+});
+
+test("explicit cookie attributes override the secure preset", async () => {
+  const store = new MemoryStore({ ttl: 30_000 });
+  const mw = sessionMiddleware({
+    secret: SECRET,
+    cookie: { preset: "secure", sameSite: "strict", httpOnly: false },
+    store,
+  });
+  const app = new Zebra({ session: { resolver: mw.resolver, ttl: 30_000 } });
+  app.use(mw);
+  app.get("/", async () => new Response("hi"));
+
+  const res = await app.dispatch(new Request("http://test.local/"));
+  const setCookie = res.headers.get("set-cookie");
+  expect(setCookie).toContain("SameSite=Strict");
+  expect(setCookie).not.toContain("HttpOnly");
+});
+
+test("default cookie stays plain: no HttpOnly / SameSite flags (v1 frozen default)", async () => {
+  const store = new MemoryStore({ ttl: 30_000 });
+  const mw = sessionMiddleware({ secret: SECRET, store });
+  const app = new Zebra({ session: { resolver: mw.resolver, ttl: 30_000 } });
+  app.use(mw);
+  app.get("/", async () => new Response("hi"));
+
+  const res = await app.dispatch(new Request("http://test.local/"));
+  const setCookie = res.headers.get("set-cookie");
+  expect(setCookie).not.toContain("HttpOnly");
+  expect(setCookie).not.toContain("SameSite");
 });
