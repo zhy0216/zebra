@@ -2,30 +2,37 @@
 
 > A Bun-first TypeScript web framework with first-class dependency injection. Built on `Bun.serve` and Web Standard `Request`/`Response` — no Node compat layer. Every app is built around a DI `Container` whose graph is validated at boot.
 
-Zebra v2 (current) is a rewrite. v1 (2019) is archived on the `v1-archive` git tag. The framework is at v0.1 MVP status: DI container, radix router, middleware, app + lifecycle, static files, and testing helpers are implemented. Validation, OpenAPI, session, WebSocket, CORS, and rate-limit are planned packages.
+Zebra v2 (current) is a rewrite. v1 (2019) is archived on the `v1-archive` git tag. The framework is at v0.2: DI container, radix router, middleware, app + lifecycle, static files, testing helpers, and contract-first (`@zebra/contract`, `app.implement`, `@zebra/client`, `createTestClient`). OpenAPI, session, WebSocket, CORS, and rate-limit are planned packages.
 
 Core principles:
 - DI is mandatory, not bolted on. Routes and middleware declare their dependencies via a named-object spec (`{ svc: Service }`); the container resolves them and validates the full graph (circular deps, scope violations) at boot. The `Zebra` instance exposes `injectSingleton` / `injectRequest` / `injectTransient` / `injectSession` (class bindings), `injectFactorySingleton`/`injectFactoryRequest`/… (factory bindings, with optional declared-deps form for boot validation), and `injectValue` (value bindings) — so most apps never construct a `Container` directly.
 - Web Standards. Handlers receive a `ZebraRequest` (a `Request` superset with `params`, `query`, and lazy body parsing) and return a `Response` or value.
 - Structured errors. Default error responses follow RFC 9457 (Problem+Json) via `HttpError`.
+- Contract-first (oRPC style). Contracts are frozen pure-data defs built with the chained, immutable `zc` builder (`zc.get(path).params(s).query(s).body(s).output(s).status(n).errors(e).meta(m)`); schemas use Standard Schema V1 (`~standard`, works with Zod/Valibot/ArkType). `app.implement(proc | router, deps?, impls, opts?)` constrains and runtime-validates handlers (params/query/body → 422 with prefixed issues; output re-validated and stripped; raw Response passthrough; 204 → empty body). `@zebra/client` `createClient(router, { baseUrl, fetch?, headers? })` derives a type-safe client (types only; non-2xx throws `ClientError {status, code, problem, response}`; zero runtime deps, browser-safe). Contract, core, and client each vendor the protocol + Standard Schema interfaces (parity guarded by type tests). `app.routeTable` and `RegisteredRoute.contract` are the OpenAPI/introspection seam.
 - Four DI scopes: singleton, request, session, transient — with scope-rank rules enforced at boot.
 
 ## Docs
 
 - [README](README.md): install, quick start, features, package layout
 - [Design spec (v0.1 → v1.0 surface)](docs/superpowers/specs/2026-05-16-zebra-v2-design.md): the authoritative design document for the rewrite
+- [Contract-first design spec](docs/superpowers/specs/2026-08-09-zebra-contract-first-design.md): the v0.2 contract-first design (claims the v0.2 slot; OpenAPI slips to v0.3)
 - [v2 MVP plan](docs/superpowers/plans/2026-05-16-zebra-v2-mvp.md): implementation plan and milestones
 - [LICENSE](LICENSE): MIT
 
 ## Packages
 
 - [`zebra`](packages/zebra): public facade — re-exports `@zebra/core`
-- [`@zebra/core`](packages/core): app, DI container, radix router, HTTP layer, middleware, lifecycle
-- [`@zebra/testing`](packages/testing): `createTestApp` for in-process integration tests (no sockets)
+- [`@zebra/core`](packages/core): app, DI container, radix router, HTTP layer, middleware, lifecycle, contract implement + routeTable
+- [`@zebra/contract`](packages/contract): contract builder (`zc`), `prefix`, protocol (Standard Schema V1; zero deps)
+- [`@zebra/client`](packages/client): `createClient` derived typed client (zero deps)
+- [`@zebra/testing`](packages/testing): `createTestApp` + `createTestClient` in-process (no sockets)
 
 ## Public API surface (`packages/core/src/index.ts`)
 
 - App: `Zebra`, `ZebraOptions`, `RouteHandler`, `DepsSpec`, `RegisteredRoute`, `GroupApi`, `LifecycleEvent`, `LifecycleHandler`, `validateGraph`
+- Contract (core): `implement` (single/bulk overloads), `routeTable`, `ContractHandler`, `ContractProcedure`, `RouterImpl`, `ImplementOptions`, `isContractProcedure`
+- Contract (shared): `zc` chain (`@zebra/contract`), `prefix`, `StandardSchemaV1`, `InferParams/Query/Body/Output`
+- Client: `createClient`, `ClientError`, `ContractClient`, `ClientOptions` (`@zebra/client`)
 - DI: `Container`, `token`, `Token`, `injectable`, `inject`, `ScopeKind`, `Disposable`, `CircularDependencyError`, `UnboundTokenError`, `ScopeMismatchError`
 - HTTP: `ZebraRequest`, `buildRequest`, `HttpError`, `toProblemJson`, `ProblemJson`
 - Middleware: `Middleware`, `middleware`, `getMiddlewareDeps`
@@ -42,8 +49,9 @@ Core principles:
 
 - [`examples/hello`](examples/hello): minimal Zebra app
 - [`examples/blog`](examples/blog): DI services, route groups, structured errors
+- [`examples/contract-blog`](examples/contract-blog): contract-first end-to-end (`start` server, `client` typed round-trip)
 
-Run from repo root: `bun --filter example-hello start` or `bun --filter example-blog start`.
+Run from repo root: `bun --filter example-hello start`, `bun --filter example-blog start`, or `bun --filter example-contract-blog start` / `client`.
 
 ## Tooling
 

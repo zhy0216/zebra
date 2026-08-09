@@ -10,6 +10,7 @@ A Bun-first TypeScript web framework with first-class DI.
 - **DI is mandatory, not bolted on.** Every app is built around a `Container`. Routes and middleware declare their dependencies; the container validates the full graph at boot.
 - **Named-object route DI.** `app.get(path, { svc: Service }, (req, { svc }) => ...)` — explicit, type-safe, no string-parsing tricks.
 - **Structured errors.** Default error responses follow RFC 9457 (Problem+Json).
+- **Contract-first (oRPC style).** Define a contract once (`zc.get(path).params(s).query(s).body(s).output(s)`), implement it on the server with full type inference + runtime validation (`app.implement`), and derive a type-safe client from the same contract (`createClient` / `createTestClient`).
 
 ## Install
 
@@ -89,31 +90,37 @@ const z = new Zebra({ container });
 - **Static files** — `app.static()` with path-traversal defense, weak ETags, conditional requests, and byte ranges.
 - **Lifecycle** — boot/ready/shutdown hooks, graceful draining, and disposable cleanup wired to `Bun.serve`.
 - **Session-scoped DI** — session-id resolution, idle TTL, explicit `disposeSession()`, and request-local anonymous sessions.
-- **Testing** — `@zebra/testing` `createTestApp` runs requests in-process without opening sockets.
+- **Testing** — `@zebra/testing` `createTestApp` runs requests in-process without opening sockets; `createTestClient` gives a typed contract client over that app.
+- **Contract-first** — `@zebra/contract` (Standard Schema V1 builder + protocol), `app.implement` with input/output validation, `@zebra/client` (derived typed client, zero deps).
 
 ## Examples
 
 - [`examples/hello`](examples/hello) — minimal Zebra app.
 - [`examples/blog`](examples/blog) — DI services, route groups, structured errors.
+- [`examples/contract-blog`](examples/contract-blog) — contract-first: shared contract, `app.implement`, typed client round-trip.
 
 Run an example from the repo root:
 
 ```sh
 bun --filter example-hello start
 bun --filter example-blog start
+bun --filter example-contract-blog start      # contract-first server
+bun --filter example-contract-blog client     # typed client round-trip
 ```
 
 ## Packages
 
-| Package          | What it is                                          |
-| ---------------- | --------------------------------------------------- |
-| `zebra`          | Public facade — re-exports `@zebra/core`            |
-| `@zebra/core`    | App, DI container, router, HTTP, middleware         |
-| `@zebra/testing` | `createTestApp` for in-process integration tests    |
+| Package           | What it is                                          |
+| ----------------- | --------------------------------------------------- |
+| `zebra`           | Public facade — re-exports `@zebra/core`            |
+| `@zebra/core`     | App, DI container, router, HTTP, middleware, `implement` |
+| `@zebra/contract` | Contract builder + protocol (Standard Schema V1, zero deps) |
+| `@zebra/client`   | Derived type-safe client (zero deps)                |
+| `@zebra/testing`  | `createTestApp` / `createTestClient` in-process     |
 
 ## Status
 
-v0.1 MVP is implemented. The core, testing helper, facade, examples, and all v0.1 behaviors are covered by the repository test suite. See the [design spec](docs/superpowers/specs/2026-05-16-zebra-v2-design.md) for the full v0.1 → v1.0 surface; validation, OpenAPI, cookie-session middleware, WebSocket, CORS, and rate-limit remain planned packages.
+v0.1 MVP is implemented (core, testing, facade, examples). v0.2 adds contract-first: `@zebra/contract`, `app.implement`, `@zebra/client`, `createTestClient`. OpenAPI, cookie-session middleware, WebSocket, CORS, and rate-limit remain planned packages (OpenAPI consumes the `routeTable` seam).
 
 ## License
 
