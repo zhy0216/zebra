@@ -12,6 +12,11 @@ A Bun-first TypeScript web framework with first-class DI.
 - **Structured errors.** Default error responses follow RFC 9457 (Problem+Json).
 - **Contract-first (oRPC style).** Define a contract once (`zc.get(path).params(s).query(s).body(s).output(s).status(n).errors(e).meta(m)`), implement it on the server with full type inference + runtime validation (`app.implement`), and derive a type-safe client from the same contract (`createClient` / `createTestClient`).
 
+## Documentation
+
+- [Docs site](docs/site/) — guides: quick start, DI, routing, contract-first, per-package guides, migration
+- [API freeze](docs/api-freeze.md) — the frozen v1.0 surface and SemVer policy
+
 ## Install
 
 ```sh
@@ -127,7 +132,17 @@ bun --filter example-contract-blog client     # typed client round-trip
 
 ## Status
 
-v0.2.0 is released: core (DI, radix router, middleware, lifecycle, static files) + contract-first (`@zebra/contract`, `app.implement`, `@zebra/client`, `createTestClient`) + testing helpers + examples. v0.3 is complete: `@zebra/session`, `@zebra/cors`, and `@zebra/rate-limit` middleware shipped with tests. v0.4 in progress: WebSocket (`app.ws()` with DI upgrade decision and session-scope integration) is implemented in core with end-to-end tests; v1.0 tracks API freeze, docs site, and benchmarks.
+**v1.0.0 is in preparation: API freeze is complete.** The public API surface of
+all packages (`zebra` facade, `@zebra/core`, `@zebra/contract`, `@zebra/client`,
+`@zebra/testing`, `@zebra/session`, `@zebra/cors`, `@zebra/rate-limit`) is frozen
+as of [docs/api-freeze.md](docs/api-freeze.md) — that document defines the v1
+stability promise and the SemVer version policy (what requires a major). The
+framework includes DI (singleton / request / session / transient scopes), radix
+router, middleware, lifecycle, static files, WebSocket (`app.ws()` with DI
+upgrade decision), contract-first (`@zebra/contract`, `app.implement`,
+`@zebra/client`, `createTestClient`), cookie sessions, CORS, rate limiting, and
+testing helpers. Final v1.0.0 release tracks the remaining C2–C4 items (docs
+site, benchmarks, release pipeline).
 
 ## License
 

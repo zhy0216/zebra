@@ -2,10 +2,12 @@
   "name": "zebra-monorepo",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*", "examples/*"],
+  "workspaces": ["packages/*", "examples/*", "bench"],
   "scripts": {
     "test": "bun test",
+    "bench": "bun run bench/bench.ts",
     "build": "bun --filter='*' run build",
+    "release": "bun scripts/release.ts",
     "typecheck": "bun --filter='*' run typecheck",
     "lint": "biome check .",
     "format": "biome format --write ."
