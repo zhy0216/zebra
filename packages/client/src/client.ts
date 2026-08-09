@@ -31,7 +31,7 @@ async function problemFrom(res: Response): Promise<ProblemJson> {
     type: "https://errors.zebra.dev/request_failed",
     status: res.status,
     title: `Request failed with status ${res.status}`,
-    instance: new URL(res.url).pathname,
+    instance: res.url !== "" ? new URL(res.url).pathname : "/",
   };
 }
 
