@@ -10,7 +10,7 @@ A Bun-first TypeScript web framework with first-class DI.
 - **DI is mandatory, not bolted on.** Every app is built around a `Container`. Routes and middleware declare their dependencies; the container validates the full graph at boot.
 - **Named-object route DI.** `app.get(path, { svc: Service }, (req, { svc }) => ...)` — explicit, type-safe, no string-parsing tricks.
 - **Structured errors.** Default error responses follow RFC 9457 (Problem+Json).
-- **Contract-first (oRPC style).** Define a contract once (`zc.get(path).params(s).query(s).body(s).output(s)`), implement it on the server with full type inference + runtime validation (`app.implement`), and derive a type-safe client from the same contract (`createClient` / `createTestClient`).
+- **Contract-first (oRPC style).** Define a contract once (`zc.get(path).params(s).query(s).body(s).output(s).status(n).errors(e).meta(m)`), implement it on the server with full type inference + runtime validation (`app.implement`), and derive a type-safe client from the same contract (`createClient` / `createTestClient`).
 
 ## Install
 
@@ -83,7 +83,7 @@ const z = new Zebra({ container });
 ## Features
 
 - **DI container** — `@injectable` classes, token bindings, four scopes (singleton / request / session / transient), boot-time circular-dependency and scope checks.
-- **Routing** — radix-tree router with params (`/:id`) and wildcards; `app.get` / `post` / `put` / `delete`.
+- **Routing** — radix-tree router with params (`/:id`) and wildcards; `app.get` / `post` / `put` / `patch` / `delete`.
 - **Groups** — `app.group("/blogs", g => { ... })` with prefix and per-group middleware scoping.
 - **Middleware** — Koa-style compose, dep-aware `middleware()` helper, default Problem+Json error middleware.
 - **HTTP** — `ZebraRequest` with lazy body parsing, content-type-aware body parser with size limits, `HttpError` for structured failures.
@@ -120,7 +120,7 @@ bun --filter example-contract-blog client     # typed client round-trip
 
 ## Status
 
-v0.1 MVP is implemented (core, testing, facade, examples). v0.2 adds contract-first: `@zebra/contract`, `app.implement`, `@zebra/client`, `createTestClient`. OpenAPI, cookie-session middleware, WebSocket, CORS, and rate-limit remain planned packages (OpenAPI consumes the `routeTable` seam).
+v0.2.0 is released: core (DI, radix router, middleware, lifecycle, static files) + contract-first (`@zebra/contract`, `app.implement`, `@zebra/client`, `createTestClient`) + testing helpers + examples. v0.3 plans `@zebra/openapi` (consumes the `routeTable` seam) and `@zebra/session`; CORS, rate-limit, and WebSocket remain planned packages.
 
 ## License
 
