@@ -2,6 +2,18 @@ import type { BindingBuilder } from "../di/binding.ts";
 import { Container } from "../di/container.ts";
 import { ScopeKind } from "../di/scope.ts";
 import type { ClassConstructor, Identifier } from "../di/token.ts";
+import { buildContractHandler } from "../contract/implement.ts";
+import {
+  isContractProcedure,
+  type ContractProcedureDef,
+} from "../contract/protocol.ts";
+import {
+  isHandlerEntry,
+  type ContractHandler,
+  type ContractProcedure,
+  type ImplementOptions,
+  type ProcedureImpl,
+} from "../contract/types.ts";
 import type { BodyOptions } from "../http/body.ts";
 import { HttpError } from "../http/errors.ts";
 import { buildRequest } from "../http/request.ts";
@@ -275,11 +287,64 @@ export class Zebra {
     deps: DepsSpec | null,
     handler: RouteHandler,
     extraMws: Middleware[] = [],
+    contract?: ContractProcedureDef,
   ): void {
     this.assertNotFrozen("routes");
-    const route: RegisteredRoute = { method, path, deps, handler, middlewares: extraMws };
+    const route: RegisteredRoute = {
+      method,
+      path,
+      deps,
+      handler,
+      middlewares: extraMws,
+      ...(contract !== undefined ? { contract } : {}),
+    };
     this.routes.push(route);
     this.router.add(method, path, route);
+  }
+
+  implement<Def extends ContractProcedureDef>(
+    proc: ContractProcedure<Def>,
+    handler: ContractHandler<Def>,
+  ): void;
+  implement<Def extends ContractProcedureDef, D extends DepsSpec>(
+    proc: ContractProcedure<Def>,
+    deps: D,
+    handler: ContractHandler<Def, ResolvedDeps<D>>,
+    opts?: ImplementOptions,
+  ): void;
+  implement(procOrRouter: unknown, depsOrImpls: unknown, implsOrOpts?: unknown, opts?: unknown): void {
+    if (isContractProcedure(procOrRouter)) {
+      const def = procOrRouter.def;
+      if (implsOrOpts === undefined) {
+        this.registerContract(def, null, depsOrImpls as ProcedureImpl<any, any>, undefined);
+      } else {
+        this.registerContract(
+          def,
+          depsOrImpls as DepsSpec,
+          implsOrOpts as ProcedureImpl<any, any>,
+          opts as ImplementOptions | undefined,
+        );
+      }
+      return;
+    }
+    throw new Error("implement(router, ...) is not implemented yet");
+  }
+
+  private registerContract(
+    def: ContractProcedureDef,
+    deps: DepsSpec | null,
+    entry: ProcedureImpl<any, any>,
+    opts: ImplementOptions | undefined,
+  ): void {
+    this.assertNotFrozen("routes");
+    const entryHandler = isHandlerEntry(entry) ? entry : { handler: entry };
+    const middlewares = entryHandler.middlewares ?? [];
+    if (opts?.middlewares) middlewares.push(...opts.middlewares);
+    const wrapped = buildContractHandler(def, entryHandler.handler, {
+      exposeStack: this.exposeStack,
+      validateOutput: opts?.validateOutput ?? true,
+    });
+    this.register(def.method, def.path, deps, wrapped, middlewares, def);
   }
 
   get<const Path extends string>(path: Path, handler: RouteHandler<never, PathParams<Path>>): void;
