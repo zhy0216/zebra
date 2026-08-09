@@ -1,0 +1,15 @@
+{
+  "name": "example-better-auth",
+  "version": "0.0.0",
+  "dependencies": {
+    "@better-auth/kysely-adapter": "1.6.26",
+    "better-auth": "1.6.26",
+    "zebra": "workspace:*"
+  },
+  "private": true,
+  "scripts": {
+    "start": "bun run src/main.ts",
+    "test": "bun test"
+  },
+  "type": "module"
+}

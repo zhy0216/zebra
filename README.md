@@ -104,10 +104,11 @@ const z = new Zebra({ container });
 
 ## Examples
 
-- [`examples/hello`](examples/hello) — minimal Zebra app.
-- [`examples/blog`](examples/blog) — DI services, route groups, structured errors.
-- [`examples/contract-blog`](examples/contract-blog) — contract-first: shared contract, `app.implement`, typed client round-trip.
-- [`examples/forum`](examples/forum) — full-featured: contract-first API, DI, signed-cookie sessions, per-user rate limiting, CORS, WebSocket live feed, static frontend, integration tests.
+- [`examples/hello`](examples/hello) — minimal Zebra app — http://localhost:3000
+- [`examples/blog`](examples/blog) — DI services, route groups, structured errors — http://localhost:3001
+- [`examples/contract-blog`](examples/contract-blog) — contract-first: shared contract, `app.implement`, typed client round-trip — http://localhost:3001
+- [`examples/forum`](examples/forum) — full-featured: contract-first API, DI, signed-cookie sessions, per-user rate limiting, CORS, WebSocket live feed, static frontend, integration tests — http://localhost:3002
+- [`examples/better-auth`](examples/better-auth) — Better Auth integration: one middleware mounts `/api/auth/*`, protected routes via server-side session checks, `bun:sqlite` storage, integration tests — http://localhost:3003
 
 Run an example from the repo root:
 
@@ -119,6 +120,8 @@ bun --filter example-contract-blog client     # typed client round-trip
 bun --filter example-forum start              # forum: http://localhost:3002
 bun --filter example-forum client             # typed client round-trip
 bun --filter example-forum test               # in-process integration tests
+bun --filter example-better-auth start        # better-auth: http://localhost:3003
+bun --filter example-better-auth test         # in-process integration tests
 ```
 
 ## Packages
