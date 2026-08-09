@@ -9,7 +9,7 @@ Zebra v0.3 → v1.0 路线图（**不含 OpenAPI**，用户明确排除）。
 | Priority | 阶段 | 文件 |
 | -------- | ---- | ---- |
 | P0 | v0.3 | ✅ [01-session.md](done/01-session.md) |
-| P0 | v0.3 | [02-cors.md](02-cors.md) |
+| P0 | v0.3 | ✅ [02-cors.md](done/02-cors.md) |
 | P0 | v0.3 | [03-rate-limit.md](03-rate-limit.md) |
 | P1 | v0.4 | [04-websocket.md](04-websocket.md) |
 | P2 | v1.0 | [05-v1-release.md](05-v1-release.md) |
@@ -18,7 +18,7 @@ Zebra v0.3 → v1.0 路线图（**不含 OpenAPI**，用户明确排除）。
 ## 文件
 
 - [✅ 01-session.md](done/01-session.md) — `@zebra/session`：cookie 会话中间件 + 可插拔 store，接入 core 现有 session scope
-- [02-cors.md](02-cors.md) — `@zebra/cors`：预检 + 响应头注入
+- [✅ 02-cors.md](done/02-cors.md) — `@zebra/cors`：预检 + 响应头注入
 - [03-rate-limit.md](03-rate-limit.md) — `@zebra/rate-limit`：滑动窗口限流 + 可插拔 store
 - [04-websocket.md](04-websocket.md) — `@zebra/websocket`：`app.ws()`，Bun.serve upgrade 路径 + DI
 - [05-v1-release.md](05-v1-release.md) — v1.0：API 冻结、文档站点、benchmark、发布流程
