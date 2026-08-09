@@ -62,7 +62,7 @@ test("createTestClient surfaces 422 as ClientError with problem errors", async (
     await api.create({ body: { title: "", content: "x" } });
     expect.unreachable();
   } catch (err) {
-    const e = err as { status: number; code: string; problem: { errors: Array<{ path: string }> } };
+    const e = err as { status: number; code: string; problem: { errors: Array<{ path: string; message: string }> } };
     expect(e.status).toBe(422);
     expect(e.code).toBe("validation_failed");
     expect(e.problem.errors).toEqual([{ path: "body.title", message: "String must contain at least 1 character(s)" }]);
