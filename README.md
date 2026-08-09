@@ -92,6 +92,7 @@ const z = new Zebra({ container });
 - **Session-scoped DI** — session-id resolution, idle TTL, explicit `disposeSession()`, and request-local anonymous sessions.
 - **Cookie sessions** — `@zebra/session` middleware: HMAC-SHA256 signed `sid` cookies, `req.ctx.session` read/write with `getSession(req)`, pluggable `SessionStore` (in-memory default), rolling TTL renewal, and session-fixation protection (destroyed/expired ids are never revived).
 - **CORS** — `@zebra/cors` middleware: origin allowlists (string/array/RegExp/predicate), preflight handling (204 + full header set), credentials with exact-origin echo, `Vary: Origin` on dynamic matches.
+- **Rate limiting** — `@zebra/rate-limit` middleware: fixed-window per-key counters (lazy window rotation, atomic increments), pluggable `RateLimitStore` (in-memory default), 429 Problem+Json with `X-RateLimit-*` / `Retry-After` headers.
 - **Testing** — `@zebra/testing` `createTestApp` runs requests in-process without opening sockets; `createTestClient` gives a typed contract client over that app.
 - **Contract-first** — `@zebra/contract` (Standard Schema V1 builder + protocol), `app.implement` with input/output validation, `@zebra/client` (derived typed client, zero deps).
 
@@ -120,11 +121,12 @@ bun --filter example-contract-blog client     # typed client round-trip
 | `@zebra/client`   | Derived type-safe client (zero deps)                |
 | `@zebra/session`  | Cookie sessions: HMAC-signed `sid`, pluggable store, fixation-safe |
 | `@zebra/cors`     | CORS middleware: preflight, origin allowlists, credentials echo |
+| `@zebra/rate-limit` | Fixed-window rate limiting: 429 Problem+Json, `X-RateLimit-*` headers, pluggable store |
 | `@zebra/testing`  | `createTestApp` / `createTestClient` in-process     |
 
 ## Status
 
-v0.2.0 is released: core (DI, radix router, middleware, lifecycle, static files) + contract-first (`@zebra/contract`, `app.implement`, `@zebra/client`, `createTestClient`) + testing helpers + examples. v0.3 in progress: `@zebra/session` (HMAC-signed cookie middleware, pluggable store, session scope wiring) and `@zebra/cors` (preflight + header injection) are implemented with tests; rate-limit is the next planned package, then WebSocket for v0.4.
+v0.2.0 is released: core (DI, radix router, middleware, lifecycle, static files) + contract-first (`@zebra/contract`, `app.implement`, `@zebra/client`, `createTestClient`) + testing helpers + examples. v0.3 in progress: `@zebra/session`, `@zebra/cors`, and `@zebra/rate-limit` (fixed-window, pluggable store, 429 Problem+Json) are implemented with tests — the v0.3 middleware suite is complete; WebSocket follows for v0.4.
 
 ## License
 

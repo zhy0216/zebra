@@ -1,19 +1,26 @@
-// C1: `RateLimitStore` interface — minimal placeholder; the contract is
-// finalized in C4 (`packages/rate-limit/src/store.ts`).
+// C4: `RateLimitStore` interface + `MemoryStore` default implementation.
 //
-// C4 contract (from todos/03-rate-limit.md): pluggable storage with
-// `increment(key, windowMs)` → `{ count, resetAt }` and `reset(key)`. The
-// interface stays independent of the in-memory implementation so a later
-// adapter (e.g. `@zebra/rate-limit-redis`) can implement it without touching
-// this module. Semantics: `count` is the number of requests already counted
-// inside the current window — *not* the remaining budget (a fixed-window
-// counter, see C2); `resetAt` is the epoch ms when the window expires and the
-// count resets. C4 settles whether `windowMs` is passed per call (as below)
-// or only at `MemoryStore({ windowMs })` construction (C1's default-store
-// wording).
+// The interface is deliberately independent of any storage backend so that a
+// later adapter package (e.g. `@zebra/rate-limit-redis`) can implement it
+// without touching this module. It only speaks string keys and number
+// windows — no Map, no entries — and the count semantics are pinned: the
+// return value is the number of requests counted *inside* the current
+// window, never the remaining budget (the middleware derives
+// `remaining = max - count`, see C2/C3).
+
+export interface MemoryStoreOptions {
+  /**
+   * Default window length in milliseconds. Used when `increment` is called
+   * without an explicit `windowMs`.
+   */
+  windowMs?: number;
+}
 
 export interface IncrementResult {
-  /** Requests counted inside the current window (not the remaining budget). */
+  /**
+   * Requests counted inside the current window, this request included (the
+   * first request of a window returns count 1). Not the remaining budget.
+   */
   count: number;
   /** Epoch ms at which the current window expires and the count resets. */
   resetAt: number;
@@ -21,16 +28,71 @@ export interface IncrementResult {
 
 /**
  * Pluggable rate-limit counter storage. All methods are async so backends
- * with I/O (Redis, Postgres, ...) can implement it. Per-key counters expire
- * with their window; expired keys may be dropped lazily.
+ * with I/O (Redis, Postgres, ...) can implement it.
+ *
+ * Semantics (pinned by C2/C3): `count` is the number of requests already
+ * counted *inside* the current window — never the remaining budget, which
+ * callers derive as `max - count`. `windowMs` is passed per call so one
+ * store can serve keys with different windows; implementations may also
+ * carry their own default. Per-key counters expire with their window;
+ * expired keys may be dropped lazily.
  */
 export interface RateLimitStore {
   /**
-   * Counts one request for `key` inside the current window. `windowMs`
-   * overrides the store default when given. Returns the new in-window count
-   * and the window reset time.
+   * Counts one request for `key` inside the current window of `windowMs`
+   * milliseconds, returning the new in-window count and the window reset
+   * time in epoch ms. When the current window is already past, a fresh
+   * window starts with count 1.
    */
-  increment(key: string, windowMs?: number): Promise<IncrementResult>;
+  increment(key: string, windowMs: number): Promise<IncrementResult>;
   /** Drops the counter for `key`; the next increment starts a fresh window. */
   reset(key: string): Promise<void>;
+}
+
+interface Entry {
+  count: number;
+  resetAt: number;
+}
+
+/**
+ * Default in-memory implementation backed by a `Map`. Fixed windows are
+ * opened lazily: the first `increment` for a key starts a window expiring at
+ * `Date.now() + windowMs`; once past, the next `increment` replaces it with a
+ * fresh one. No timers are used, so nothing can leak.
+ *
+ * Atomicity: the check-and-update below runs entirely in one synchronous
+ * section of the async body — no `await` sits between reading `buckets` and
+ * writing it back — so on the single-threaded event loop the read-modify-
+ * write is atomic: concurrent increments cannot interleave and drop a count,
+ * no locks or CAS needed.
+ */
+export class MemoryStore implements RateLimitStore {
+  private readonly windowMs: number | undefined;
+  private readonly buckets = new Map<string, Entry>();
+
+  constructor(options: MemoryStoreOptions = {}) {
+    this.windowMs = options.windowMs;
+  }
+
+  async increment(key: string, windowMs?: number): Promise<IncrementResult> {
+    const ms = windowMs ?? this.windowMs;
+    if (ms === undefined) {
+      throw new Error(
+        "MemoryStore: increment requires windowMs (constructor option or per-call argument)",
+      );
+    }
+    const now = Date.now();
+    const entry = this.buckets.get(key);
+    if (entry === undefined || now >= entry.resetAt) {
+      const fresh: Entry = { count: 1, resetAt: now + ms };
+      this.buckets.set(key, fresh);
+      return { count: fresh.count, resetAt: fresh.resetAt };
+    }
+    entry.count += 1;
+    return { count: entry.count, resetAt: entry.resetAt };
+  }
+
+  async reset(key: string): Promise<void> {
+    this.buckets.delete(key);
+  }
 }

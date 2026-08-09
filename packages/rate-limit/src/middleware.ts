@@ -14,9 +14,10 @@
 // peer as seen by the edge). Requests without the header share the
 // `anonymous` key rather than being exempt from limiting.
 
-import type { Middleware, ZebraRequest } from "@zebra/core";
+import { HttpError, type Middleware, type ZebraRequest } from "@zebra/core";
 
-import type { RateLimitStore } from "./store.ts";
+import { checkLimit } from "./limiter.ts";
+import { MemoryStore, type RateLimitStore } from "./store.ts";
 
 export interface RateLimitOptions {
   /** Window length in milliseconds. Required. */
@@ -42,6 +43,55 @@ function clientIp(req: { headers: Headers }): string {
   return first === undefined || first === "" ? DEFAULT_KEY : first;
 }
 
+// C3: fixed-window enforcement.
+//
+// Per request: derive the key via `keyBy`, then one atomic
+// `checkLimit(store, key, windowMs, max)` increment. Under the limit the
+// handler runs and the response is wrapped with `X-RateLimit-*` headers on
+// the way out (the "after hook": `await next()` first, wrap afterwards, so a
+// handler exception propagates to core's error middleware untouched — never
+// caught, never swallowed). Over the limit `next()` is never called and an
+// `HttpError(429)` is thrown instead: core's error middleware
+// (`packages/core/src/middleware/error.ts`) turns it into an RFC 9457
+// Problem+Json response (`application/problem+json`, `toProblemJson` copies
+// `detail`), and it copies `err.headers` verbatim — which is how the
+// `Retry-After` plus `X-RateLimit-*` headers ride along on the 429.
+//
+// Header semantics: `X-RateLimit-Limit` = configured `max`,
+// `X-RateLimit-Remaining` = `max - count` floored at 0 (0 on a 429),
+// `X-RateLimit-Reset` = window expiry in epoch *seconds*
+// (`Math.floor(resetAt / 1000)`), `Retry-After` = seconds until the window
+// resets, rounded up and floored at 1.
+
+/** Seconds until `resetAt` (epoch ms), rounded up, never below 1. */
+function retryAfterSeconds(resetAt: number): number {
+  return Math.max(1, Math.ceil((resetAt - Date.now()) / 1000));
+}
+
+function rateLimitHeaders(
+  limit: number,
+  remaining: number,
+  resetAt: number,
+): Record<string, string> {
+  return {
+    "x-rate-limit-limit": String(limit),
+    "x-rate-limit-remaining": String(remaining),
+    // Epoch seconds — the fixed window expires at `resetAt` ms.
+    "x-rate-limit-reset": String(Math.floor(resetAt / 1000)),
+  };
+}
+
+/** Wraps `res` with extra headers, preserving status/statusText/body. */
+function withHeaders(res: Response, headers: Record<string, string>): Response {
+  const merged = new Headers(res.headers);
+  for (const [name, value] of Object.entries(headers)) merged.set(name, value);
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers: merged,
+  });
+}
+
 export function rateLimit(options: RateLimitOptions): Middleware {
   if (typeof options.windowMs !== "number" || options.windowMs <= 0) {
     throw new Error("rateLimit: windowMs must be a positive number");
@@ -49,12 +99,37 @@ export function rateLimit(options: RateLimitOptions): Middleware {
   if (typeof options.max !== "number" || options.max <= 0) {
     throw new Error("rateLimit: max must be a positive number");
   }
+  const windowMs = options.windowMs;
+  const max = options.max;
   const keyBy = options.keyBy ?? clientIp;
-  // C3: fixed-window enforcement — default store `MemoryStore({ windowMs })`,
-  // per-key increment via `store.increment(key, windowMs)` with `keyBy`
-  // (above), 429 on `count > max` with `Retry-After`, `X-RateLimit-*` headers
-  // injected on the response path (after hook, without swallowing handler
-  // exceptions).
-  void keyBy; // consumed by the C3 enforcement below
-  return async (_req, next) => next();
+  const store = options.store ?? new MemoryStore({ windowMs });
+
+  return async (req, next) => {
+    const key = await keyBy(req);
+    const { allowed, remaining, resetAt } = await checkLimit(store, key, windowMs, max);
+
+    // Over the limit: never call `next()`, throw so core's error middleware
+    // emits the Problem+Json 429. The headers ride on the HttpError — core
+    // copies `err.headers` onto the response — so the 429 also carries
+    // `Retry-After` and the `X-RateLimit-*` headers (remaining is 0 here).
+    if (!allowed) {
+      const retryAfter = retryAfterSeconds(resetAt);
+      throw new HttpError(
+        429,
+        "rate_limit_exceeded",
+        "Too Many Requests",
+        { limit: max, retryAfterSeconds: retryAfter },
+        {
+          ...rateLimitHeaders(max, remaining, resetAt),
+          "retry-after": String(retryAfter),
+        },
+      );
+    }
+
+    // Under the limit: run the handler, then inject the headers on the
+    // response path. A handler exception propagates unchanged — it is never
+    // caught here, so core's error middleware still sees the original error.
+    const res = await next();
+    return withHeaders(res, rateLimitHeaders(max, remaining, resetAt));
+  };
 }
