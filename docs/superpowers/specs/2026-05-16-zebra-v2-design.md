@@ -541,3 +541,12 @@ These are deferred but called out so we don't accidentally close doors:
 ## Addendum (2026-05-17): Implicit DI sugar
 
 The DI section of this spec describes the `Container` API in full. After v0.1 shipped, a follow-up spec ([2026-05-17-zebra-implicit-di-design.md](2026-05-17-zebra-implicit-di-design.md)) added `inject*` methods directly on the `Zebra` class and made `ZebraOptions.container` optional. The underlying `Container` API is unchanged; the new methods are sugar that delegate to it. New apps should prefer the sugar; the explicit `Container` path remains for advanced cases (test mocks, shared containers, snapshot/restore).
+
+## Addendum (2026-08-09): Contract-first (oRPC style) — v0.2 redefinition
+
+The v0.2 slot is redefined by [2026-08-09-zebra-contract-first-design.md](2026-08-09-zebra-contract-first-design.md):
+
+- **§8.1 `@zebra/validation` is superseded.** The inline-schema route form (`app.post(path, deps, { body, query }, handler)`) is replaced by the contract path: `zc.get(path).params(s).query(s).body(s).output(s)` → `app.implement(proc | router, deps?, impls, opts?)`. Schema validation still runs against Standard Schema V1, but schemas now live in a standalone contract shared with the client.
+- **§8.2 `@zebra/openapi` slips to v0.3.** The OpenAPI generator will consume the new seams: `def.meta/errors/status`, `app.routeTable` (frozen copies), and `RegisteredRoute.contract`.
+- **New packages:** `@zebra/contract` (contract builder + protocol; zero deps), `@zebra/client` (type-safe client; zero deps), plus core `implement`/`routeTable` and `@zebra/testing.createTestClient`.
+- Route registration, DI, middleware, groups, and the request lifecycle (§6) are unchanged; contract routes are plain registered routes with a validating wrapper handler.
