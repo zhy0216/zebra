@@ -27,7 +27,7 @@ function makeApp(opts: CorsOptions): TestApp {
   app.use(cors(opts));
   app.get("/api/data", async () => Response.json({ ok: true, value: 1 }));
   app.post("/api/data", async (req: ZebraRequest) => {
-    const { value } = await req.body<{ value: number }>();
+    const { value } = (await req.body()) as { value: number };
     return Response.json({ ok: true, value });
   });
   return app;

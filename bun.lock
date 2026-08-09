@@ -71,6 +71,14 @@
         "@zebra/testing": "workspace:*",
       },
     },
+    "packages/rate-limit": {
+      "name": "@zebra/rate-limit",
+      "version": "0.3.0",
+      "devDependencies": {
+        "@zebra/core": "workspace:*",
+        "@zebra/testing": "workspace:*",
+      },
+    },
     "packages/session": {
       "name": "@zebra/session",
       "version": "0.3.0",
@@ -97,6 +105,7 @@
       "dependencies": {
         "@zebra/core": "workspace:*",
         "@zebra/cors": "workspace:*",
+        "@zebra/rate-limit": "workspace:*",
         "@zebra/session": "workspace:*",
       },
     },
@@ -131,6 +140,8 @@
     "@zebra/core": ["@zebra/core@workspace:packages/core"],
 
     "@zebra/cors": ["@zebra/cors@workspace:packages/cors"],
+
+    "@zebra/rate-limit": ["@zebra/rate-limit@workspace:packages/rate-limit"],
 
     "@zebra/session": ["@zebra/session@workspace:packages/session"],
 
