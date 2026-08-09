@@ -1,5 +1,5 @@
 import { ClientError } from "./error.ts";
-import { isProcedure, type ContractProcedureDef, type ProblemJson } from "./protocol.ts";
+import { type ContractProcedureDef, type ProblemJson, isProcedure } from "./protocol.ts";
 import type { ClientOptions, ClientProcedure, ContractClient, ContractRouter } from "./types.ts";
 
 function substitutePath(path: string, params: Record<string, unknown>): string {
@@ -11,10 +11,7 @@ function substitutePath(path: string, params: Record<string, unknown>): string {
   return withParams.replace(/\*([A-Za-z0-9_]+)/g, (_match, name: string) => {
     const value = params[name];
     if (value === undefined) throw new Error(`Missing required path parameter "*${name}"`);
-    return String(value)
-      .split("/")
-      .map(encodeURIComponent)
-      .join("/");
+    return String(value).split("/").map(encodeURIComponent).join("/");
   });
 }
 
@@ -42,7 +39,13 @@ function makeCall(
   resolveHeaders: () => Record<string, string>,
 ): ClientProcedure<ContractProcedureDef> {
   return async (args) => {
-    const { params = {}, query = {}, body, headers = {}, signal } = (args ?? {}) as {
+    const {
+      params = {},
+      query = {},
+      body,
+      headers = {},
+      signal,
+    } = (args ?? {}) as {
       params?: Record<string, unknown>;
       query?: Record<string, unknown>;
       body?: unknown;

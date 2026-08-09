@@ -5,6 +5,10 @@ import { createClient, type ClientArgs, type ClientOutput } from "../src/index.t
 
 const Blog = z.object({ id: z.number(), title: z.string(), content: z.string() });
 
+function stubFetch(): (url: string, init: RequestInit) => Promise<Response> {
+  return async () => new Response("{}", { status: 200 });
+}
+
 const blogContract = {
   list: zc
     .get("/blogs")
@@ -20,14 +24,14 @@ const blogContract = {
 };
 
 test("client call args: declared keys exist and are required", () => {
-  const api = createClient(blogContract, { baseUrl: "http://x" });
+  const api = createClient(blogContract, { baseUrl: "http://x", fetch: stubFetch() });
   api.create({ body: { title: "hi", content: "x" } });
   api.get({ params: { id: 1 } });
   api.list({ query: { page: 2 } });
 });
 
 test("missing declared key is a compile error", () => {
-  const api = createClient(blogContract, { baseUrl: "http://x" });
+  const api = createClient(blogContract, { baseUrl: "http://x", fetch: stubFetch() });
   try {
     // @ts-expect-error create requires body
     api.create({});
@@ -37,7 +41,7 @@ test("missing declared key is a compile error", () => {
 });
 
 test("wrong argument type is a compile error", () => {
-  const api = createClient(blogContract, { baseUrl: "http://x" });
+  const api = createClient(blogContract, { baseUrl: "http://x", fetch: stubFetch() });
   try {
     // @ts-expect-error body.title must be a string
     api.create({ body: { title: 42, content: "x" } });
@@ -47,7 +51,7 @@ test("wrong argument type is a compile error", () => {
 });
 
 test("undeclared key is a compile error", () => {
-  const api = createClient(blogContract, { baseUrl: "http://x" });
+  const api = createClient(blogContract, { baseUrl: "http://x", fetch: stubFetch() });
   try {
     // @ts-expect-error params is not declared on create
     api.create({ body: { title: "t", content: "c" }, params: { id: 1 } });
@@ -58,7 +62,7 @@ test("undeclared key is a compile error", () => {
 
 test("all-optional procedure: the whole args object can be omitted", () => {
   const bare = { ping: zc.get("/ping") };
-  const api = createClient(bare, { baseUrl: "http://x" });
+  const api = createClient(bare, { baseUrl: "http://x", fetch: stubFetch() });
   api.ping();
   api.ping({});
 });
@@ -101,7 +105,7 @@ test("createClient maps a router to a client with nested structure", () => {
     a: zc.get("/a"),
     nested: { b: zc.post("/b") },
   };
-  const api = createClient(router, { baseUrl: "http://x" });
+  const api = createClient(router, { baseUrl: "http://x", fetch: stubFetch() });
   expectTypeOf(api.a).toEqualTypeOf<
     (args: { headers?: Record<string, string>; signal?: AbortSignal } | void) => Promise<unknown>
   >();

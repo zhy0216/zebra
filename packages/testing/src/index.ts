@@ -1,4 +1,4 @@
-import { createClient, type ContractClient } from "@zebra/client";
+import { type ContractClient, createClient } from "@zebra/client";
 import type { ContractRouter } from "@zebra/contract";
 import { Zebra, type ZebraOptions } from "@zebra/core";
 
