@@ -75,7 +75,8 @@ export class Container {
     return this.instantiate(binding, [...stack, { key, name }]);
   }
 
-  protected findBinding<T>(id: Identifier<T>): Binding<T> | undefined {
+  /** Look up a binding across the container chain. */
+  public findBinding<T>(id: Identifier<T>): Binding<T> | undefined {
     return this.bindings.get(keyOf(id)) ?? this.parent?.findBinding(id);
   }
 
@@ -91,9 +92,18 @@ export class Container {
   }
 
   async dispose(): Promise<void> {
-    const disposables = new Set<unknown>(this.instances.values());
+    const seen = new Set<unknown>();
+    const disposables: unknown[] = [];
+    const collect = (value: unknown): void => {
+      if (value === null || (typeof value !== "object" && typeof value !== "function")) return;
+      if (seen.has(value)) return;
+      seen.add(value);
+      disposables.push(value);
+    };
+    // LIFO over instantiation order: dependents are disposed before dependencies.
+    for (const instance of [...this.instances.values()].reverse()) collect(instance);
     for (const binding of this.bindings.values()) {
-      if (binding.kind === "value") disposables.add(binding.target);
+      if (binding.kind === "value") collect(binding.target);
     }
     for (const instance of disposables) {
       if (isDisposable(instance)) await instance.dispose();
@@ -119,10 +129,19 @@ export class Container {
         }
         instance = (binding.target as (r: Record<string, unknown>) => T)(resolved);
       } else {
-        instance = (binding.target as (c: Container) => T)(this);
+        // The factory receives the container matching its scope (root for
+        // singletons, request/session scope for those), never a short-lived
+        // container the singleton was first resolved through.
+        instance = (binding.target as (c: Container) => T)(cacheContainer ?? this);
       }
     } else {
       const cls = binding.target as new (...args: any[]) => T;
+      if (typeof cls !== "function") {
+        const name = displayName(binding.identifier);
+        throw new Error(
+          `Binding for "${name}" has no implementation configured (call .to(), .toSelf(), .toFactory() or .toValue())`,
+        );
+      }
       const deps = getConstructorDeps(cls).map((d) => this.resolveWithStack(d, stack));
       instance = new cls(...deps);
     }

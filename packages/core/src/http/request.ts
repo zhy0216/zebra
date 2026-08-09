@@ -23,7 +23,7 @@ export function buildRequest<P, B = unknown>(
   bodyOpts: BodyOptions = DEFAULT_BODY,
 ): ZebraRequest<P, B> {
   const url = new URL(raw.url);
-  const query: Record<string, string> = {};
+  const query = Object.create(null) as Record<string, string>;
   for (const [k, v] of url.searchParams) query[k] = v;
   let bodyPromise: Promise<B> | null = null;
   return {

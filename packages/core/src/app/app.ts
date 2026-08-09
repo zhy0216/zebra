@@ -15,7 +15,7 @@ import { ScopeKind } from "../di/scope.ts";
 import type { ClassConstructor, Identifier } from "../di/token.ts";
 import type { BodyOptions } from "../http/body.ts";
 import { HttpError } from "../http/errors.ts";
-import { buildRequest } from "../http/request.ts";
+import { type ZebraRequest, buildRequest } from "../http/request.ts";
 import { type StaticOptions, serveStatic } from "../http/static.ts";
 import { compose } from "../middleware/compose.ts";
 import { errorMiddleware } from "../middleware/error.ts";
@@ -43,6 +43,7 @@ const DEFAULT_BODY = {
 
 const DEFAULT_SESSION_TTL = 30 * 60 * 1000;
 const DEFAULT_GRACE_PERIOD = 10_000;
+const MAX_SESSION_ID_LENGTH = 512;
 
 interface SessionScopeRecord {
   container: Container;
@@ -70,6 +71,7 @@ export class Zebra {
     shutdown: [],
   };
   protected server: ReturnType<typeof Bun.serve> | null = null;
+  private readonly errorMw: Middleware;
   private readonly sessionResolver: NonNullable<ZebraOptions["session"]>["resolver"];
   private readonly sessionTtl: number;
   private readonly gracePeriod: number;
@@ -91,6 +93,7 @@ export class Zebra {
       multipart: { ...DEFAULT_BODY.multipart, ...(opts.body?.multipart ?? {}) },
     };
     this.exposeStack = opts.errors?.exposeStack ?? false;
+    this.errorMw = errorMiddleware({ exposeStack: this.exposeStack });
     this.sessionResolver = opts.sessionResolver ?? opts.session?.resolver;
     this.sessionTtl = opts.sessionTtl ?? opts.session?.ttl ?? DEFAULT_SESSION_TTL;
     this.gracePeriod = opts.gracePeriod ?? DEFAULT_GRACE_PERIOD;
@@ -106,7 +109,17 @@ export class Zebra {
 
   /** Frozen copies of all registered routes (OpenAPI/introspection seam). */
   get routeTable(): ReadonlyArray<RegisteredRoute> {
-    return Object.freeze(this.routes.map((route) => Object.freeze({ ...route })));
+    return Object.freeze(
+      this.routes.map((route) => {
+        const copy: RegisteredRoute = {
+          ...route,
+          deps: route.deps ? Object.freeze({ ...route.deps }) : null,
+          middlewares: Object.freeze([...route.middlewares]) as Middleware[],
+        };
+        if (route.contract !== undefined) copy.contract = deepFreeze({ ...route.contract });
+        return Object.freeze(copy);
+      }),
+    );
   }
 
   on(event: LifecycleEvent, fn: LifecycleHandler): this {
@@ -397,6 +410,12 @@ export class Zebra {
             usedHere.add(key);
             this.registerContract(value.def, deps, impl as ProcedureImpl<any, any>, opts);
           }
+        } else if (typeof value !== "object" || value === null) {
+          problems.push(
+            `invalid: ${dotted} — expected a ContractProcedure or ContractRouter, got ${
+              value === null ? "null" : typeof value
+            }`,
+          );
         } else {
           const child = implsNode[key];
           if (child === undefined || typeof child !== "object") {
@@ -498,38 +517,18 @@ export class Zebra {
 
   async dispatch(raw: Request): Promise<Response> {
     this.inFlight++;
-    const url = new URL(raw.url);
-    const matched = this.router.find(raw.method, url.pathname);
-    const route = matched?.handler;
-    const req = buildRequest(raw, matched?.params ?? {}, this.bodyOpts);
-    const errors = errorMiddleware({ exposeStack: this.exposeStack });
-
     try {
-      return await errors(req, async () => {
+      const url = new URL(raw.url);
+      const matched = this.router.find(raw.method, url.pathname);
+      const route = matched?.handler;
+      const req = buildRequest<Record<string, string>>(raw, matched?.params ?? {}, this.bodyOpts);
+
+      return await this.errorMw(req, async () => {
         const scopes = await this.createRequestScopes(raw);
         try {
-          const routeMiddlewares = route?.middlewares ?? [];
-          const allMiddlewares = this.withResolvedDeps(
-            [...this.middlewares, ...routeMiddlewares],
-            scopes.request,
-          );
-
-          return compose(req, allMiddlewares, async () => {
-            if (!route) {
-              throw new HttpError(404, "not_found", `No route for ${raw.method} ${url.pathname}`);
-            }
-
-            const resolved = this.resolveDeps(route.deps, scopes.request);
-            const result = await (route.handler as RouteHandler)(req, resolved);
-            return Zebra.toResponse(result);
-          });
+          return await this.runWithScopes(req, raw, url, route, scopes);
         } finally {
-          await scopes.request.dispose();
-          if (scopes.ephemeralSession) {
-            await scopes.ephemeralSession.dispose();
-          } else if (scopes.sessionId !== undefined) {
-            this.releaseSession(scopes.sessionId);
-          }
+          await this.disposeScopes(scopes);
         }
       });
     } finally {
@@ -541,6 +540,54 @@ export class Zebra {
     }
   }
 
+  private async runWithScopes(
+    req: ZebraRequest<Record<string, string>>,
+    raw: Request,
+    url: URL,
+    route: RegisteredRoute | undefined,
+    scopes: RequestScopes,
+  ): Promise<Response> {
+    const allMiddlewares =
+      route !== undefined && route.middlewares.length > 0
+        ? [...this.middlewares, ...route.middlewares]
+        : this.middlewares;
+
+    return compose(req, this.withResolvedDeps(allMiddlewares, scopes.request), async () => {
+      if (!route) {
+        const allowed = this.router.allowedMethods(url.pathname);
+        if (allowed) {
+          throw new HttpError(405, "method_not_allowed", "Method Not Allowed", undefined, {
+            allow: allowed.join(", "),
+          });
+        }
+        throw new HttpError(404, "not_found", `No route for ${raw.method} ${url.pathname}`);
+      }
+
+      const resolved = this.resolveDeps(route.deps, scopes.request);
+      const result = await (route.handler as RouteHandler)(req, resolved);
+      return Zebra.toResponse(result);
+    });
+  }
+
+  private async disposeScopes(scopes: RequestScopes): Promise<void> {
+    let cleanupError: unknown;
+    try {
+      await scopes.request.dispose();
+    } catch (error) {
+      cleanupError = error;
+    }
+    if (scopes.ephemeralSession) {
+      try {
+        await scopes.ephemeralSession.dispose();
+      } catch (error) {
+        cleanupError ??= error;
+      }
+    } else if (scopes.sessionId !== undefined) {
+      this.releaseSession(scopes.sessionId);
+    }
+    if (cleanupError !== undefined) throw cleanupError;
+  }
+
   private resolveDeps(deps: DepsSpec | null, scope: Container): Record<string, unknown> {
     const resolved: Record<string, unknown> = {};
     if (!deps) return resolved;
@@ -549,6 +596,14 @@ export class Zebra {
   }
 
   private withResolvedDeps(middlewares: Middleware[], scope: Container): Middleware[] {
+    let needsWrap = false;
+    for (const mw of middlewares) {
+      if (getMiddlewareDeps(mw) !== null) {
+        needsWrap = true;
+        break;
+      }
+    }
+    if (!needsWrap) return middlewares;
     return middlewares.map((mw) => {
       const deps = getMiddlewareDeps(mw);
       if (!deps) return mw;
@@ -557,7 +612,13 @@ export class Zebra {
   }
 
   private async createRequestScopes(raw: Request): Promise<RequestScopes> {
-    const sessionId = await this.sessionResolver?.(raw);
+    const resolved = await this.sessionResolver?.(raw);
+    const sessionId =
+      typeof resolved === "string" &&
+      resolved.length > 0 &&
+      resolved.length <= MAX_SESSION_ID_LENGTH
+        ? resolved
+        : undefined;
     if (sessionId === undefined) {
       const session = this.container.createChildScope(ScopeKind.Session);
       return {
@@ -599,6 +660,7 @@ export class Zebra {
 
   private static toResponse(result: unknown): Response {
     if (result instanceof Response) return result;
+    if (result === undefined) return new Response(null, { status: 204 });
     return new Response(JSON.stringify(result), {
       status: 200,
       headers: { "content-type": "application/json; charset=utf-8" },
@@ -651,4 +713,13 @@ export class Zebra {
     if (this.inFlight === 0) return Promise.resolve();
     return new Promise((resolve) => this.drainWaiters.add(resolve));
   }
+}
+
+function deepFreeze<T>(value: T): T {
+  if (value === null || typeof value !== "object" || Object.isFrozen(value)) return value;
+  Object.freeze(value);
+  for (const key of Object.keys(value)) {
+    deepFreeze((value as Record<string, unknown>)[key]);
+  }
+  return value;
 }

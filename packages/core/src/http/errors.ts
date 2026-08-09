@@ -4,9 +4,15 @@ export class HttpError extends Error {
     public readonly code: string,
     public readonly title: string,
     public readonly detail?: unknown,
+    public readonly headers?: Record<string, string>,
   ) {
     super(title);
     this.name = "HttpError";
+    if (!Number.isInteger(status) || status < 400 || status > 599) {
+      throw new RangeError(
+        `HttpError status must be an integer between 400 and 599, got ${status}`,
+      );
+    }
   }
 }
 
@@ -44,7 +50,7 @@ export function toProblemJson(
       title: err.title,
       instance,
     };
-    if (err.detail !== undefined) p.detail = err.detail;
+    if (err.detail !== undefined) p.detail = safeSerialize(err.detail);
     return p;
   }
   if (err instanceof ValidationError) {
@@ -66,4 +72,14 @@ export function toProblemJson(
     p.stack = err.stack;
   }
   return p;
+}
+
+function safeSerialize(detail: unknown): unknown {
+  if (detail === null || typeof detail !== "object") return detail;
+  try {
+    JSON.stringify(detail);
+    return detail;
+  } catch {
+    return String(detail);
+  }
 }

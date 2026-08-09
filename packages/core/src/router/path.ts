@@ -12,16 +12,28 @@ export function parsePath(path: string): PathSegment[] {
     const p = parts[i]!;
     if (p.startsWith(":")) {
       if (p.length === 1) throw new Error(`path parameter name is missing in "${path}"`);
-      result.push({ kind: "param", name: p.slice(1) });
+      const name = p.slice(1);
+      assertValidName(name, "path parameter", path);
+      result.push({ kind: "param", name });
     } else if (p.startsWith("*")) {
       if (p.length === 1) throw new Error(`wildcard name is missing in "${path}"`);
       if (i !== parts.length - 1) {
         throw new Error(`wildcard *${p.slice(1)} must be the last segment in "${path}"`);
       }
-      result.push({ kind: "wildcard", name: p.slice(1) });
+      const name = p.slice(1);
+      assertValidName(name, "wildcard", path);
+      result.push({ kind: "wildcard", name });
     } else {
       result.push({ kind: "static", value: p });
     }
   }
   return result;
+}
+
+function assertValidName(name: string, kind: string, path: string): void {
+  if (!/^[A-Za-z0-9_]+$/.test(name)) {
+    throw new Error(
+      `${kind} "${name}" in "${path}" must contain only letters, digits and underscores`,
+    );
+  }
 }

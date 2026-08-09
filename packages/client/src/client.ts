@@ -74,13 +74,37 @@ function makeCall(
 
     const res = await doFetch(url.toString(), init);
     if (!res.ok) {
-      throw new ClientError(res.status, codeFrom(res.status), await problemFrom(res), res);
+      const problem = await problemFrom(res);
+      throw new ClientError(res.status, deriveCode(problem, res.status), problem, res);
     }
     if (res.status === 204 || def.status === 204) return undefined;
     const text = await res.text();
     if (text === "") return undefined;
-    return JSON.parse(text);
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new ClientError(
+        res.status,
+        "invalid_response",
+        {
+          type: "https://errors.zebra.dev/invalid_response",
+          status: res.status,
+          title: "Response body was not valid JSON",
+          instance: res.url !== "" ? new URL(res.url).pathname : "/",
+        },
+        res,
+      );
+    }
   };
+}
+
+function deriveCode(problem: ProblemJson, status: number): string {
+  const PREFIX = "https://errors.zebra.dev/";
+  if (typeof problem.type === "string" && problem.type.startsWith(PREFIX)) {
+    const code = problem.type.slice(PREFIX.length);
+    if (code !== "request_failed") return code;
+  }
+  return codeFrom(status);
 }
 
 function codeFrom(status: number): string {

@@ -58,7 +58,7 @@ function walk(
     ]);
   }
 
-  const binding = (container as any).findBinding(id);
+  const binding = container.findBinding(id);
   if (!binding) {
     throw new UnboundTokenError(name, [...stack.map((frame) => frame.name), name]);
   }
@@ -80,6 +80,11 @@ function walk(
 
   if (binding.kind === "class") {
     const cls = binding.target as Function;
+    if (typeof cls !== "function") {
+      throw new Error(
+        `Binding for "${name}" has no implementation configured (call .to(), .toSelf(), .toFactory() or .toValue())`,
+      );
+    }
     const childDeps = getConstructorDeps(cls);
     for (const d of childDeps) {
       walk(container, d, nextStack, visited, childConsumerScope, childConsumerName);

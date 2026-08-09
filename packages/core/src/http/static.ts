@@ -1,3 +1,4 @@
+import { statSync } from "node:fs";
 import { resolve, sep } from "node:path";
 
 export interface StaticOptions {
@@ -59,14 +60,28 @@ export async function serveStatic(
 
   const absRoot = resolve(root);
   const absTarget = resolve(absRoot, target);
-  if (!absTarget.startsWith(absRoot + sep) && absTarget !== absRoot) {
+  const boundary = absRoot === sep ? absRoot : absRoot + sep;
+  if (!absTarget.startsWith(boundary) && absTarget !== absRoot) {
     return new Response("Forbidden", { status: 403 });
   }
 
-  const file = Bun.file(absTarget);
-  if (!(await file.exists())) {
+  let stat = statSync(absTarget, { throwIfNoEntry: false });
+  if (!stat) {
     return new Response("Not Found", { status: 404 });
   }
+  let final = absTarget;
+  if (stat.isDirectory()) {
+    final = resolve(absTarget, opts.index);
+    if (!final.startsWith(boundary) && final !== absRoot) {
+      return new Response("Forbidden", { status: 403 });
+    }
+    stat = statSync(final, { throwIfNoEntry: false });
+    if (!stat) {
+      return new Response("Not Found", { status: 404 });
+    }
+  }
+
+  const file = Bun.file(final);
 
   const etag = `W/"${file.lastModified}-${file.size}"`;
   const headers = new Headers({

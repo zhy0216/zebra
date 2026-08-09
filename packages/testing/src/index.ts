@@ -10,7 +10,8 @@ export interface TestApp extends Zebra {
 class TestZebra extends Zebra implements TestApp {
   async request(path: string, init?: RequestInit): Promise<Response> {
     await this.boot();
-    const url = path.startsWith("http") ? path : `http://test.local${path}`;
+    const url =
+      path.startsWith("http://") || path.startsWith("https://") ? path : `http://test.local${path}`;
     return this.dispatch(new Request(url, init));
   }
 

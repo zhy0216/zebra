@@ -21,6 +21,7 @@ export class Router<T> {
 
   add(method: string, path: string, handler: T): void {
     const segs = parsePath(path);
+    const upperMethod = method.toUpperCase();
     let node = this.root;
     const paramNames: string[] = [];
     for (const s of segs) {
@@ -42,13 +43,43 @@ export class Router<T> {
         break;
       }
     }
-    node.handlers.set(method.toUpperCase(), { handler, paramNames });
+    if (node.handlers.has(upperMethod)) {
+      throw new Error(
+        `Duplicate route: ${upperMethod} ${path} is already registered (with the same parameter layout)`,
+      );
+    }
+    node.handlers.set(upperMethod, { handler, paramNames });
   }
 
   find(method: string, path: string): MatchResult<T> | null {
-    const trimmed = path.replace(/^\/+/, "").replace(/\/+$/, "");
-    const parts = trimmed === "" ? [] : trimmed.split("/");
-    return this.walk(this.root, parts, 0, [], method.toUpperCase());
+    return this.walk(this.root, splitPath(path), 0, [], method.toUpperCase());
+  }
+
+  /** Methods that would match this path if the method differed, or null when the path itself is unknown. */
+  allowedMethods(path: string): string[] | null {
+    return this.collectMethods(this.root, splitPath(path), 0);
+  }
+
+  private collectMethods(node: Node<T>, parts: string[], idx: number): string[] | null {
+    if (idx === parts.length) {
+      if (node.handlers.size > 0) return [...node.handlers.keys()];
+      const wildcard = node.wildcard;
+      if (wildcard && wildcard.handlers.size > 0) return [...wildcard.handlers.keys()];
+      return null;
+    }
+    const part = parts[idx]!;
+    const staticChild = node.static.get(part);
+    if (staticChild) {
+      const r = this.collectMethods(staticChild, parts, idx + 1);
+      if (r !== null) return r;
+    }
+    if (node.param) {
+      const r = this.collectMethods(node.param, parts, idx + 1);
+      if (r !== null) return r;
+    }
+    const wildcard = node.wildcard;
+    if (wildcard && wildcard.handlers.size > 0) return [...wildcard.handlers.keys()];
+    return null;
   }
 
   private walk(
@@ -60,7 +91,13 @@ export class Router<T> {
   ): MatchResult<T> | null {
     if (idx === parts.length) {
       const entry = node.handlers.get(method);
-      return entry !== undefined ? this.toMatch(entry, captures) : null;
+      if (entry !== undefined) return this.toMatch(entry, captures);
+      const wildcard = node.wildcard;
+      if (wildcard) {
+        const wEntry = wildcard.handlers.get(method);
+        if (wEntry !== undefined) return this.toMatch(wEntry, [...captures, ""]);
+      }
+      return null;
     }
     const part = parts[idx]!;
     const staticChild = node.static.get(part);
@@ -83,10 +120,15 @@ export class Router<T> {
   }
 
   private toMatch(entry: { handler: T; paramNames: string[] }, captures: string[]): MatchResult<T> {
-    const params: Record<string, string> = {};
+    const params: Record<string, string> = Object.create(null);
     for (let i = 0; i < entry.paramNames.length; i++) {
       params[entry.paramNames[i]!] = captures[i]!;
     }
     return { handler: entry.handler, params };
   }
+}
+
+function splitPath(path: string): string[] {
+  const trimmed = path.replace(/^\/+/, "").replace(/\/+$/, "");
+  return trimmed === "" ? [] : trimmed.split("/");
 }

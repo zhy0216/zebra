@@ -254,12 +254,10 @@ test("unhandled rejection in handler → 500", async () => {
   expect(res.status).toBe(500);
 });
 
-test("duplicate method+path keeps radix overwrite behavior (last implement wins)", async () => {
+test("duplicate method+path throws at registration instead of silently overwriting", async () => {
   const app = makeApp();
   app.implement(zc.get("/dup"), () => "first");
-  app.implement(zc.get("/dup"), () => "second");
-  const res = await app.dispatch(new Request("http://x/dup"));
-  expect(await res.json()).toBe("second");
+  expect(() => app.implement(zc.get("/dup"), () => "second")).toThrow(/Duplicate route/);
 });
 
 test("query last-wins for repeated keys", async () => {

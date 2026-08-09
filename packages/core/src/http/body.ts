@@ -66,6 +66,9 @@ async function readBody(req: Request, limit: number): Promise<Uint8Array> {
 
 export async function parseBody(req: Request, opts: BodyOptions): Promise<unknown> {
   const ct = (req.headers.get("content-type") ?? "").toLowerCase();
+
+  if (ct.startsWith("multipart/form-data")) return parseMultipart(req, opts);
+
   const bytes = await readBody(req, effectiveLimit(opts, ct));
 
   if (ct.startsWith("application/json")) {
@@ -83,37 +86,54 @@ export async function parseBody(req: Request, opts: BodyOptions): Promise<unknow
     return Object.fromEntries(new URLSearchParams(text));
   }
 
-  if (ct.startsWith("multipart/form-data")) {
-    try {
-      const parsedRequest = new Request(req.url, {
-        method: req.method,
-        headers: req.headers,
-        body: bytes,
-      });
-      const form = await parsedRequest.formData();
-      let files = 0;
-      for (const value of form.values()) {
-        if (value instanceof File) {
-          files++;
-          if (files > opts.multipart.maxFiles) {
-            throw new HttpError(413, "too_many_files", "Too many uploaded files", {
-              limit: opts.multipart.maxFiles,
-            });
-          }
-          if (value.size > opts.multipart.maxFileSize) {
-            throw new HttpError(413, "file_too_large", "Uploaded file is too large", {
-              limit: opts.multipart.maxFileSize,
-              file: value.name,
-            });
-          }
+  return bytes;
+}
+
+async function parseMultipart(req: Request, opts: BodyOptions) {
+  const limit = effectiveLimit(opts, "multipart/form-data");
+  assertDeclaredSize(req, limit);
+  try {
+    const body = req.body ? req.body.pipeThrough(limitStream(limit)) : null;
+    const parsedRequest = new Request(req.url, {
+      method: req.method,
+      headers: req.headers,
+      body,
+    });
+    const form = await parsedRequest.formData();
+    let files = 0;
+    for (const value of form.values()) {
+      if (value instanceof File) {
+        files++;
+        if (files > opts.multipart.maxFiles) {
+          throw new HttpError(413, "too_many_files", "Too many uploaded files", {
+            limit: opts.multipart.maxFiles,
+          });
+        }
+        if (value.size > opts.multipart.maxFileSize) {
+          throw new HttpError(413, "file_too_large", "Uploaded file is too large", {
+            limit: opts.multipart.maxFileSize,
+            file: value.name,
+          });
         }
       }
-      return form;
-    } catch (error) {
-      if (error instanceof HttpError) throw error;
-      throw new HttpError(400, "invalid_multipart", "Body is not valid multipart form data");
     }
+    return form;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError(400, "invalid_multipart", "Body is not valid multipart form data");
   }
+}
 
-  return bytes;
+function limitStream(limit: number): TransformStream<Uint8Array, Uint8Array> {
+  let size = 0;
+  return new TransformStream<Uint8Array, Uint8Array>({
+    transform(chunk, controller) {
+      size += chunk.byteLength;
+      if (size > limit) {
+        controller.error(new HttpError(413, "payload_too_large", "Payload too large", { limit }));
+        return;
+      }
+      controller.enqueue(chunk);
+    },
+  });
 }

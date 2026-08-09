@@ -43,7 +43,7 @@ export async function runStandardValidate(
 > {
   let result = schema["~standard"].validate(value);
   if (result instanceof Promise) result = await result;
-  if (result.issues) return { success: false, issues: result.issues };
+  if (result.issues !== undefined) return { success: false, issues: result.issues };
   return { success: true, value: result.value };
 }
 
@@ -86,7 +86,16 @@ export function buildContractHandler<Def extends ContractProcedureDef, D>(
 
     const result = await handler(zebraReq as unknown as ContractRequest<Def>, deps);
 
-    if (result instanceof Response) return result;
+    if (result instanceof Response) {
+      if (def.status === 204) {
+        throw new HttpError(
+          500,
+          "invalid_contract_response",
+          "Contract declares status 204, but the handler returned a Response",
+        );
+      }
+      return result;
+    }
 
     let payload: unknown = result;
     if (validateOutput && def.output) {
