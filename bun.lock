@@ -54,7 +54,7 @@
     },
     "packages/core": {
       "name": "@zebra/core",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
         "reflect-metadata": "^0.2.2",
       },
@@ -63,9 +63,17 @@
         "zod": "^3.24.0",
       },
     },
+    "packages/session": {
+      "name": "@zebra/session",
+      "version": "0.3.0",
+      "devDependencies": {
+        "@zebra/core": "workspace:*",
+        "@zebra/testing": "workspace:*",
+      },
+    },
     "packages/testing": {
       "name": "@zebra/testing",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
         "@zebra/client": "workspace:*",
         "@zebra/core": "workspace:*",
@@ -77,9 +85,10 @@
     },
     "packages/zebra": {
       "name": "zebra",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
         "@zebra/core": "workspace:*",
+        "@zebra/session": "workspace:*",
       },
     },
   },
@@ -111,6 +120,8 @@
     "@zebra/contract": ["@zebra/contract@workspace:packages/contract"],
 
     "@zebra/core": ["@zebra/core@workspace:packages/core"],
+
+    "@zebra/session": ["@zebra/session@workspace:packages/session"],
 
     "@zebra/testing": ["@zebra/testing@workspace:packages/testing"],
 

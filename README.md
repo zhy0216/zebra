@@ -90,6 +90,7 @@ const z = new Zebra({ container });
 - **Static files** — `app.static()` with path-traversal defense, weak ETags, conditional requests, and byte ranges.
 - **Lifecycle** — boot/ready/shutdown hooks, graceful draining, and disposable cleanup wired to `Bun.serve`.
 - **Session-scoped DI** — session-id resolution, idle TTL, explicit `disposeSession()`, and request-local anonymous sessions.
+- **Cookie sessions** — `@zebra/session` middleware: HMAC-SHA256 signed `sid` cookies, `req.ctx.session` read/write with `getSession(req)`, pluggable `SessionStore` (in-memory default), rolling TTL renewal, and session-fixation protection (destroyed/expired ids are never revived).
 - **Testing** — `@zebra/testing` `createTestApp` runs requests in-process without opening sockets; `createTestClient` gives a typed contract client over that app.
 - **Contract-first** — `@zebra/contract` (Standard Schema V1 builder + protocol), `app.implement` with input/output validation, `@zebra/client` (derived typed client, zero deps).
 
@@ -112,15 +113,16 @@ bun --filter example-contract-blog client     # typed client round-trip
 
 | Package           | What it is                                          |
 | ----------------- | --------------------------------------------------- |
-| `zebra`           | Public facade — re-exports `@zebra/core`            |
+| `zebra`           | Public facade — re-exports `@zebra/core`, `@zebra/session` |
 | `@zebra/core`     | App, DI container, router, HTTP, middleware, `implement` |
 | `@zebra/contract` | Contract builder + protocol (Standard Schema V1, zero deps) |
 | `@zebra/client`   | Derived type-safe client (zero deps)                |
+| `@zebra/session`  | Cookie sessions: HMAC-signed `sid`, pluggable store, fixation-safe |
 | `@zebra/testing`  | `createTestApp` / `createTestClient` in-process     |
 
 ## Status
 
-v0.2.0 is released: core (DI, radix router, middleware, lifecycle, static files) + contract-first (`@zebra/contract`, `app.implement`, `@zebra/client`, `createTestClient`) + testing helpers + examples. v0.3 plans `@zebra/openapi` (consumes the `routeTable` seam) and `@zebra/session`; CORS, rate-limit, and WebSocket remain planned packages.
+v0.2.0 is released: core (DI, radix router, middleware, lifecycle, static files) + contract-first (`@zebra/contract`, `app.implement`, `@zebra/client`, `createTestClient`) + testing helpers + examples. v0.3 in progress: `@zebra/session` (HMAC-signed cookie middleware, pluggable store, session scope wiring) is implemented with tests; CORS and rate-limit are the next planned packages, then WebSocket for v0.4.
 
 ## License
 
