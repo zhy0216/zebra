@@ -1,6 +1,26 @@
 import "reflect-metadata";
 
 export { Zebra } from "./app/app.ts";
+export {
+  isContractProcedure,
+  type ContractProcedureDef,
+  type Method,
+  type ErrorSpec,
+  type StandardSchemaV1,
+} from "./contract/protocol.ts";
+export type {
+  ContractHandler,
+  ContractRequest,
+  ContractParams,
+  ContractQuery,
+  ContractBody,
+  ContractReturn,
+  ContractProcedure,
+  ContractRouter,
+  ProcedureImpl,
+  RouterImpl,
+  ImplementOptions,
+} from "./contract/types.ts";
 export { Container } from "./di/container.ts";
 export {
   token,

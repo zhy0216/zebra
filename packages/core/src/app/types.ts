@@ -1,8 +1,8 @@
+import type { ContractProcedureDef } from "../contract/protocol.ts";
 import type { Container } from "../di/container.ts";
 import type { Identifier } from "../di/token.ts";
 import type { BodyOptions } from "../http/body.ts";
 import type { ZebraRequest } from "../http/request.ts";
-import type { ContractProcedureDef } from "../contract/protocol.ts";
 import type { Middleware } from "../middleware/types.ts";
 
 type SegmentParam<S extends string> = S extends `:${infer Name}`

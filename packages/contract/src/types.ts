@@ -47,9 +47,7 @@ export interface ContractProcedure<Def extends ContractProcedureDef = ContractPr
   errors<const E extends Record<string, ErrorSpec>>(
     es: E,
   ): ContractProcedure<Omit<Def, "errors"> & { errors: Def["errors"] & E }>;
-  meta<const M extends ProcedureMeta>(
-    meta: M,
-  ): ContractProcedure<Omit<Def, "meta"> & { meta: M }>;
+  meta<const M extends ProcedureMeta>(meta: M): ContractProcedure<Omit<Def, "meta"> & { meta: M }>;
 }
 
 export interface ContractRouter {

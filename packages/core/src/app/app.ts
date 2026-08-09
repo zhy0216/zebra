@@ -1,19 +1,18 @@
+import { buildContractHandler } from "../contract/implement.ts";
+import { type ContractProcedureDef, isContractProcedure } from "../contract/protocol.ts";
+import {
+  type ContractHandler,
+  type ContractProcedure,
+  type ContractRouter,
+  type ImplementOptions,
+  type ProcedureImpl,
+  type RouterImpl,
+  isHandlerEntry,
+} from "../contract/types.ts";
 import type { BindingBuilder } from "../di/binding.ts";
 import { Container } from "../di/container.ts";
 import { ScopeKind } from "../di/scope.ts";
 import type { ClassConstructor, Identifier } from "../di/token.ts";
-import { buildContractHandler } from "../contract/implement.ts";
-import {
-  isContractProcedure,
-  type ContractProcedureDef,
-} from "../contract/protocol.ts";
-import {
-  isHandlerEntry,
-  type ContractHandler,
-  type ContractProcedure,
-  type ImplementOptions,
-  type ProcedureImpl,
-} from "../contract/types.ts";
 import type { BodyOptions } from "../http/body.ts";
 import { HttpError } from "../http/errors.ts";
 import { buildRequest } from "../http/request.ts";
@@ -103,6 +102,11 @@ export class Zebra {
     this.assertNotFrozen("middleware");
     this.middlewares.push(mw);
     return this;
+  }
+
+  /** Frozen copies of all registered routes (OpenAPI/introspection seam). */
+  get routeTable(): ReadonlyArray<RegisteredRoute> {
+    return Object.freeze(this.routes.map((route) => Object.freeze({ ...route })));
   }
 
   on(event: LifecycleEvent, fn: LifecycleHandler): this {
@@ -312,7 +316,19 @@ export class Zebra {
     handler: ContractHandler<Def, ResolvedDeps<D>>,
     opts?: ImplementOptions,
   ): void;
-  implement(procOrRouter: unknown, depsOrImpls: unknown, implsOrOpts?: unknown, opts?: unknown): void {
+  implement<R extends ContractRouter>(router: R, impls: RouterImpl<R, never>): void;
+  implement<R extends ContractRouter, D extends DepsSpec>(
+    router: R,
+    deps: D,
+    impls: RouterImpl<R, ResolvedDeps<D>>,
+    opts?: ImplementOptions,
+  ): void;
+  implement(
+    procOrRouter: unknown,
+    depsOrImpls: unknown,
+    implsOrOpts?: unknown,
+    opts?: unknown,
+  ): void {
     if (isContractProcedure(procOrRouter)) {
       const def = procOrRouter.def;
       if (implsOrOpts === undefined) {
@@ -327,7 +343,17 @@ export class Zebra {
       }
       return;
     }
-    throw new Error("implement(router, ...) is not implemented yet");
+    const router = procOrRouter as ContractRouter;
+    if (implsOrOpts === undefined) {
+      this.registerRouter(router, null, depsOrImpls, undefined);
+    } else {
+      this.registerRouter(
+        router,
+        depsOrImpls as DepsSpec,
+        implsOrOpts,
+        opts as ImplementOptions | undefined,
+      );
+    }
   }
 
   private registerContract(
@@ -345,6 +371,50 @@ export class Zebra {
       validateOutput: opts?.validateOutput ?? true,
     });
     this.register(def.method, def.path, deps, wrapped, middlewares, def);
+  }
+
+  private registerRouter(
+    router: ContractRouter,
+    deps: DepsSpec | null,
+    impls: unknown,
+    opts: ImplementOptions | undefined,
+  ): void {
+    this.assertNotFrozen("routes");
+    const problems: string[] = [];
+    const walk = (
+      node: ContractRouter,
+      prefix: string,
+      implsNode: Record<string, unknown>,
+    ): void => {
+      const usedHere = new Set<string>();
+      for (const [key, value] of Object.entries(node)) {
+        const dotted = prefix === "" ? key : `${prefix}.${key}`;
+        if (isContractProcedure(value)) {
+          const impl = implsNode[key];
+          if (impl === undefined) {
+            problems.push(`missing: ${dotted} (${value.def.method} ${value.def.path})`);
+          } else {
+            usedHere.add(key);
+            this.registerContract(value.def, deps, impl as ProcedureImpl<any, any>, opts);
+          }
+        } else {
+          const child = implsNode[key];
+          if (child === undefined || typeof child !== "object") {
+            problems.push(`missing: ${dotted}`);
+          } else {
+            usedHere.add(key);
+            walk(value as ContractRouter, dotted, child as Record<string, unknown>);
+          }
+        }
+      }
+      for (const key of Object.keys(implsNode)) {
+        if (!usedHere.has(key)) problems.push(`extra: ${prefix === "" ? key : `${prefix}.${key}`}`);
+      }
+    };
+    walk(router, "", impls as Record<string, unknown>);
+    if (problems.length > 0) {
+      throw new Error(`Router implementation mismatch — ${problems.join("; ")}`);
+    }
   }
 
   get<const Path extends string>(path: Path, handler: RouteHandler<never, PathParams<Path>>): void;

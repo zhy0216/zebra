@@ -7,7 +7,7 @@ export interface BuildContractHandlerOptions extends ImplementOptions {
   exposeStack?: boolean;
 }
 
-interface MutableContractRequest<Def extends ContractProcedureDef> {
+interface MutableContractRequest {
   params: Record<string, unknown>;
   query: Record<string, unknown>;
   body: () => Promise<unknown>;
@@ -38,7 +38,8 @@ export async function runStandardValidate(
   schema: StandardSchemaV1,
   value: unknown,
 ): Promise<
-  { success: true; value: unknown } | { success: false; issues: ReadonlyArray<StandardSchemaV1.Issue> }
+  | { success: true; value: unknown }
+  | { success: false; issues: ReadonlyArray<StandardSchemaV1.Issue> }
 > {
   let result = schema["~standard"].validate(value);
   if (result instanceof Promise) result = await result;
@@ -59,7 +60,7 @@ export function buildContractHandler<Def extends ContractProcedureDef, D>(
   const { validateOutput = true, exposeStack = false } = opts;
 
   return async (req, deps) => {
-    const zebraReq = req as unknown as MutableContractRequest<Def>;
+    const zebraReq = req as unknown as MutableContractRequest;
     const issues: ValidationIssue[] = [];
 
     if (def.params) {

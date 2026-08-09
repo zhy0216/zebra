@@ -55,9 +55,7 @@ export class ContractProcedureImpl<Def extends ContractProcedureDef>
     return new ContractProcedureImpl(def);
   }
 
-  params<S extends StandardSchemaV1>(
-    schema: S,
-  ): ContractProcedure<Next<Def, "params", S>> {
+  params<S extends StandardSchemaV1>(schema: S): ContractProcedure<Next<Def, "params", S>> {
     const next = {
       version: 1,
       method: this.def.method,
@@ -73,9 +71,7 @@ export class ContractProcedureImpl<Def extends ContractProcedureDef>
     return new ContractProcedureImpl<Next<Def, "params", S>>(next);
   }
 
-  query<S extends StandardSchemaV1>(
-    schema: S,
-  ): ContractProcedure<Next<Def, "query", S>> {
+  query<S extends StandardSchemaV1>(schema: S): ContractProcedure<Next<Def, "query", S>> {
     const next = {
       version: 1,
       method: this.def.method,
@@ -112,9 +108,7 @@ export class ContractProcedureImpl<Def extends ContractProcedureDef>
     return new ContractProcedureImpl<Next<Def, "body", S>>(next);
   }
 
-  output<S extends StandardSchemaV1>(
-    schema: S,
-  ): ContractProcedure<Next<Def, "output", S>> {
+  output<S extends StandardSchemaV1>(schema: S): ContractProcedure<Next<Def, "output", S>> {
     const next = {
       version: 1,
       method: this.def.method,
@@ -146,7 +140,9 @@ export class ContractProcedureImpl<Def extends ContractProcedureDef>
     return new ContractProcedureImpl<Next<Def, "status", S>>(next);
   }
 
-  errors<const E extends Record<string, ErrorSpec>>(es: E): ContractProcedure<Next<Def, "errors", Def["errors"] & E>> {
+  errors<const E extends Record<string, ErrorSpec>>(
+    es: E,
+  ): ContractProcedure<Next<Def, "errors", Def["errors"] & E>> {
     const next = {
       version: 1,
       method: this.def.method,
@@ -191,6 +187,5 @@ export const zc = {
   post: <const Path extends string>(path: Path) => ContractProcedureImpl.create("POST", path),
   put: <const Path extends string>(path: Path) => ContractProcedureImpl.create("PUT", path),
   patch: <const Path extends string>(path: Path) => ContractProcedureImpl.create("PATCH", path),
-  delete: <const Path extends string>(path: Path) =>
-    ContractProcedureImpl.create("DELETE", path),
+  delete: <const Path extends string>(path: Path) => ContractProcedureImpl.create("DELETE", path),
 };

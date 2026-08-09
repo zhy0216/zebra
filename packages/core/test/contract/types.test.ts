@@ -78,3 +78,66 @@ test("handler may return a raw Response as an escape hatch", () => {
   const app = new Zebra();
   app.implement(zc.get("/raw").output(z.string()), () => new Response("raw", { status: 200 }));
 });
+
+test("bulk implement: shared deps context derives handler deps and nested routers type-check", () => {
+  const app = new Zebra();
+  class Repo {
+    find(): string {
+      return "x";
+    }
+  }
+  app.injectSingleton(Repo);
+  const router = {
+    list: zc.get("/items").output(z.array(z.string())),
+    nested: { get: zc.get("/items/:id").output(z.string()) },
+  };
+  app.implement(router, { repo: Repo }, {
+    list: (req, { repo }) => {
+      expectTypeOf(repo).toEqualTypeOf<Repo>();
+      expectTypeOf(req.query).toEqualTypeOf<Record<string, string>>();
+      return [repo.find()];
+    },
+    nested: {
+      get: (req, { repo }) => {
+        expectTypeOf(req.params).toEqualTypeOf<{ id: string }>();
+        return repo.find();
+      },
+    },
+  });
+});
+
+test("bulk implement: missing key is a compile error", () => {
+  const app = new Zebra();
+  const router = {
+    a: zc.get("/a"),
+    b: zc.get("/b"),
+  };
+  try {
+    // @ts-expect-error missing implementation for b
+    app.implement(router, { a: () => "ok" });
+  } catch {
+    // expected runtime throw
+  }
+});
+
+test("bulk implement: wrong handler param type is a compile error", () => {
+  const app = new Zebra();
+  const router = {
+    get: zc.get("/items/:id").params(z.object({ id: z.coerce.number() })),
+  };
+  // @ts-expect-error req.params.id is a number after coerce, not a string
+  app.implement(router, { get: (req) => req.params.id.toUpperCase() });
+});
+
+test("bulk implement: wrong deps type is a compile error", () => {
+  const app = new Zebra();
+  class Repo {
+    tag = "repo" as const;
+  }
+  class Other {
+    tag = "other" as const;
+  }
+  const router = { list: zc.get("/x") };
+  // @ts-expect-error deps spec does not include Other
+  app.implement(router, { repo: Repo }, { list: (req, { repo }: { repo: Other }) => "ok" });
+});

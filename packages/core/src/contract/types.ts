@@ -3,9 +3,10 @@ import type { ZebraRequest } from "../http/request.ts";
 import type { Middleware } from "../middleware/types.ts";
 import type { ContractProcedureDef, StandardSchemaV1 } from "./protocol.ts";
 
-export type ContractParams<Def extends ContractProcedureDef> = Def["params"] extends StandardSchemaV1
-  ? StandardSchemaV1.InferOutput<Def["params"]>
-  : PathParams<Def["path"]>;
+export type ContractParams<Def extends ContractProcedureDef> =
+  Def["params"] extends StandardSchemaV1
+    ? StandardSchemaV1.InferOutput<Def["params"]>
+    : PathParams<Def["path"]>;
 
 export type ContractQuery<Def extends ContractProcedureDef> = Def["query"] extends StandardSchemaV1
   ? StandardSchemaV1.InferOutput<Def["query"]>
@@ -28,13 +29,27 @@ export interface ContractProcedure<Def extends ContractProcedureDef = ContractPr
   readonly def: Def;
 }
 
-export interface ContractHandler<Def extends ContractProcedureDef, D = never> {
-  (req: ContractRequest<Def>, deps: D): ContractReturn<Def> | Promise<ContractReturn<Def>>;
+export interface ContractRouter {
+  [key: string]: ContractProcedure | ContractRouter;
 }
+
+export type ContractHandler<Def extends ContractProcedureDef, D = never> = (
+  req: ContractRequest<Def>,
+  deps: D,
+) => ContractReturn<Def> | Promise<ContractReturn<Def>>;
 
 export type ProcedureImpl<Def extends ContractProcedureDef, D> =
   | ContractHandler<Def, D>
   | { handler: ContractHandler<Def, D>; middlewares?: Middleware[] };
+
+/** Exhaustive (non-optional mapped type) implementation record for a router. */
+export type RouterImpl<R extends ContractRouter, D> = {
+  [K in keyof R]: R[K] extends ContractProcedure<infer Def>
+    ? ProcedureImpl<Def, D>
+    : R[K] extends ContractRouter
+      ? RouterImpl<R[K], D>
+      : never;
+};
 
 export interface ImplementOptions {
   middlewares?: Middleware[];
@@ -42,5 +57,7 @@ export interface ImplementOptions {
 }
 
 export function isHandlerEntry(value: unknown): value is { handler: ContractHandler<any, any> } {
-  return typeof value === "object" && value !== null && typeof (value as any).handler === "function";
+  return (
+    typeof value === "object" && value !== null && typeof (value as any).handler === "function"
+  );
 }

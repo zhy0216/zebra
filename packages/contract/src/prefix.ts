@@ -25,7 +25,7 @@ function joinPath(prefix: string, path: string): string {
   return path.startsWith("/") ? `${prefix}${path}` : `${prefix}/${path}`;
 }
 
-function walk<P extends string>(prefix: string, router: ContractRouter): unknown {
+function walk(prefix: string, router: ContractRouter): unknown {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(router)) {
     if (isProcedure(value)) {
