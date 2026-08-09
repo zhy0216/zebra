@@ -61,4 +61,4 @@ export type {
 export type { GroupApi } from "./app/group.ts";
 export type { LifecycleEvent, LifecycleHandler } from "./app/lifecycle.ts";
 export { validateGraph } from "./app/boot-validation.ts";
-export const VERSION = "0.1.0";
+export const VERSION = "0.2.0";
