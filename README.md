@@ -14,7 +14,7 @@ A Bun-first TypeScript web framework with first-class DI.
 
 ## Documentation
 
-- [Docs site](docs/site/) — guides: quick start, DI, routing, contract-first, per-package guides, migration
+- [Docs](docs/README.md) — guides: getting started, routing, DI, middleware, HTTP, lifecycle, sessions, CORS, rate limiting, WebSocket, contract-first, testing, observability, Redis, production
 - [API freeze](docs/api-freeze.md) — the frozen v1.0 surface and SemVer policy
 
 ## Install
