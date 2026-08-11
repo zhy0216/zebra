@@ -20,3 +20,4 @@ coverage/
 
 # Logs
 *.log
+.omo/
