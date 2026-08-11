@@ -1,6 +1,7 @@
 # API Freeze · v1.0
 
-> Status: **frozen as of v1.0.0** (2026-08-09). This document is the authoritative
+> Status: **frozen as of v1.0.0** (2026-08-09, extended 2026-08-11 to cover
+> `@zebra/observability` and `@zebra/redis`). This document is the authoritative
 > record of the v1 stable API surface. Everything listed here ships with a
 > stability promise; anything not listed here is internal and may change at any
 > time without a major version bump.
@@ -15,13 +16,14 @@ downstream consumers:
    New exports may be added (minor); removals or renames are breaking (major).
 2. **Class and interface members listed in §3 are stable.** Methods and
    properties documented on `Zebra`, `GroupApi`, `RequestSession`, and the
-   store interfaces are part of the contract. Members not listed (including
-   anything marked `protected`/`private`/`internal`) are not.
+   store / middleware interfaces are part of the contract. Members not listed
+   (including anything marked `protected`/`private`/`internal`) are not.
 3. **Behavioral semantics are stable.** Request routing, validation outcomes
    (422 prefixing, output re-validation/stripping), Problem+Json shape, status
-   codes, cookie semantics, and rate-limit header names behave as documented
-   and tested. Bug fixes that change observable behavior are treated as
-   breaking when they change documented semantics, and shipped in majors.
+   codes, cookie semantics, rate-limit header names, and observability
+   middleware behavior behave as documented and tested. Bug fixes that change
+   observable behavior are treated as breaking when they change documented
+   semantics, and shipped in majors.
 4. **Runtime requirements are stable for the `1.x` line:** Bun runtime, TypeScript
    with `experimentalDecorators` + `emitDecoratorMetadata`, and `reflect-metadata`
    imported once at the entry point. A change to these requirements is breaking.
@@ -41,9 +43,8 @@ downstream consumers:
 
 ## 2. Version policy (SemVer)
 
-All seven packages (and the `zebra` facade) are released in lockstep at the
-same version number. The policy below applies to each package and to the
-facade.
+All packages (and the `zebra` facade) are released in lockstep at the same
+version number. The policy below applies to each package and to the facade.
 
 ### Requires a **major** (2.0)
 
@@ -56,7 +57,8 @@ Any change that can break a consumer who uses the API as documented:
   require runtime support (or the reverse).
 - **Behavioral semantics**: changing documented runtime behavior — request
   routing outcomes, validation behavior, status codes, cookie/header semantics,
-  error class thrown, DI resolution or scope rules, lifecycle ordering.
+  error class thrown, DI resolution or scope rules, lifecycle ordering,
+  observability middleware semantics.
 - **Requirement changes**: dropping Bun / decorator / `reflect-metadata`
   support, or requiring a newer Bun or TypeScript than the documented minimum.
 - **Type-leak fixes that change inference**: e.g. a parameter previously typed
@@ -105,21 +107,21 @@ Known asymmetry (documented, frozen): rate-limit's `MemoryStore` /
 aliased in the facade. Import them unprefixed from `@zebra/rate-limit` directly
 when needed.
 
-`@zebra/contract`, `@zebra/client`, and `@zebra/testing` are intentionally NOT
-re-exported by the facade (keeps the facade tree-shakeable and dependency-light);
-import them from their own packages.
+`@zebra/contract`, `@zebra/client`, `@zebra/testing`, `@zebra/observability`,
+and `@zebra/redis` are intentionally NOT re-exported by the facade (keeps the
+facade tree-shakeable and dependency-light); import them from their own
+packages.
 
 ### `@zebra/core`
 
-- App: `Zebra`, type `ZebraOptions`, `ListenOptions`, `RouteHandler`, `DepsSpec`,
-  `ResolvedDeps`, `RegisteredRoute`, `GroupApi`, `LifecycleEvent`,
-  `LifecycleHandler`, `PathParams`, `JoinPath`, `SessionOptions`, `validateGraph`,
-  `VERSION`.
+- App: `Zebra`, type `ZebraOptions`, `RouteHandler`, `DepsSpec`, `ResolvedDeps`,
+  `RegisteredRoute`, `GroupApi`, `LifecycleEvent`, `LifecycleHandler`,
+  `PathParams`, `JoinPath`, `SessionOptions`, `validateGraph`, `VERSION`.
   `Zebra` instance members: `use`, `on`, `listen`, `stop`, `disposeSession`,
   `injectValue`, `injectSingleton`, `injectRequest`, `injectTransient`,
   `injectSession`, `injectFactorySingleton`, `injectFactoryRequest`,
-  `injectFactoryTransient`, `injectFactorySession`, `implement`, `route`, `get`,
-  `post`, `put`, `patch`, `delete`, `head`, `options`, `group`, `static`, `ws`,
+  `injectFactoryTransient`, `injectFactorySession`, `implement`, `get`, `post`,
+  `put`, `patch`, `delete`, `head`, `options`, `route`, `group`, `static`, `ws`,
   `dispatch`, `routeTable`.
 - Contract (implement): `isContractProcedure`, types `ContractProcedureDef`,
   `ContractHandler`, `ContractRequest`, `ContractParams`, `ContractQuery`,
@@ -132,12 +134,14 @@ import them from their own packages.
   `ScopeMismatchError`, types `Token`, `Identifier`, `ClassConstructor`,
   `AbstractConstructor`.
 - HTTP: `ZebraRequest`, `buildRequest`, `HttpError`, `ValidationError`,
-  `toProblemJson`, types `ProblemJson`, `ValidationIssue`. Response helpers
-  `json`, `text`, `html`, `redirect`, `stream`. `ZebraRequest` members:
-  `body`, `json`, `text`, `form`, `stream`, `ctx`, `ip?`, `signal`.
+  `toProblemJson`, `json`, `text`, `html`, `redirect`, `stream`, types
+  `ProblemJson`, `ValidationIssue`.
 - Middleware: `middleware`, `getMiddlewareDeps`, type `Middleware`.
 - WebSocket: types `WsHandler`, `WsData`, `WsRoute` (upgrade/handler surface
   wired to `app.ws`).
+
+> Note: `head` / `options` / `route` are listed as stable `Zebra` members —
+> they have been part of the routing surface since the freeze audit (C1).
 
 ### `@zebra/contract`
 
@@ -160,8 +164,7 @@ import them from their own packages.
 ### `@zebra/session`
 
 `sessionMiddleware`, `createSession`, `getSession`, `SESSION_KEY`, `MemoryStore`,
-`sign`, `verify`, `parseCookies`, `parseSignedCookie`, `serializeCookie`,
-`SECURE_COOKIE`, types
+`sign`, `verify`, `parseCookies`, `parseSignedCookie`, `serializeCookie`, types
 `SessionCookieOptions`, `SessionMiddleware`, `SessionMiddlewareOptions`,
 `SessionResolver`, `RequestSession`, `MemoryStoreOptions`, `SessionStore`,
 `CookieSerializeOptions`.
@@ -180,123 +183,54 @@ import them from their own packages.
 `RateLimitOptions`, `Limiter`, `RateLimitResult`, `IncrementResult`,
 `MemoryStoreOptions`, `RateLimitStore`.
 
+### `@zebra/observability` *(frozen 2026-08-11)*
+
+`requestId`, `getRequestId`, `REQUEST_ID_KEY`, `accessLog`, `errorReporter`,
+`metrics`, `health`, types `RequestIdOptions`, `AccessLogEntry`,
+`AccessLogOptions`, `ErrorReporterInfo`, `MetricsOptions`, `LatencyHistogram`,
+`MetricsHandle`, `MetricsMiddleware`, `MetricsSnapshot`, `HealthOptions`,
+`Probe`.
+
+### `@zebra/redis` *(frozen 2026-08-11)*
+
+`RedisRateLimitStore`, `RedisSessionStore`, types `RedisRateLimitStoreOptions`,
+`RedisSessionStoreOptions`, `RedisLike`.
+
 ## 4. Freeze status
 
-| Package    | Version | Status      |
-| ---------- | ------- | ----------- |
-| zebra      | 1.0.0   | frozen      |
-| @zebra/core | 1.0.0  | frozen      |
-| @zebra/contract | 1.0.0 | frozen |
-| @zebra/client | 1.0.0  | frozen      |
-| @zebra/testing | 1.0.0 | frozen      |
-| @zebra/session | 1.0.0 | frozen      |
-| @zebra/cors | 1.0.0   | frozen      |
-| @zebra/rate-limit | 1.0.0 | frozen   |
+| Package               | Version | Status |
+| --------------------- | ------- | ------ |
+| zebra                 | 1.0.0   | frozen |
+| @zebra/core           | 1.0.0   | frozen |
+| @zebra/contract       | 1.0.0   | frozen |
+| @zebra/client         | 1.0.0   | frozen |
+| @zebra/testing        | 1.0.0   | frozen |
+| @zebra/session        | 1.0.0   | frozen |
+| @zebra/cors           | 1.0.0   | frozen |
+| @zebra/rate-limit     | 1.0.0   | frozen |
+| @zebra/observability  | 1.0.0   | frozen (2026-08-11) |
+| @zebra/redis          | 1.0.0   | frozen (2026-08-11) |
 
 All packages are frozen at v1.0.0 (see §2 for the version policy). The
 `zebra` facade is the only place where aliasing intentionally deviates from
 dependency-package names (rate-limit `MemoryStore` collision, §3 `zebra`).
 
-## 5. Audit record (C1, 2026-08-09)
+## 5. Audit record
+
+### C1 (2026-08-09)
 
 - README / llms.txt export lists reconciled against the actual `index.ts`
-  exports of all eight packages.
+  exports of all eight packages (at the time: zebra, core, contract, client,
+  testing, session, cors, rate-limit).
 - Removed `RequestSessionInternal` from `@zebra/session`'s public index
   (internal type leak).
-- Bumped `@zebra/core`'s `VERSION` constant from `0.2.0` to `1.0.0`.
-- Bumped all seven publishable packages from `0.2.0`/`0.3.0` to `1.0.0`.
-- Updated `README.md` (Status + link) and `llms.txt` (surface + package list).
-- No other gaps, collisions, or unstable exports found.
 
-## 6. Audit record (07 · security defaults, 2026-08-09)
+### C5 (2026-08-11)
 
-Additive changes (allowed in `1.x` minors) plus one security fix that
-intentionally changes an under-documented default. No frozen semantics were
-silently changed.
-
-- **`@zebra/session` — additive.** New optional `SessionCookieOptions.preset:
-  "secure"` (applies `HttpOnly` + `SameSite=Lax`, explicit per-attribute
-  options win) and new exported constant `SECURE_COOKIE`. The v1 default
-  cookie (no flags) is unchanged and frozen.
-- **`@zebra/core` — additive.** `ZebraOptions.trustProxy?: boolean` (default
-  false) exposed as the public `Zebra.trustProxy` member, and `ZebraRequest.ip?:
-  string` (the socket peer address from Bun's `server.requestIP(req)`, never
-  header-derived). `dispatch(raw, ip?)` and `buildRequest(raw, params,
-  bodyOpts?, ip?)` gained optional parameters. Core never reads
-  `x-forwarded-for`; trusting it is opt-in at the consumer (see rate-limit).
-- **`@zebra/rate-limit` — security fix in a minor, documented here on
-  purpose.** The default key derivation changed from "leftmost
-  `x-forwarded-for` entry" (client-spoofable when no edge proxy overwrites
-  the header) to "socket IP (`req.ip`), falling back to the shared
-  `anonymous` key". The old behavior is opt-in via the new
-  `RateLimitOptions.trustProxy?: boolean` (default false). Requests without a
-  socket (direct `dispatch` in tests) already shared the `anonymous` key, so
-  the observable change is limited to deployments behind non-header-setting
-  proxies. This is a security hardening of an under-specified default, not a
-  documented-semantics break.
-- **`@zebra/core` static files — bug fix.** `serveStatic` now verifies the
-  `realpath` of the final target stays inside the realpath of root, closing
-  the symlink-escape hole (a symlink inside root pointing outside root used
-  to pass the lexical boundary check). Previously-broken behavior (serving
-  files outside root via symlink) is now 403/404; all documented behavior is
-  unchanged.
-
-## 7. Audit record (timeouts, cancellation, transport options, 2026-08-09)
-
-Additive changes only; no frozen semantics changed. `{ port, hostname? }`
-listens keep working unchanged.
-
-- **`@zebra/core` — `ListenOptions` (new exported type).** `listen()` gained
-  additive passthrough fields for `Bun.serve`: `idleTimeout?` (seconds),
-  `maxRequestBodySize?` (bytes, transport-level 413 before handlers),
-  `reusePort?`, `tls?` (`TLSOptions | TLSOptions[]`). Return type
-  `Promise<{ port: number }>` unchanged.
-- **`@zebra/core` — `ZebraOptions.requestTimeout?: number` (additive).**
-  Opt-in per-request deadline in ms: on expiry the dispatch answers 504
-  Problem+Json (`request_timeout`) and the handler's `req.signal` aborts.
-  Must be positive; unset = no deadline (previous behavior). `ZebraRequest`
-  gained the additive `signal: AbortSignal` member — Bun's raw
-  `Request.signal` when no timeout is configured, otherwise a combined
-  signal (client disconnect + deadline; `signal.reason` is the 504
-  `HttpError` on timeout). `buildRequest(raw, params, bodyOpts?, ip?, signal?)`
-  gained an optional trailing parameter.
-- **`@zebra/core` — body limit semantics (docs + tests only).** Transport
-  `maxRequestBodySize` vs app-level `body` limits documented in the body
-  module and site docs: both answer 413; keep transport ≥ app limits so the
-  parser's per-type limits stay authoritative.
-
-## 8. Audit record (request/response helpers, 2026-08-09)
-
-Additive changes only; no frozen semantics changed. `req.body()` and
-`Zebra.toResponse` behave exactly as before.
-
-- **`@zebra/core` — request helpers (additive `ZebraRequest` members).**
-  `req.json()`, `req.text()`, `req.form()`, `req.stream()` added. Lazy +
-  memoized: the body is buffered once (same per-content-type `body` limits
-  enforced) and `json` / `text` / `form` derive from the shared bytes;
-  `req.body()` is unchanged. `req.form()` returns a `FormData` for multipart
-  (with `File` entries, `maxFiles` / `maxFileSize` enforced) and urlencoded
-  bodies, and an empty `FormData` otherwise. `req.stream()` is the
-  non-buffering path for large uploads: the raw body stream piped through
-  the same app-level size limit; it is inherently non-memoizable (it
-  consumes the stream) and cannot be combined with the buffering helpers or
-  `req.body()`.
-- **`@zebra/core` — response helpers (new exports).** `json`, `text`,
-  `html`, `redirect`, `stream` with documented defaults: `application/json`,
-  `text/plain`, `text/html` (each with `; charset=utf-8`),
-  `application/octet-stream` for `stream()`, and `redirect()` → 302 +
-  `Location` (override with `init.status`). `init.headers` always wins over
-  the default `content-type`; `Location` always comes from the `url`
-  argument.
-- **`@zebra/core` — documented (not changed) value-return rules.** A handler
-  returning a non-`Response` value is `JSON.stringify`d — including plain
-  strings and `null` — with 200 (frozen `toResponse`); `undefined` → empty
-  204; a raw `Response` passes through unchanged. The new helpers are the
-  explicit ways to return text/html/binary/redirects.
-- **`@zebra/core` — internal streaming fix (no frozen-surface change).**
-  `limitStream` errors the stream with the 413 `HttpError` (a throw from its
-  transform, spec-equal to `controller.error`), so over-limit bodies reject
-  the consumer's `read()` with the `HttpError` — the buffered multipart path
-  surfaces it as the same 413 Problem+Json as before, and direct `stream()`
-  consumers get a clean rejection instead of a raw error escaping the
-  transform callback.
+- Freeze extended to the two packages added by the 07-lightweight-http work:
+  `@zebra/observability` (middleware suite: requestId / accessLog /
+  errorReporter / metrics / health) and `@zebra/redis` (Redis session &
+  rate-limit stores). Export lists reconciled against their `index.ts`.
+- `head` / `options` / `route` and the response helpers (`json` / `text` /
+  `html` / `redirect` / `stream`) recorded explicitly in the `@zebra/core`
+  frozen surface.
