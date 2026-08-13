@@ -258,3 +258,42 @@ test("default cookie stays plain: no HttpOnly / SameSite flags (v1 frozen defaul
   expect(setCookie).not.toContain("HttpOnly");
   expect(setCookie).not.toContain("SameSite");
 });
+
+test("handler errors still issue the sid cookie to a first-time visitor", async () => {
+  const store = new MemoryStore({ ttl: 30_000 });
+  const { app } = makeApp(store);
+  app.get("/boom", async () => {
+    throw new Error("boom");
+  });
+
+  const res = await app.dispatch(new Request("http://test.local/boom"));
+  expect(res.status).toBe(500);
+  const setCookie = res.headers.get("set-cookie");
+  expect(setCookie).not.toBeNull();
+  const signed = setCookie!.split(";")[0]!.slice("sid=".length);
+  const sid = verify(signed, SECRET);
+  expect(sid).not.toBeNull();
+  // Nothing was written, so no store record exists (mirrors the success path).
+  expect(await store.get(sid!)).toBeUndefined();
+});
+
+test("a session destroyed before the handler throws expires the cookie on the error response", async () => {
+  const store = new MemoryStore({ ttl: 30_000 });
+  const { app } = makeApp(store);
+  // First visit establishes the session.
+  app.get("/start", async (req: ZebraRequest) => {
+    await getSession(req)!.set("user", 1);
+    return "ok";
+  });
+  const first = await app.dispatch(new Request("http://test.local/start"));
+  const cookie = first.headers.get("set-cookie")!.split(";")[0]!;
+
+  app.get("/boom", async (req: ZebraRequest) => {
+    await getSession(req)!.destroy();
+    throw new Error("boom");
+  });
+  const res = await app.dispatch(new Request("http://test.local/boom", { headers: { cookie } }));
+  expect(res.status).toBe(500);
+  const setCookies = res.headers.getSetCookie();
+  expect(setCookies.join("; ")).toContain("Max-Age=0");
+});

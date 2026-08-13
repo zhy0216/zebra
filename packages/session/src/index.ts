@@ -5,7 +5,7 @@ export type {
   SessionMiddlewareOptions,
   SessionResolver,
 } from "./middleware.ts";
-export { createSession, getSession, SESSION_KEY } from "./session.ts";
+export { createSession, getSession, PENDING_SET_COOKIES, SESSION_KEY } from "./session.ts";
 export type { RequestSession } from "./session.ts";
 export { MemoryStore } from "./store.ts";
 export type { MemoryStoreOptions, SessionStore } from "./store.ts";

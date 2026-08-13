@@ -1002,15 +1002,38 @@ export class Zebra {
     const record = this.sessions.get(id);
     if (!record) return;
     record.activeRequests = Math.max(0, record.activeRequests - 1);
-    if (record.activeRequests === 0) record.timer = this.scheduleSessionExpiry(id);
+    if (record.activeRequests === 0) {
+      // Drop any stale timer before arming a fresh one — an orphaned timer
+      // must never fire against a session that has since been re-activated.
+      if (record.timer) {
+        clearTimeout(record.timer);
+        record.timer = undefined;
+      }
+      record.timer = this.scheduleSessionExpiry(id);
+    }
   }
 
   private scheduleSessionExpiry(id: string): ReturnType<typeof setTimeout> {
     const timer = setTimeout(() => {
-      void this.disposeSession(id);
+      void this.expireSession(id);
     }, this.sessionTtl);
     timer.unref?.();
     return timer;
+  }
+
+  /**
+   * Timer-driven expiry: re-arms when a request re-entered the session in the
+   * meantime instead of disposing a live container. The public
+   * `disposeSession(id)` remains the explicit, unconditional escape hatch.
+   */
+  private async expireSession(id: string): Promise<void> {
+    const record = this.sessions.get(id);
+    if (!record) return;
+    if (record.activeRequests > 0) {
+      record.timer = this.scheduleSessionExpiry(id);
+      return;
+    }
+    await this.disposeSession(id);
   }
 
   private static toResponse(result: unknown): Response {

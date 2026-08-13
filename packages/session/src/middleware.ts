@@ -41,6 +41,7 @@ import type { Middleware } from "@zebra/core";
 
 import { type CookieSerializeOptions, parseSignedCookie, serializeCookie } from "./cookie.ts";
 import {
+  PENDING_SET_COOKIES,
   type RequestSession,
   type RequestSessionInternal,
   SESSION_KEY,
@@ -151,7 +152,22 @@ export function sessionMiddleware(options: SessionMiddlewareOptions): SessionMid
       }
       return res;
     } catch (error) {
-      if (!session.isDestroyed()) await persistSession(store, session);
+      // A failing handler still owns the session lifecycle: persist what was
+      // written, and make sure the error response carries the same cookie the
+      // success path would have issued — the core error middleware appends
+      // the stashed values after it builds the problem response.
+      if (session.isDestroyed()) {
+        stashSetCookie(req, expireCookie(cookieName, cookieOptions));
+      } else {
+        try {
+          await persistSession(store, session);
+        } catch {
+          // Persistence failure must not mask the original error.
+        }
+        if (session.isNew) {
+          stashSetCookie(req, serializeCookie(cookieName, sign(session.id, secret), cookieOptions));
+        }
+      }
       throw error;
     }
   };
@@ -209,6 +225,17 @@ function appendSetCookie(res: Response, cookie: string): Response {
   const headers = new Headers(res.headers);
   headers.append("set-cookie", cookie);
   return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+}
+
+/** Queues a cookie for the error path; the core error middleware reads
+ * `PENDING_SET_COOKIES` and appends each value to the problem response. */
+function stashSetCookie(req: { ctx: Map<symbol, unknown> }, cookie: string): void {
+  const list = req.ctx.get(PENDING_SET_COOKIES);
+  if (Array.isArray(list)) {
+    list.push(cookie);
+  } else {
+    req.ctx.set(PENDING_SET_COOKIES, [cookie]);
+  }
 }
 
 /** Set-Cookie that instructs the client to drop the cookie (Max-Age=0). */

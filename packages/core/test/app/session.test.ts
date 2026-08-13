@@ -70,3 +70,45 @@ test("session scope expires after the idle TTL", async () => {
   expect(await requestId(app, "expiring")).not.toBe(first);
   await app.stop();
 });
+
+test("a stale expiry timer never disposes a session container mid-request", async () => {
+  SessionState.nextId = 0;
+  SessionState.disposed = [];
+  const app = sessionApp(20);
+
+  let release!: () => void;
+  let markEntered!: () => void;
+  const gate = new Promise<void>((r) => {
+    release = r;
+  });
+  const entered = new Promise<void>((r) => {
+    markEntered = r;
+  });
+  app.get("/hold", { state: SessionState }, async (_req, { state }) => {
+    markEntered();
+    await gate;
+    return state.id;
+  });
+
+  // First request opens the session and arms the 20ms expiry timer on release.
+  const first = await requestId(app, "s1");
+  await Bun.sleep(10);
+
+  // The second request re-enters and holds the session open past the deadline.
+  const holdP = app.dispatch(new Request("http://x/hold", { headers: { "x-session": "s1" } }));
+  await entered;
+  await Bun.sleep(30);
+  // A timer firing in this window must re-arm, not dispose the live container.
+  expect(SessionState.disposed.length).toBe(0);
+
+  release();
+  const holdRes = await holdP;
+  expect(holdRes.status).toBe(200);
+  // The in-flight request still saw the original session-scoped instance.
+  expect(await holdRes.json()).toBe(first);
+
+  // Once idle again, the timer expires the container for real.
+  await Bun.sleep(40);
+  expect(SessionState.disposed).toContain(first);
+  await app.stop();
+});

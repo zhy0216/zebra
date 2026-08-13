@@ -56,8 +56,16 @@ export class Container {
     this.instances = s.instances;
   }
 
+  /**
+   * Resolution stack active while a dependency-free factory is executing
+   * (see `instantiate`); null everywhere else. Factories receive a container
+   * whose `resolve()` continues THIS stack, so circular dependencies across
+   * lazy factories are detected instead of overflowing the call stack.
+   */
+  private activeFactoryStack: ResolutionFrame[] | null = null;
+
   resolve<T>(id: Identifier<T>): T {
-    return this.resolveWithStack(id, []);
+    return this.resolveWithStack(id, this.activeFactoryStack ?? []);
   }
 
   protected resolveWithStack<T>(id: Identifier<T>, stack: ResolutionFrame[]): T {
@@ -131,8 +139,20 @@ export class Container {
       } else {
         // The factory receives the container matching its scope (root for
         // singletons, request/session scope for those), never a short-lived
-        // container the singleton was first resolved through.
-        instance = (binding.target as (c: Container) => T)(cacheContainer ?? this);
+        // container the singleton was first resolved through. While it runs,
+        // that container's resolve() continues the current stack (which
+        // already includes this binding's frame), closing the cycle-detection
+        // gap for lazy factories. Known limitation: an `await` inside the
+        // factory breaks the chain — the stack is restored on return, so
+        // cycles resolved after an await still surface as a stack overflow.
+        const target = cacheContainer ?? this;
+        const previous = target.activeFactoryStack;
+        target.activeFactoryStack = stack;
+        try {
+          instance = (binding.target as (c: Container) => T)(target);
+        } finally {
+          target.activeFactoryStack = previous;
+        }
       }
     } else {
       const cls = binding.target as new (...args: any[]) => T;

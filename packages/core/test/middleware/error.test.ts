@@ -39,3 +39,15 @@ test("ValidationError → 422 Problem+Json with field issues", async () => {
     errors: [{ path: "body.title", message: "Required" }],
   });
 });
+
+test("stashed Set-Cookie values survive error responses and are appended individually", async () => {
+  const mw = errorMiddleware({ exposeStack: false });
+  const req = buildRequest(new Request("http://x/"), {});
+  req.ctx.set(Symbol.for("zebra.set-cookie"), ["sid=abc; Path=/", "sid=; Max-Age=0"]);
+  const res = await mw(req, async () => {
+    throw new HttpError(500, "boom", "boom");
+  });
+  expect(res.status).toBe(500);
+  // Two distinct Set-Cookie headers, never comma-joined into one.
+  expect(res.headers.getSetCookie()).toEqual(["sid=abc; Path=/", "sid=; Max-Age=0"]);
+});

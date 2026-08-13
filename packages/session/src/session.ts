@@ -9,6 +9,16 @@ import type { SessionStore } from "./store.ts";
 /** Key under which the middleware stores the session on `req.ctx`. */
 export const SESSION_KEY: symbol = Symbol.for("zebra.session");
 
+/**
+ * Key under which the middleware stashes Set-Cookie values that must survive
+ * an error response (a first-time visitor whose handler threw still gets a
+ * sid cookie; a destroyed session still gets the expiring one). The core
+ * error middleware reads this key by its `Symbol.for` registration and
+ * appends the values after building the problem response — the two packages
+ * stay decoupled (core has no dependency on `@zebra/session`).
+ */
+export const PENDING_SET_COOKIES: symbol = Symbol.for("zebra.set-cookie");
+
 /** Read/write handle to the current request's session. */
 export interface RequestSession {
   /** Verified session id (newly generated for first-time visitors). */
