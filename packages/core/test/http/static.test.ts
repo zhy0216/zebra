@@ -19,6 +19,22 @@ test("serves index when path is empty", async () => {
   expect(await res.text()).toContain("<h1>Index</h1>");
 });
 
+test("dotfiles are denied by default (403), even when the file exists", async () => {
+  const res = await serveStatic(root, ".env", opts);
+  expect(res.status).toBe(403);
+});
+
+test("dotfile segments nested in the path are denied", async () => {
+  const res = await serveStatic(root, ".git/config", opts);
+  expect(res.status).toBe(403);
+});
+
+test("dotfiles: allow serves them", async () => {
+  const res = await serveStatic(root, ".env", { ...opts, dotfiles: "allow" });
+  expect(res.status).toBe(200);
+  expect(await res.text()).toBe("SECRET=1\n");
+});
+
 test("blocks path traversal via ..", async () => {
   const res = await serveStatic(root, "../package.json", opts);
   expect(res.status).toBe(403);

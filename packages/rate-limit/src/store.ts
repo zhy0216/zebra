@@ -81,6 +81,7 @@ export class MemoryStore implements RateLimitStore {
         "MemoryStore: increment requires windowMs (constructor option or per-call argument)",
       );
     }
+    this.sweep();
     const now = Date.now();
     const entry = this.buckets.get(key);
     if (entry === undefined || now >= entry.resetAt) {
@@ -95,4 +96,22 @@ export class MemoryStore implements RateLimitStore {
   async reset(key: string): Promise<void> {
     this.buckets.delete(key);
   }
+
+  /**
+   * Removes already-expired buckets, scanning at most `SWEEP_BUDGET` per call
+   * so per-increment cost stays bounded. Without this, a long-lived process
+   * under an ever-changing key space (e.g. per-IP keys behind `trustProxy`)
+   * would grow the map without limit.
+   */
+  private sweep(): void {
+    const now = Date.now();
+    let scanned = 0;
+    for (const [key, entry] of this.buckets) {
+      if (++scanned > SWEEP_BUDGET) break;
+      if (now >= entry.resetAt) this.buckets.delete(key);
+    }
+  }
 }
+
+/** Max entries scanned per `sweep()` call; keeps per-access cost bounded. */
+const SWEEP_BUDGET = 512;

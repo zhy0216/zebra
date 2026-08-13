@@ -97,6 +97,18 @@ describe("MemoryStore", () => {
     expect(long.resetAt - short.resetAt).toBeLessThan(1_000);
   });
 
+  test("expired buckets are swept so the map cannot grow without limit", async () => {
+    const store = new MemoryStore({ windowMs: 60_000 });
+    await store.increment("a", 10);
+    await store.increment("b", 10);
+    await Bun.sleep(15);
+    // The sweep on this increment drops the two expired buckets above.
+    await store.increment("c", 10);
+    const buckets = (store as unknown as { buckets: Map<string, unknown> }).buckets;
+    expect(buckets.size).toBe(1);
+    expect(buckets.has("c")).toBe(true);
+  });
+
   test("increment without any windowMs rejects", async () => {
     const store = new MemoryStore();
     expect(store.increment("k")).rejects.toThrow(/windowMs/);

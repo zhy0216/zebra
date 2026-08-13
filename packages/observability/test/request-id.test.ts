@@ -36,6 +36,27 @@ describe("requestId middleware · id resolution", () => {
     expect(getRequestId(req)).toMatch(/^[0-9a-f-]{36}$/);
   });
 
+  test("rejects client ids with control characters (log injection, defense in depth)", async () => {
+    // Bun's Headers refuse control characters outright, so fabricate a
+    // lenient transport: the validation regex is the last line of defense
+    // before client-provided values reach log lines.
+    const mw = requestId();
+    const req = {
+      headers: { get: (name: string) => (name === "x-request-id" ? "ok\ninjected" : null) },
+      ctx: new Map(),
+      url: new URL("http://x/"),
+    };
+    await mw(req, okNext);
+    expect(getRequestId(req)).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  test("rejects overlong client ids", async () => {
+    const mw = requestId();
+    const req = makeReq({ headers: { "x-request-id": "x".repeat(129) } });
+    await mw(req, okNext);
+    expect(getRequestId(req)).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
   test("generated id is non-empty and stored on ctx", async () => {
     const mw = requestId();
     const req = makeReq();

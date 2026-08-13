@@ -13,6 +13,12 @@ export interface StaticOptions {
    * hot path. The body is always streamed from the live file.
    */
   cacheTtl?: number;
+  /**
+   * Dotfile policy for path segments (default `"deny"`): with `"deny"`, any
+   * decoded segment starting with `.` (`.env`, `.git/...`) is refused with
+   * 403 — serving a project root would otherwise expose its hidden files.
+   */
+  dotfiles?: "allow" | "deny";
 }
 
 /** Cached realpath per root — resolved once at first use (symlink-safe). */
@@ -167,6 +173,15 @@ export async function serveStatic(
   // A decoded NUL byte is never a valid file name and makes fs calls throw.
   if (target.includes("\0")) {
     return new Response("Bad Request", { status: 400 });
+  }
+  // Dotfile policy: refuse hidden files/directories (`.env`, `.git/...`)
+  // unless explicitly allowed — see StaticOptions.dotfiles.
+  if (opts.dotfiles !== "allow") {
+    for (const segment of target.split("/")) {
+      if (segment.startsWith(".")) {
+        return new Response("Forbidden", { status: 403 });
+      }
+    }
   }
 
   const absRoot = resolve(root);

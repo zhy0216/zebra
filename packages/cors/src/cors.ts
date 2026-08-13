@@ -44,7 +44,11 @@ export function cors(opts: CorsOptions = {}): Middleware {
       req.headers.get("access-control-request-method") !== null && req.raw?.method === "OPTIONS";
     if (isPreflight) {
       const reflected = resolveAllowOrigin(req.headers.get("origin"), origin, credentials);
-      if (reflected === null) return new Response(null, { status: 204 });
+      if (reflected === null) {
+        // The rejection decision depends on the Origin: a shared cache must
+        // never reuse this 204 for a different origin (cache poisoning).
+        return new Response(null, { status: 204, headers: { vary: "Origin" } });
+      }
 
       const headers = new Headers();
       headers.set("access-control-allow-origin", reflected);

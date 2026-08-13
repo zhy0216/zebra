@@ -64,6 +64,26 @@ describe("accessLog middleware", () => {
     const res = await mw(makeReq(), okNext);
     expect(res.status).toBe(200);
   });
+
+  test("ids containing newlines are neutralized in the default log line", async () => {
+    const log = mock((_line: string) => {});
+    const original = console.log;
+    console.log = log;
+    try {
+      // The generator bypass is intentional — the requestId middleware does
+      // not validate generated ids; formatEntry is the last line of defense.
+      const app = createTestApp();
+      app.use(requestId({ generator: () => "bad\nid" }));
+      app.use(accessLog());
+      app.get("/x", () => new Response("ok"));
+      await app.request("/x");
+    } finally {
+      console.log = original;
+    }
+    const line = String(log.mock.calls[0]![0]);
+    expect(line).toContain("bad id");
+    expect(line).not.toContain("bad\nid");
+  });
 });
 
 describe("accessLog middleware · integration through core", () => {

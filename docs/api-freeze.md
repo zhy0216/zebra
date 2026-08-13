@@ -163,11 +163,17 @@ packages.
 
 ### `@zebra/session`
 
-`sessionMiddleware`, `createSession`, `getSession`, `SESSION_KEY`, `MemoryStore`,
-`sign`, `verify`, `parseCookies`, `parseSignedCookie`, `serializeCookie`, types
-`SessionCookieOptions`, `SessionMiddleware`, `SessionMiddlewareOptions`,
-`SessionResolver`, `RequestSession`, `MemoryStoreOptions`, `SessionStore`,
-`CookieSerializeOptions`.
+`sessionMiddleware`, `createSession`, `getSession`, `SESSION_KEY`,
+`PENDING_SET_COOKIES`, `MemoryStore`, `sign`, `verify`, `parseCookies`,
+`parseSignedCookie`, `serializeCookie`, types `SessionCookieOptions`,
+`SessionMiddleware`, `SessionMiddlewareOptions`, `SessionResolver`,
+`RequestSession`, `MemoryStoreOptions`, `SessionStore`, `CookieSerializeOptions`.
+
+> v1.0.0 cookie semantics (pre-release hardening, 2026-08-14): the default
+> cookie carries `HttpOnly` + `SameSite=Lax` (`SECURE_COOKIE`); `cookie: {
+> preset: "plain" }` restores a flag-free cookie. Error responses carry the
+> same Set-Cookie the success path would have issued (via
+> `PENDING_SET_COOKIES`, appended by the core error middleware).
 
 > `RequestSessionInternal` was removed from the public index during the C1
 > freeze audit (v1.0.0): it is middleware-internal and was exported by accident.

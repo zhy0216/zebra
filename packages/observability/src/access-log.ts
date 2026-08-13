@@ -22,7 +22,9 @@ export interface AccessLogOptions {
 
 function formatEntry(entry: AccessLogEntry): string {
   const status = entry.status === undefined ? "-" : String(entry.status);
-  const requestId = entry.requestId ?? "-";
+  // Defensive: ids flow through the requestId middleware's validation, but a
+  // log line must never be injectable by a client-controlled value.
+  const requestId = (entry.requestId ?? "-").replace(/[\r\n]+/g, " ");
   return `${new Date(entry.timestamp).toISOString()} ${entry.method} ${entry.path} ${status} ${entry.durationMs.toFixed(1)}ms ${requestId}`;
 }
 

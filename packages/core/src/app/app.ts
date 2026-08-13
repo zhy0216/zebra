@@ -606,6 +606,10 @@ export class Zebra {
     const o: StaticOptions = {
       index: opts.index ?? "index.html",
       maxAge: opts.maxAge ?? 3600,
+      // Pass every optional knob through — an omitted one keeps serveStatic's
+      // own default (cacheTtl 1000, dotfiles "deny").
+      ...(opts.cacheTtl !== undefined ? { cacheTtl: opts.cacheTtl } : {}),
+      ...(opts.dotfiles !== undefined ? { dotfiles: opts.dotfiles } : {}),
     };
     const prefix = routPath.replace(/\/+$/, "");
     const serve = async (req: Parameters<RouteHandler>[0], file: string) =>

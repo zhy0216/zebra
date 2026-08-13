@@ -160,6 +160,7 @@ With `exposeStack: true`, unknown errors (not HttpError/ValidationError) include
 `app.static(routePath, root, opts)` — see the [Routing guide](02-routing.md#static-files-appstatic). Key points:
 
 - Path traversal and symlink-escape protection (realpath containment check, 403).
+- Dotfiles are denied by default (any decoded segment starting with `.` → 403); opt out per mount with `dotfiles: "allow"`.
 - Weak ETags, `If-None-Match` → 304, `Range` → 206 / 416.
 - `index` (default `index.html`), `maxAge` (default 3600), `cacheTtl` (default 1000ms metadata cache).
 

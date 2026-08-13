@@ -100,6 +100,9 @@ test("disallowed origin: no CORS headers on preflight or actual requests", async
   expect(preflight.status).toBe(204);
   expect(preflight.headers.get("access-control-allow-origin")).toBeNull();
   expect(preflight.headers.get("access-control-allow-methods")).toBeNull();
+  // The rejection depends on the Origin — a shared cache must not reuse it
+  // for other origins (Vary even on the rejected 204).
+  expect(preflight.headers.get("vary")).toBe("Origin");
 
   const actual = await app.request("/api/data", { method: "GET", headers: { origin: EVIL } });
   expect(actual.status).toBe(200);

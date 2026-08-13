@@ -78,17 +78,18 @@ Persistence runs after `next()` (including the handler-threw path, as long as th
 
 - Default cookie name `sid`, path `/`.
 - Value = HMAC-SHA256-signed id. `parseSignedCookie` verifies the signature; a tampered cookie is treated as anonymous.
-- **The default cookie has no security attributes** (frozen v1 behavior). Harden with `preset: "secure"` (`HttpOnly` + `SameSite=Lax`), or explicit attributes (which override the preset):
+- **The default cookie carries `HttpOnly` + `SameSite=Lax`.** Opt out with `preset: "plain"` (a flag-free cookie — the original default), or override per attribute (explicit attributes always win over the preset):
 
 ```ts
 sessionMiddleware({
   secret,
-  cookie: { preset: "secure" },            // HttpOnly + SameSite=Lax
+  // default: HttpOnly + SameSite=Lax
+  cookie: { preset: "plain" },             // no flags
   // or explicit: cookie: { httpOnly: true, sameSite: "strict", secure: true }
 });
 ```
 
-`SECURE_COOKIE` is the frozen `{ httpOnly: true, sameSite: "lax" }` constant; `SECURE_COOKIE` env var also works.
+`SECURE_COOKIE` is the frozen `{ httpOnly: true, sameSite: "lax" }` constant applied by default.
 
 ## Session-fixation protection
 

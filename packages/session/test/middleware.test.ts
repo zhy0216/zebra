@@ -246,9 +246,22 @@ test("explicit cookie attributes override the secure preset", async () => {
   expect(setCookie).not.toContain("HttpOnly");
 });
 
-test("default cookie stays plain: no HttpOnly / SameSite flags (v1 frozen default)", async () => {
+test("default cookie is hardened: HttpOnly + SameSite=Lax", async () => {
   const store = new MemoryStore({ ttl: 30_000 });
   const mw = sessionMiddleware({ secret: SECRET, store });
+  const app = new Zebra({ session: { resolver: mw.resolver, ttl: 30_000 } });
+  app.use(mw);
+  app.get("/", async () => new Response("hi"));
+
+  const res = await app.dispatch(new Request("http://test.local/"));
+  const setCookie = res.headers.get("set-cookie");
+  expect(setCookie).toContain("HttpOnly");
+  expect(setCookie).toContain("SameSite=Lax");
+});
+
+test("preset: plain restores the flag-free cookie", async () => {
+  const store = new MemoryStore({ ttl: 30_000 });
+  const mw = sessionMiddleware({ secret: SECRET, cookie: { preset: "plain" }, store });
   const app = new Zebra({ session: { resolver: mw.resolver, ttl: 30_000 } });
   app.use(mw);
   app.get("/", async () => new Response("hi"));

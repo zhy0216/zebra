@@ -14,6 +14,13 @@ export interface RequestIdOptions {
 
 const DEFAULT_HEADER = "x-request-id";
 
+/**
+ * Client-provided ids are echoed back and may end up in logs; only accept
+ * values that cannot inject log lines or exceed sane bounds. Anything else
+ * falls back to a generated id.
+ */
+const VALID_ID = /^[A-Za-z0-9._-]{1,128}$/;
+
 /** Reads the request id previously stored by the `requestId` middleware. */
 export function getRequestId(req: { ctx: Map<symbol, unknown> }): string | undefined {
   const id = req.ctx.get(REQUEST_ID_KEY);
@@ -35,7 +42,7 @@ export function requestId(options: RequestIdOptions = {}): Middleware {
 
   return async (req, next) => {
     const incoming = req.headers.get(headerName);
-    const id = incoming === null || incoming === "" ? generator() : incoming;
+    const id = incoming !== null && VALID_ID.test(incoming) ? incoming : generator();
     req.ctx.set(REQUEST_ID_KEY, id);
     const res = await next();
     if (!propagate) return res;
