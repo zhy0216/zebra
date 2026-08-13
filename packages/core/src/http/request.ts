@@ -73,10 +73,16 @@ export function buildRequest<P, B = unknown>(
   bodyOpts: BodyOptions = DEFAULT_BODY,
   ip?: string,
   signal?: AbortSignal,
+  // Pre-parsed URL from the dispatcher: avoids a second `new URL(raw.url)`
+  // per request (the dispatcher needs one for routing anyway).
+  url?: URL,
 ): ZebraRequest<P, B> {
-  const url = new URL(raw.url);
-  const query = Object.create(null) as Record<string, string>;
-  for (const [k, v] of url.searchParams) query[k] = v;
+  const parsedUrl = url ?? new URL(raw.url);
+  // Lazy per-request state: the vast majority of requests never read `query`
+  // or `ctx` — allocate only on first access. `query` keeps a setter because
+  // the contract pipeline assigns the coerced value back onto the request.
+  let query: Record<string, string> | null = null;
+  let ctx: Map<symbol, unknown> | null = null;
   let bodyPromise: Promise<B> | null = null;
   let bytesPromise: Promise<Uint8Array> | null = null;
   let jsonPromise: Promise<unknown> | null = null;
@@ -93,9 +99,19 @@ export function buildRequest<P, B = unknown>(
   return {
     raw,
     params,
-    query,
+    get query() {
+      if (query === null) {
+        const built = Object.create(null) as Record<string, string>;
+        for (const [k, v] of parsedUrl.searchParams) built[k] = v;
+        query = built;
+      }
+      return query;
+    },
+    set query(value: Record<string, string>) {
+      query = value;
+    },
     headers: raw.headers,
-    url,
+    url: parsedUrl,
     ...(ip === undefined ? {} : { ip }),
     signal: signal ?? raw.signal,
     body: () => {
@@ -132,7 +148,10 @@ export function buildRequest<P, B = unknown>(
       }
       return raw.body.pipeThrough(limitStream(effectiveLimit(bodyOpts, ct)));
     },
-    ctx: new Map(),
+    get ctx() {
+      if (ctx === null) ctx = new Map();
+      return ctx;
+    },
   };
 }
 

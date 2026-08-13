@@ -676,6 +676,8 @@ export class Zebra {
             matched.params,
             this.bodyOpts,
             ip,
+            undefined,
+            url,
           );
           const result = await handler.upgrade(zebraReq, deps as never, matched.params);
           if (result === false) {
@@ -733,6 +735,7 @@ export class Zebra {
         this.bodyOpts,
         ip,
         deadline?.controller.signal,
+        url,
       );
       const plan = this.planFor(route);
 

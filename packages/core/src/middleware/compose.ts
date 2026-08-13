@@ -5,6 +5,8 @@ export async function compose(
   mws: Middleware[],
   final: () => Promise<Response>,
 ): Promise<Response> {
+  // Zero-middleware fast path: no chain, no closures, no next() guard state.
+  if (mws.length === 0) return final();
   let lastCalled = -1;
   const dispatch = async (idx: number): Promise<Response> => {
     if (idx <= lastCalled) throw new Error("next() called multiple times");

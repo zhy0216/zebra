@@ -101,7 +101,12 @@ export class Router<T> {
       const wildcard = node.wildcard;
       if (wildcard) {
         const wEntry = wildcard.handlers.get(method);
-        if (wEntry !== undefined) return this.toMatch(wEntry, [...captures, ""]);
+        if (wEntry !== undefined) {
+          captures.push("");
+          const match = this.toMatch(wEntry, captures);
+          captures.pop();
+          return match;
+        }
       }
       return null;
     }
@@ -112,14 +117,21 @@ export class Router<T> {
       if (r) return r;
     }
     if (node.param) {
-      const r = this.walk(node.param, parts, idx + 1, [...captures, part], method);
+      // push/pop instead of a per-branch copy: one captures array per lookup,
+      // backtracks cleanly when the param branch fails and the wildcard tries.
+      captures.push(part);
+      const r = this.walk(node.param, parts, idx + 1, captures, method);
+      captures.pop();
       if (r) return r;
     }
     if (node.wildcard) {
       const rest = parts.slice(idx).join("/");
       const entry = node.wildcard.handlers.get(method);
       if (entry !== undefined) {
-        return this.toMatch(entry, [...captures, rest]);
+        captures.push(rest);
+        const match = this.toMatch(entry, captures);
+        captures.pop();
+        return match;
       }
     }
     return null;
@@ -152,6 +164,6 @@ function decodeParam(value: string): string {
 }
 
 function splitPath(path: string): string[] {
-  const trimmed = path.replace(/^\/+/, "").replace(/\/+$/, "");
+  const trimmed = path.replace(/^\/+|\/+$/g, "");
   return trimmed === "" ? [] : trimmed.split("/");
 }

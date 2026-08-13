@@ -69,6 +69,10 @@ export class Container {
   }
 
   protected resolveWithStack<T>(id: Identifier<T>, stack: ResolutionFrame[]): T {
+    const binding = this.findBinding(id);
+    // Fast path: value bindings are terminal — no cycle risk, no stack
+    // bookkeeping, no frame allocation (hot for toValue route deps).
+    if (binding?.kind === "value") return binding.target as T;
     const key = keyOf(id);
     const name = displayName(id);
     const cycleStart = stack.findIndex((frame) => frame.key === key);
@@ -78,7 +82,6 @@ export class Container {
         name,
       ]);
     }
-    const binding = this.findBinding(id);
     if (!binding) throw new UnboundTokenError(name, [...stack.map((frame) => frame.name), name]);
     return this.instantiate(binding, [...stack, { key, name }]);
   }
