@@ -1,7 +1,7 @@
 import { expectTypeOf, test } from "bun:test";
-import { zc, type ContractRouter } from "@zebra/contract";
+import { type ContractRouter, zc } from "@zebra/contract";
 import { z } from "zod";
-import { createClient, type ClientArgs, type ClientOutput } from "../src/index.ts";
+import { type ClientArgs, type ClientOutput, createClient } from "../src/index.ts";
 
 const Blog = z.object({ id: z.number(), title: z.string(), content: z.string() });
 
@@ -14,7 +14,10 @@ const blogContract = {
     .get("/blogs")
     .query(z.object({ page: z.coerce.number().min(1).default(1) }))
     .output(z.array(Blog)),
-  get: zc.get("/blogs/:id").params(z.object({ id: z.coerce.number().int() })).output(Blog),
+  get: zc
+    .get("/blogs/:id")
+    .params(z.object({ id: z.coerce.number().int() }))
+    .output(Blog),
   create: zc
     .post("/blogs")
     .body(z.object({ title: z.string().min(1), content: z.string() }))
@@ -89,7 +92,6 @@ test("all-optional procedure args are omittable at the type level", () => {
 });
 
 test("client output types: InferOutput, 204 → undefined", () => {
-
   type ListOut = ClientOutput<(typeof blogContract)["list"]["def"]>;
   expectTypeOf<ListOut>().toEqualTypeOf<Array<{ id: number; title: string; content: string }>>();
 

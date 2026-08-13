@@ -84,7 +84,8 @@ test("transport maxRequestBodySize rejects oversized bodies before the handler r
     });
     expect(small.status).toBe(200);
     expect(await small.text()).toBe("ok");
-    expect(hit).toBe(1);  } finally {
+    expect(hit).toBe(1);
+  } finally {
     await app.stop();
   }
 });

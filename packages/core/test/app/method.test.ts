@@ -12,10 +12,12 @@ function makeApp(): Zebra {
 
 test("HEAD falls back to GET with an empty body and preserved headers", async () => {
   const app = makeApp();
-  app.get("/hello", async () =>
-    new Response("hello", {
-      headers: { "content-type": "text/plain", "content-length": "5", "x-custom": "v" },
-    }),
+  app.get(
+    "/hello",
+    async () =>
+      new Response("hello", {
+        headers: { "content-type": "text/plain", "content-length": "5", "x-custom": "v" },
+      }),
   );
 
   const res = await app.dispatch(new Request("http://x/hello", { method: "HEAD" }));

@@ -51,12 +51,7 @@ test("upgrade handshake returns 101 and fires open", async () => {
         socket: {
           open(sock) {
             sock.write(
-              "GET /chat/lobby HTTP/1.1\r\n" +
-                `Host: localhost:${port}\r\n` +
-                "Upgrade: websocket\r\n" +
-                "Connection: Upgrade\r\n" +
-                "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n" +
-                "Sec-WebSocket-Version: 13\r\n\r\n",
+              `GET /chat/lobby HTTP/1.1\r\nHost: localhost:${port}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n`,
             );
           },
           data(sock, data) {

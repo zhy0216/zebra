@@ -7,8 +7,8 @@ import { expect, test } from "bun:test";
 import { Zebra, type ZebraRequest } from "@zebra/core";
 
 import { MemoryStore, createSession, getSession, sessionMiddleware } from "../src/index.ts";
-import type { SessionStore } from "../src/store.ts";
 import { verify } from "../src/sign.ts";
+import type { SessionStore } from "../src/store.ts";
 
 const SECRET = "test-secret";
 
@@ -41,9 +41,7 @@ test("session.destroy(): store record removed and the response carries an expiri
   const { cookie, sid } = await login(app);
   expect(await store.get(sid)).toEqual({ user: { id: 42 } });
 
-  const res = await app.dispatch(
-    new Request("http://test.local/logout", { headers: { cookie } }),
-  );
+  const res = await app.dispatch(new Request("http://test.local/logout", { headers: { cookie } }));
   expect(res.status).toBe(200);
 
   // Response-end persistence must not resurrect the record.

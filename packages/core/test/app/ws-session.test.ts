@@ -36,11 +36,11 @@ test("session.wsSession hook fills ws.data.session from the resolver's sessionId
   const sessions: unknown[] = [];
   const app = startApp({
     resolver: sidResolver,
-    wsSession: (req, sessionId) =>
+    wsSession: (_req, sessionId) =>
       sessionId === undefined ? undefined : { id: sessionId, from: "wsSession" },
   });
   app.ws("/chat/:room", {
-    open(ws, data) {
+    open(_ws, data) {
       sessions.push(data.session);
     },
     message(ws, data, msg) {
@@ -79,7 +79,7 @@ test("anonymous upgrade: wsSession receives undefined sessionId and data.session
   let openedData: WsData | null = null;
   const app = startApp({
     resolver: sidResolver,
-    wsSession: async (req, sessionId) => {
+    wsSession: async (_req, sessionId) => {
       hookSessionIds.push(sessionId);
       return undefined;
     },
@@ -140,11 +140,11 @@ test("session is a reserved field: wsSession result wins over a session key in u
   let openedData: any = null;
   const app = startApp({
     resolver: sidResolver,
-    wsSession: (req, sessionId) =>
+    wsSession: (_req, sessionId) =>
       sessionId === undefined ? undefined : { id: sessionId, from: "wsSession" },
   });
   app.ws("/auth", {
-    upgrade: (req) => ({ userId: "u1", session: "reserved-key" }),
+    upgrade: (_req) => ({ userId: "u1", session: "reserved-key" }),
     open(ws, data) {
       openedData = data;
       ws.close();

@@ -46,7 +46,8 @@ async function assertStoreContract(store: RateLimitStore): Promise<void> {
   expect(afterReset.resetAt).toBeGreaterThanOrEqual(first.resetAt);
 }
 
-test("contract holds for MemoryStore", () => assertStoreContract(new MemoryStore({ windowMs: 60_000 })));
+test("contract holds for MemoryStore", () =>
+  assertStoreContract(new MemoryStore({ windowMs: 60_000 })));
 
 test("contract holds for an unrelated fake implementation", () => {
   const store = new FakeStore();

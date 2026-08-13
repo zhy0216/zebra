@@ -128,9 +128,24 @@ function respond(meta: FileMeta, requestHeaders: Headers, maxAge: number): Respo
     return new Response(null, { status: 304, headers });
   }
 
+  // If-Modified-Since: honored only when If-None-Match is absent
+  // (RFC 9110 §13.1.3 — IMS is ignored otherwise).
+  if (ifNoneMatch === null) {
+    const ifModifiedSince = requestHeaders.get("if-modified-since");
+    if (ifModifiedSince !== null) {
+      const since = Date.parse(ifModifiedSince);
+      if (!Number.isNaN(since) && since >= new Date(meta.lastModified).getTime()) {
+        return new Response(null, { status: 304, headers });
+      }
+    }
+  }
+
   const file = Bun.file(meta.realTarget);
   const requestedRange = requestHeaders.get("range");
-  if (requestedRange !== null) {
+  // Multi-range requests (bytes=a-b,c-d) are answered with the full 200
+  // instead of a 416: RFC 9110 §14.2 allows ignoring a Range header, and a
+  // satisfiable multi-range must never be reported unsatisfiable.
+  if (requestedRange !== null && !requestedRange.includes(",")) {
     const range = parseRange(requestedRange, meta.size);
     if (!range) {
       headers.set("content-range", `bytes */${meta.size}`);

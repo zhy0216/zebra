@@ -32,11 +32,11 @@ test("ws open/message/close: upgrade fields are typed via Up, Bun params stay in
       expectTypeOf(data.ts).toEqualTypeOf<number>();
       expectTypeOf(ws.send).toBeFunction();
     },
-    message(ws, data, msg) {
+    message(_ws, data, msg) {
       expectTypeOf(data.userId).toEqualTypeOf<string>();
       expectTypeOf(msg).toEqualTypeOf<string | Buffer>();
     },
-    close(ws, data, code, reason) {
+    close(_ws, data, code, reason) {
       expectTypeOf(data.userId).toEqualTypeOf<string>();
       expectTypeOf(code).toEqualTypeOf<number>();
       expectTypeOf(reason).toEqualTypeOf<string>();
@@ -49,4 +49,3 @@ test("ws open/message/close: upgrade fields are typed via Up, Bun params stay in
     },
   });
 });
-

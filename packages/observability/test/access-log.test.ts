@@ -1,8 +1,8 @@
 import { describe, expect, mock, test } from "bun:test";
-import { buildRequest, type ZebraRequest } from "@zebra/core";
+import { type ZebraRequest, buildRequest } from "@zebra/core";
 import { createTestApp } from "@zebra/testing";
 
-import { accessLog, requestId, REQUEST_ID_KEY, type AccessLogEntry } from "../src/index.ts";
+import { type AccessLogEntry, REQUEST_ID_KEY, accessLog, requestId } from "../src/index.ts";
 
 function makeReq(path = "/"): ZebraRequest {
   return buildRequest(new Request(`http://test.local${path}`), {});

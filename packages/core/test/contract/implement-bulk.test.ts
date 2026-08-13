@@ -22,15 +22,19 @@ const router = {
 test("bulk implement with shared deps: handlers receive ResolvedDeps", async () => {
   const app = new Zebra({ container: new Container() });
   app.injectSingleton(Greeter);
-  app.implement(router, { g: Greeter }, {
-    hello: (req, { g }) => g.greet(req.params.name),
-    nested: {
-      bye: (_req, { g }) => {
-        expectTypeOf(g).toEqualTypeOf<Greeter>();
-        return undefined;
+  app.implement(
+    router,
+    { g: Greeter },
+    {
+      hello: (req, { g }) => g.greet(req.params.name),
+      nested: {
+        bye: (_req, { g }) => {
+          expectTypeOf(g).toEqualTypeOf<Greeter>();
+          return undefined;
+        },
       },
     },
-  });
+  );
 
   const res = await app.dispatch(new Request("http://x/hello/world"));
   expect(res.status).toBe(200);

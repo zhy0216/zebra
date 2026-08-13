@@ -3,6 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "scripts": { "start": "bun run src/main.ts" },
+  "scripts": { "start": "bun run src/main.ts", "test": "bun test" },
   "dependencies": { "zebra": "workspace:*" }
 }

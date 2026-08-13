@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { expectTypeOf, test } from "bun:test";
-import { zc, type StandardSchemaV1 } from "@zebra/contract";
+import { type StandardSchemaV1, zc } from "@zebra/contract";
 import { z } from "zod";
 import { Zebra } from "../../src/app/app.ts";
 
@@ -68,8 +68,10 @@ test("body is typed via InferOutput and is async", () => {
 
 test("transform: handler returns output InferInput, client-facing output is InferOutput", () => {
   const app = new Zebra();
-  const dateProc = zc.get("/when").output(z.object({ at: z.string().transform((s) => new Date(s)) }));
-  app.implement(dateProc, (req) => {
+  const dateProc = zc
+    .get("/when")
+    .output(z.object({ at: z.string().transform((s) => new Date(s)) }));
+  app.implement(dateProc, (_req) => {
     return { at: "2026-01-01T00:00:00Z" };
   });
 });
@@ -91,19 +93,23 @@ test("bulk implement: shared deps context derives handler deps and nested router
     list: zc.get("/items").output(z.array(z.string())),
     nested: { get: zc.get("/items/:id").output(z.string()) },
   };
-  app.implement(router, { repo: Repo }, {
-    list: (req, { repo }) => {
-      expectTypeOf(repo).toEqualTypeOf<Repo>();
-      expectTypeOf(req.query).toEqualTypeOf<Record<string, string>>();
-      return [repo.find()];
-    },
-    nested: {
-      get: (req, { repo }) => {
-        expectTypeOf(req.params).toEqualTypeOf<{ id: string }>();
-        return repo.find();
+  app.implement(
+    router,
+    { repo: Repo },
+    {
+      list: (req, { repo }) => {
+        expectTypeOf(repo).toEqualTypeOf<Repo>();
+        expectTypeOf(req.query).toEqualTypeOf<Record<string, string>>();
+        return [repo.find()];
+      },
+      nested: {
+        get: (req, { repo }) => {
+          expectTypeOf(req.params).toEqualTypeOf<{ id: string }>();
+          return repo.find();
+        },
       },
     },
-  });
+  );
 });
 
 test("bulk implement: missing key is a compile error", () => {
@@ -139,5 +145,5 @@ test("bulk implement: wrong deps type is a compile error", () => {
   }
   const router = { list: zc.get("/x") };
   // @ts-expect-error deps spec does not include Other
-  app.implement(router, { repo: Repo }, { list: (req, { repo }: { repo: Other }) => "ok" });
+  app.implement(router, { repo: Repo }, { list: (_req, { repo: _repo }: { repo: Other }) => "ok" });
 });

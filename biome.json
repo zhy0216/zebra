@@ -4,9 +4,22 @@
     "ignore": [
       "**/node_modules",
       "**/dist",
-      "**/test/**",
       "**/test-setup.ts",
-      "packages/core/src/di/decorators.ts"
+      "packages/core/src/di/decorators.ts",
+      "packages/core/test/middleware/helper.test.ts",
+      "packages/core/test/di/decorators.test.ts",
+      "packages/core/test/di/circular.test.ts",
+      "packages/core/test/di/scope-request.test.ts",
+      "packages/core/test/di/scope-transient.test.ts",
+      "packages/core/test/di/scope-session.test.ts",
+      "packages/core/test/app/inject-methods.test.ts",
+      "packages/core/test/app/inject-boot-validation.test.ts",
+      "packages/core/test/app/session.test.ts",
+      "packages/core/test/app/route-deps.test.ts",
+      "packages/core/test/app/ws.test.ts",
+      "packages/core/test/app/boot-validation.test.ts",
+      "packages/core/test/app/lifecycle.test.ts",
+      "packages/testing/test/test-app.test.ts"
     ]
   },
   "organizeImports": { "enabled": true },

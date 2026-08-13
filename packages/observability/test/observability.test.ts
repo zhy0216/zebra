@@ -2,12 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { createTestApp } from "@zebra/testing";
 
 import {
+  type AccessLogEntry,
   accessLog,
   errorReporter,
   health,
   metrics,
   requestId,
-  type AccessLogEntry,
 } from "../src/index.ts";
 
 describe("observability middleware set · pass-through", () => {

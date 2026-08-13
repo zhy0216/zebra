@@ -118,7 +118,11 @@ test("req.form enforces multipart maxFiles", async () => {
   form.append("b", new File(["2"], "b.txt"));
   form.append("c", new File(["3"], "c.txt"));
   const raw = new Request("http://x/", { method: "POST", body: form });
-  const z = buildRequest(raw, {}, { ...opts, multipart: { limit: 4096, maxFiles: 2, maxFileSize: 512 } });
+  const z = buildRequest(
+    raw,
+    {},
+    { ...opts, multipart: { limit: 4096, maxFiles: 2, maxFileSize: 512 } },
+  );
   await expect(z.form()).rejects.toMatchObject({ status: 413, code: "too_many_files" });
 });
 

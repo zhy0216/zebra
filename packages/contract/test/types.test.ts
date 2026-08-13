@@ -18,7 +18,9 @@ test("builder chain preserves literals and accumulates schema types", () => {
   expectTypeOf(proc.def.method).toEqualTypeOf<"GET">();
   expectTypeOf(proc.def.path).toEqualTypeOf<"/blogs/:id">();
   expectTypeOf(proc.def.status).toEqualTypeOf<201>();
-  expectTypeOf(proc.def.errors).toEqualTypeOf<{ readonly blog_not_found: { readonly status: 404 } }>();
+  expectTypeOf(proc.def.errors).toEqualTypeOf<{
+    readonly blog_not_found: { readonly status: 404 };
+  }>();
   expectTypeOf(proc.def.meta).toEqualTypeOf<{ readonly summary: "Get blog" }>();
   expectTypeOf(proc.def.body).toEqualTypeOf<undefined>();
 
@@ -44,7 +46,10 @@ test("bare zc.get is a valid procedure with fallback types", () => {
 });
 
 test("POST body schema flows InferOutput", () => {
-  const create = zc.post("/blogs").body(z.object({ title: z.string() })).output(Blog);
+  const create = zc
+    .post("/blogs")
+    .body(z.object({ title: z.string() }))
+    .output(Blog);
   expectTypeOf(create.def.method).toEqualTypeOf<"POST">();
   expectTypeOf<InferBody<typeof create>>().toEqualTypeOf<{ title: string }>();
   expectTypeOf<InferOutput<typeof create>>().toEqualTypeOf<{
@@ -69,7 +74,10 @@ test("errors accumulate across calls", () => {
     .get("/a")
     .errors({ one: { status: 400 } })
     .errors({ two: { status: 404 } });
-  expectTypeOf(p.def.errors).branded.toEqualTypeOf<{ readonly one: { readonly status: 400 }; readonly two: { readonly status: 404 } }>();
+  expectTypeOf(p.def.errors).branded.toEqualTypeOf<{
+    readonly one: { readonly status: 400 };
+    readonly two: { readonly status: 404 };
+  }>();
 });
 
 test("chain is immutable: later calls do not mutate earlier procedures", () => {

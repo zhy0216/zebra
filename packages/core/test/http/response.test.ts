@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { html, json, redirect, stream, text } from "../../src/http/response.ts";
+import { stream, html, json, redirect, text } from "../../src/http/response.ts";
 
 test("json(undefined) maps to an empty 204 (no invalid JSON body)", async () => {
   const res = json(undefined);

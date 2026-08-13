@@ -80,3 +80,26 @@ test("wildcard captures are not percent-decoded", () => {
   r.add("GET", "/files/*path", "h");
   expect(r.find("GET", "/files/a%2Fb/c%20d")?.params).toEqual({ path: "a%2Fb/c%20d" });
 });
+
+test("duplicate registration with the same parameter layout throws", () => {
+  const r = new Router<string>();
+  r.add("GET", "/a/:id", "one");
+  expect(() => r.add("GET", "/a/:slug", "two")).toThrow(/Duplicate route/);
+});
+
+test("a param segment wins over a wildcard for a single-segment path", () => {
+  const r = new Router<string>();
+  r.add("GET", "/x/:id", "param");
+  r.add("GET", "/x/*rest", "wildcard");
+  expect(r.find("GET", "/x/42")?.handler).toBe("param");
+  // Deeper paths can only match the wildcard.
+  expect(r.find("GET", "/x/a/b")?.handler).toBe("wildcard");
+  expect(r.find("GET", "/x/a/b")?.params).toEqual({ rest: "a/b" });
+});
+
+test("trailing slashes are ignored by the matcher", () => {
+  const r = new Router<string>();
+  r.add("GET", "/a", "h");
+  expect(r.find("GET", "/a/")?.handler).toBe("h");
+  expect(r.find("GET", "///a///")?.handler).toBe("h");
+});

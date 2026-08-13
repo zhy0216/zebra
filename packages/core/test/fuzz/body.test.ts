@@ -84,7 +84,10 @@ test("fuzz: deep JSON nesting and pathological multipart never escape as non-Htt
   const rnd = mulberry32(0x9e51);
   const cases: Array<[Uint8Array, string]> = [
     [new TextEncoder().encode("[".repeat(30_000) + "]".repeat(30_000)), "application/json"],
-    [new TextEncoder().encode('{"a":'.repeat(10_000) + "1" + "}".repeat(10_000)), "application/json"],
+    [
+      new TextEncoder().encode(`${'{"a":'.repeat(10_000)}1${"}".repeat(10_000)}`),
+      "application/json",
+    ],
     [new TextEncoder().encode("%00".repeat(1000)), "application/x-www-form-urlencoded"],
     [randomBytes(rnd, 2048), "multipart/form-data; boundary=----fuzzBoundary42"],
     [randomBytes(rnd, 2048), "multipart/form-data"],
@@ -95,7 +98,9 @@ test("fuzz: deep JSON nesting and pathological multipart never escape as non-Htt
     try {
       await parseBody(req, opts);
     } catch (error) {
-      expect(error instanceof HttpError, `case ${i} ct ${contentType} threw non-HttpError`).toBe(true);
+      expect(error instanceof HttpError, `case ${i} ct ${contentType} threw non-HttpError`).toBe(
+        true,
+      );
     }
   }
 });

@@ -14,9 +14,9 @@
 
 import { expect, test } from "bun:test";
 import type { ZebraRequest } from "@zebra/core";
-import { createTestApp, type TestApp } from "@zebra/testing";
+import { type TestApp, createTestApp } from "@zebra/testing";
 
-import { cors, type CorsOptions } from "../src/index.ts";
+import { type CorsOptions, cors } from "../src/index.ts";
 
 const ALLOWED = "https://example.com";
 const EVIL = "https://evil.example";

@@ -27,15 +27,21 @@ test("injectValue after listen() throws", async () => {
 
 import { injectable } from "../../src/di/decorators.ts";
 
-@injectable() class Greeter {
-  hello() { return "hi"; }
+@injectable()
+class Greeter {
+  hello() {
+    return "hi";
+  }
 }
 
 abstract class IGreeter {
   abstract hello(): string;
 }
-@injectable() class LoudGreeter extends IGreeter {
-  hello() { return "HI"; }
+@injectable()
+class LoudGreeter extends IGreeter {
+  hello() {
+    return "HI";
+  }
 }
 
 test("injectSingleton(X): toSelf, same instance across resolves", async () => {
@@ -58,7 +64,8 @@ test("injectSingleton(IFace, Impl): maps interface to implementation", async () 
   await app.stop();
 });
 
-@injectable() class ReqState {
+@injectable()
+class ReqState {
   static idCounter = 0;
   id = ++ReqState.idCounter;
 }
@@ -75,7 +82,8 @@ test("injectRequest(X): one instance per request scope", async () => {
   await app.stop();
 });
 
-@injectable() class Tick {
+@injectable()
+class Tick {
   static n = 0;
   v = ++Tick.n;
 }
@@ -92,7 +100,8 @@ test("injectTransient(X): new instance every resolve", async () => {
   await app.stop();
 });
 
-@injectable() class SessionItem {}
+@injectable()
+class SessionItem {}
 
 test("injectSession(X): registers without error (resolution requires session child scope, exercised elsewhere)", () => {
   const app = new Zebra();

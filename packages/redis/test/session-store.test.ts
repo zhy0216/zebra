@@ -15,7 +15,7 @@ function makeStore(ttl = TTL, prefix = PREFIX): { store: RedisSessionStore; redi
 }
 
 test("contract: any implementation is assignable", () => {
-  const { store } = makeStore();
+  makeStore();
   expectTypeOf<RedisSessionStore>().toMatchTypeOf<SessionStore>();
   expectTypeOf<FakeRedis>().toMatchTypeOf<RedisLike>();
 });

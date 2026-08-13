@@ -15,7 +15,7 @@ class FakeStore implements SessionStore {
     return Promise.resolve();
   }
 
-  touch(id: string, _ttl?: number): Promise<void> {
+  touch(_id: string, _ttl?: number): Promise<void> {
     return Promise.resolve();
   }
 
@@ -50,7 +50,8 @@ async function assertStoreContract(store: SessionStore): Promise<void> {
 
 test("contract holds for MemoryStore", () => assertStoreContract(new MemoryStore({ ttl: 60_000 })));
 
-test("contract holds for an unrelated fake implementation", () => assertStoreContract(new FakeStore()));
+test("contract holds for an unrelated fake implementation", () =>
+  assertStoreContract(new FakeStore()));
 
 describe("MemoryStore", () => {
   test("get returns undefined after ttl expires", async () => {

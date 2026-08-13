@@ -1,15 +1,9 @@
 import { expect, test } from "bun:test";
 import { Zebra, type ZebraRequest } from "@zebra/core";
 
-import {
-  SECURE_COOKIE,
-  MemoryStore,
-  getSession,
-  sessionMiddleware,
-  sign,
-} from "../src/index.ts";
-import type { SessionStore } from "../src/store.ts";
+import { MemoryStore, SECURE_COOKIE, getSession, sessionMiddleware, sign } from "../src/index.ts";
 import { verify } from "../src/sign.ts";
+import type { SessionStore } from "../src/store.ts";
 
 const SECRET = "test-secret";
 
@@ -59,9 +53,7 @@ test("writes persist to the store at response end and read back on the next requ
   expect(await store.get(sessionId)).toEqual({ user: { id: 42 } });
 
   const cookie = res1.headers.get("set-cookie")!.split(";")[0]!;
-  const res2 = await app.dispatch(
-    new Request("http://test.local/me", { headers: { cookie } }),
-  );
+  const res2 = await app.dispatch(new Request("http://test.local/me", { headers: { cookie } }));
   expect(await res2.json()).toEqual({ user: { id: 42 }, isNew: false });
 });
 
@@ -107,7 +99,7 @@ test("read-only requests on an existing session renew the TTL via touch instead 
   });
 
   // A brand-new visitor that writes nothing is not persisted at all.
-  const res1 = await app.dispatch(new Request("http://test.local/"));
+  const _res1 = await app.dispatch(new Request("http://test.local/"));
   expect(ops.filter((op) => op.startsWith("set:"))).toHaveLength(0);
 
   // An existing session is touched on read-only requests, never rewritten.
@@ -146,9 +138,7 @@ test("explicit flush persists mid-request; the response-end pass only renews", a
   const first = await app.dispatch(new Request("http://test.local/flush"));
   const cookie = first.headers.get("set-cookie")!.split(";")[0]!;
   ops.length = 0;
-  const res = await app.dispatch(
-    new Request("http://test.local/flush", { headers: { cookie } }),
-  );
+  const res = await app.dispatch(new Request("http://test.local/flush", { headers: { cookie } }));
   expect(res.headers.get("set-cookie")).toBeNull();
   expect(ops.filter((op) => op.startsWith("set:"))).toHaveLength(1);
   expect(ops.at(-1)?.startsWith("touch:")).toBe(true);
@@ -191,11 +181,9 @@ test("verified sessions enter core's non-ephemeral session scope (injectSession 
     items = 0;
   }
   app.injectSession(Cart);
-  app.get(
-    "/cart",
-    { cart: Cart } as never,
-    async (_req, deps: { cart: Cart }) => ({ items: deps.cart.items }),
-  );
+  app.get("/cart", { cart: Cart } as never, async (_req, deps: { cart: Cart }) => ({
+    items: deps.cart.items,
+  }));
 
   // A live store record is required for the resolver to enter the session scope.
   const sid = "di-session-id";

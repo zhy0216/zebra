@@ -8,7 +8,7 @@ import "reflect-metadata";
 import { describe, expect, test } from "bun:test";
 import { rateLimit } from "@zebra/rate-limit";
 import { getSession, sessionMiddleware, verify } from "@zebra/session";
-import { createTestApp, type TestApp } from "@zebra/testing";
+import { type TestApp, createTestApp } from "@zebra/testing";
 
 import { RedisRateLimitStore, RedisSessionStore } from "../src/index.ts";
 import { FakeRedis } from "./fake-redis.ts";
@@ -74,7 +74,9 @@ describe("session middleware with RedisSessionStore", () => {
 
     await mw.destroySession(sid);
     // Resolver agrees with the store: the destroyed id is anonymous again.
-    expect(await mw.resolver(new Request("http://test.local/", { headers: { cookie } }))).toBeUndefined();
+    expect(
+      await mw.resolver(new Request("http://test.local/", { headers: { cookie } })),
+    ).toBeUndefined();
 
     const res = await app.request("/me", { headers: { cookie } });
     const body = (await res.json()) as { sid: string; isNew: boolean };
@@ -152,7 +154,9 @@ describe("rate limit middleware with RedisRateLimitStore", () => {
     // Reset header is derived from the actual window start stored in Redis.
     const start = Number(await redis.get("e2e:rl:client:start"));
     expect(start).toBeGreaterThan(0);
-    expect(res.headers.get("x-rate-limit-reset")).toBe(String(Math.floor((start + WINDOW_MS) / 1000)));
+    expect(res.headers.get("x-rate-limit-reset")).toBe(
+      String(Math.floor((start + WINDOW_MS) / 1000)),
+    );
     expect(res.headers.get("retry-after")).toMatch(/^\d+$/);
   });
 

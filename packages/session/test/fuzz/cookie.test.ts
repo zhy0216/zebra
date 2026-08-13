@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import { parseCookies, parseSignedCookie } from "../../src/cookie.ts";
 import { mulberry32, randomString } from "../../../core/test/fuzz/prng.ts";
+import { parseCookies, parseSignedCookie } from "../../src/cookie.ts";
 
 // --- cookie fuzz --------------------------------------------------------------
 //

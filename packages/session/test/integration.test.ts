@@ -11,7 +11,7 @@
 import "reflect-metadata";
 import { expect, test } from "bun:test";
 import type { ZebraRequest } from "@zebra/core";
-import { createTestApp, type TestApp } from "@zebra/testing";
+import { type TestApp, createTestApp } from "@zebra/testing";
 
 import { MemoryStore, getSession, sessionMiddleware, verify } from "../src/index.ts";
 import type { SessionStore } from "../src/store.ts";
@@ -201,13 +201,17 @@ test("resolver assembly: session.resolver from the middleware makes the session 
   expect(first.user).toEqual({ id: 7 });
 
   // Same session id → the same session-scoped instance is reused.
-  const second = (await (await app.request("/state", { headers: { cookie: c1 } })).json()) as typeof first;
+  const second = (await (
+    await app.request("/state", { headers: { cookie: c1 } })
+  ).json()) as typeof first;
   expect(second.stateId).toBe(first.stateId);
   expect(second.sid).toBe(first.sid);
 
   // A different session id gets its own container and instance.
   const c2 = extractCookie(await app.request("/login", { method: "POST" }));
-  const other = (await (await app.request("/state", { headers: { cookie: c2 } })).json()) as typeof first;
+  const other = (await (
+    await app.request("/state", { headers: { cookie: c2 } })
+  ).json()) as typeof first;
   expect(other.sid).not.toBe(first.sid);
   expect(other.stateId).not.toBe(first.stateId);
 });

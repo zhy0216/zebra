@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { buildRequest, type ZebraRequest } from "@zebra/core";
+import { type ZebraRequest, buildRequest } from "@zebra/core";
 import { createTestApp } from "@zebra/testing";
 
-import { getRequestId, REQUEST_ID_KEY, requestId } from "../src/index.ts";
+import { REQUEST_ID_KEY, getRequestId, requestId } from "../src/index.ts";
 
 function makeReq(init: RequestInit = {}): ZebraRequest {
   return buildRequest(new Request("http://test.local/", init), {});
@@ -90,8 +90,9 @@ describe("requestId middleware · id resolution", () => {
 
   test("does not clobber a request-id header the handler already set", async () => {
     const mw = requestId();
-    const res = await mw(makeReq(), async () =>
-      new Response("ok", { headers: { "x-request-id": "handler-set" } }),
+    const res = await mw(
+      makeReq(),
+      async () => new Response("ok", { headers: { "x-request-id": "handler-set" } }),
     );
     expect(res.headers.get("x-request-id")).toBe("handler-set");
   });

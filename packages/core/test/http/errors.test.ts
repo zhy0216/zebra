@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { HttpError, toProblemJson, ValidationError } from "../../src/http/errors.ts";
+import { HttpError, ValidationError, toProblemJson } from "../../src/http/errors.ts";
 
 test("HttpError holds status, code, title", () => {
   const e = new HttpError(404, "blog_not_found", "no such blog", { id: "42" });

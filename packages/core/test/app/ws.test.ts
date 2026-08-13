@@ -334,7 +334,7 @@ test("unbound onUpgrade dep is an internal error (500), not a client rejection",
 
 test("upgrade hook receives path params for path-based auth (room checks)", async () => {
   const allowedRooms: string[] = [];
-  let opened: boolean = false;
+  let opened = false;
   const app = startApp((a) => {
     a.ws("/chat/:room", {
       upgrade: async (_req, _deps, params) => {

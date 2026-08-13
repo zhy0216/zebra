@@ -33,7 +33,8 @@ test("listen: declared-form factory with circular dep throws CircularDependencyE
   await expect(app.listen({ port: 0 })).rejects.toThrow(CircularDependencyError);
 });
 
-@injectable() class ReqOnly {}
+@injectable()
+class ReqOnly {}
 
 test("listen: singleton factory depending on request-scoped class throws ScopeMismatchError", async () => {
   const SingletonOut = token<unknown>("SingletonOut");

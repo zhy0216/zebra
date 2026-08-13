@@ -20,9 +20,9 @@
 // numbers, not from any independent bookkeeping.
 
 import { describe, expect, test } from "bun:test";
-import { createTestApp, type TestApp } from "@zebra/testing";
+import { type TestApp, createTestApp } from "@zebra/testing";
 
-import { rateLimit, type RateLimitOptions } from "../src/index.ts";
+import { type RateLimitOptions, rateLimit } from "../src/index.ts";
 import type { IncrementResult, RateLimitStore } from "../src/store.ts";
 
 const WINDOW_MS = 60_000;

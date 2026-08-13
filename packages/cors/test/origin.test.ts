@@ -1,11 +1,6 @@
 import { expect, test } from "bun:test";
 
-import {
-  DEFAULT_ORIGIN,
-  matchOrigin,
-  reflectOrigin,
-  resolveAllowOrigin,
-} from "../src/origin.ts";
+import { DEFAULT_ORIGIN, matchOrigin, reflectOrigin, resolveAllowOrigin } from "../src/origin.ts";
 
 test("string config matches exactly", () => {
   expect(matchOrigin("https://example.com", "https://example.com", false)).toBe(true);

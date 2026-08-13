@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { buildRequest, type ZebraRequest } from "@zebra/core";
+import { type ZebraRequest, buildRequest } from "@zebra/core";
 import { createTestApp } from "@zebra/testing";
 
-import { metrics, type MetricsSnapshot } from "../src/index.ts";
+import { type MetricsSnapshot, metrics } from "../src/index.ts";
 
 function makeReq(): ZebraRequest {
   return buildRequest(new Request("http://test.local/"), {});
@@ -56,7 +56,17 @@ describe("metrics middleware", () => {
     for (let i = 0; i < 7; i++) await m(makeReq(), okNext);
     const s = m.snapshot();
     expect(s.latency.bucketBoundsMs).toEqual([
-      5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, Infinity,
+      5,
+      10,
+      25,
+      50,
+      100,
+      250,
+      500,
+      1000,
+      2500,
+      5000,
+      Number.POSITIVE_INFINITY,
     ]);
     expect(s.latency.buckets).toHaveLength(11);
     expect(s.latency.buckets.reduce((acc, n) => acc + n, 0)).toBe(7);

@@ -3,7 +3,10 @@ import { Zebra } from "@zebra/core";
 
 import { cors } from "../src/index.ts";
 
-function makeApp(opts: Parameters<typeof cors>[0], handler: () => Response = () => new Response("ok")) {
+function makeApp(
+  opts: Parameters<typeof cors>[0],
+  handler: () => Response = () => new Response("ok"),
+) {
   const app = new Zebra();
   app.use(cors(opts));
   app.get("/api", handler);
@@ -46,8 +49,9 @@ test("inject: exposedHeaders are advertised", async () => {
 });
 
 test("inject: handler's Vary header is merged, not overwritten", async () => {
-  const app = makeApp({ origin: "https://example.com" }, () =>
-    new Response("ok", { headers: { vary: "Accept-Encoding" } }),
+  const app = makeApp(
+    { origin: "https://example.com" },
+    () => new Response("ok", { headers: { vary: "Accept-Encoding" } }),
   );
   const res = await get(app, "https://example.com");
   expect(res.headers.get("vary")).toBe("Accept-Encoding, Origin");
@@ -76,8 +80,10 @@ test("inject: preserves status, statusText and streaming body semantics", async 
       controller.close();
     },
   });
-  const app = makeApp({ origin: "https://example.com" }, () =>
-    new Response(stream, { status: 201, statusText: "Created", headers: { "x-handler": "1" } }),
+  const app = makeApp(
+    { origin: "https://example.com" },
+    () =>
+      new Response(stream, { status: 201, statusText: "Created", headers: { "x-handler": "1" } }),
   );
   const res = await get(app, "https://example.com");
   expect(res.status).toBe(201);

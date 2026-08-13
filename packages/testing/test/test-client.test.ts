@@ -8,8 +8,14 @@ import { createTestClient } from "../src/index.ts";
 const Blog = z.object({ id: z.number(), title: z.string(), content: z.string() });
 
 const blogContract = {
-  list: zc.get("/blogs").query(z.object({ page: z.coerce.number().min(1).default(1) })).output(z.array(Blog)),
-  get: zc.get("/blogs/:id").params(z.object({ id: z.coerce.number().int() })).output(Blog),
+  list: zc
+    .get("/blogs")
+    .query(z.object({ page: z.coerce.number().min(1).default(1) }))
+    .output(z.array(Blog)),
+  get: zc
+    .get("/blogs/:id")
+    .params(z.object({ id: z.coerce.number().int() }))
+    .output(Blog),
   create: zc
     .post("/blogs")
     .body(z.object({ title: z.string().min(1), content: z.string() }))
@@ -62,10 +68,16 @@ test("createTestClient surfaces 422 as ClientError with problem errors", async (
     await api.create({ body: { title: "", content: "x" } });
     expect.unreachable();
   } catch (err) {
-    const e = err as { status: number; code: string; problem: { errors: Array<{ path: string; message: string }> } };
+    const e = err as {
+      status: number;
+      code: string;
+      problem: { errors: Array<{ path: string; message: string }> };
+    };
     expect(e.status).toBe(422);
     expect(e.code).toBe("validation_failed");
-    expect(e.problem.errors).toEqual([{ path: "body.title", message: "String must contain at least 1 character(s)" }]);
+    expect(e.problem.errors).toEqual([
+      { path: "body.title", message: "String must contain at least 1 character(s)" },
+    ]);
   }
 });
 

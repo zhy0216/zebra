@@ -1,9 +1,5 @@
 import "reflect-metadata";
-import { Zebra } from "zebra";
+import { buildHelloApp } from "./app.ts";
 
-const z = new Zebra();
-
-z.get("/hello/:name", async (req) => new Response(`hello, ${req.params.name}`));
-
-await z.listen({ port: 3000 });
+await buildHelloApp().listen({ port: 3000 });
 console.log("hello example listening on http://localhost:3000");

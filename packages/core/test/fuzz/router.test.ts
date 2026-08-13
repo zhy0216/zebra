@@ -33,14 +33,14 @@ function randomPath(rnd: () => number): string {
   for (let i = 0; i < depth; i++) {
     const kind = int(rnd, 0, 9);
     if (kind < 6) segments.push(pick(rnd, SEGMENTS));
-    else if (kind < 9) segments.push(":" + pick(rnd, PARAM_NAMES));
-    else segments.push("*" + pick(rnd, ["rest", "all"]));
+    else if (kind < 9) segments.push(`:${pick(rnd, PARAM_NAMES)}`);
+    else segments.push(`*${pick(rnd, ["rest", "all"])}`);
   }
   // parsePath requires a wildcard to be the last segment.
   for (let i = 0; i < segments.length - 1; i++) {
     if (segments[i]!.startsWith("*")) segments[i] = pick(rnd, SEGMENTS);
   }
-  return "/" + segments.join("/");
+  return `/${segments.join("/")}`;
 }
 
 /** Concretizes a route path into a query that definitely matches it. */
@@ -55,14 +55,15 @@ function concretePath(path: string, rnd: () => number): string {
     }
     return p;
   });
-  return "/" + out.join("/");
+  return `/${out.join("/")}`;
 }
 
 test("fuzz: router precedence and param capture invariants", async () => {
   const rnd = mulberry32(0x8ab1e);
   const seen = new Set<string>();
   const staticRoutes: Array<{ method: string; path: string; handler: number }> = [];
-  const allRoutes: Array<{ method: string; path: string; handler: number; hasParams: boolean }> = [];
+  const allRoutes: Array<{ method: string; path: string; handler: number; hasParams: boolean }> =
+    [];
 
   for (let i = 0; i < 60; i++) {
     const path = randomPath(rnd);
@@ -110,7 +111,11 @@ test("fuzz: router precedence and param capture invariants", async () => {
   // Invariant 3: random garbage queries never throw, and results are well-formed.
   for (let i = 0; i < 3000; i++) {
     const method = pick(rnd, [...METHODS, "OPTIONS", "BREW"]);
-    const path = pick(rnd, [() => randomPath(rnd), () => concretePath("/:p/:p/:p", rnd), () => randomGarbage(rnd)])();
+    const path = pick(rnd, [
+      () => randomPath(rnd),
+      () => concretePath("/:p/:p/:p", rnd),
+      () => randomGarbage(rnd),
+    ])();
     const match = router.find(method, path);
     if (match === null) continue;
     expect(match.handler).toBeTypeOf("number");

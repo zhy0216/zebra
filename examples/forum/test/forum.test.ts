@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { ClientError, createClient } from "@zebra/client";
 import { buildForumApp } from "../src/app.ts";
-import { forumContract } from "../src/contract.ts";
 import type { ForumAppOptions } from "../src/app.ts";
+import { forumContract } from "../src/contract.ts";
 
 // ---------------------------------------------------------------------------
 // Integration tests drive the real composition root (buildForumApp) through
@@ -14,9 +14,7 @@ import type { ForumAppOptions } from "../src/app.ts";
 function buildTestApp(opts: ForumAppOptions = { sessionSecret: "test-secret" }) {
   const app = buildForumApp(opts);
   const request = (path: string, init: RequestInit = {}) =>
-    app.dispatch(
-      new Request(/^https?:\/\//.test(path) ? path : `http://test.local${path}`, init),
-    );
+    app.dispatch(new Request(/^https?:\/\//.test(path) ? path : `http://test.local${path}`, init));
   return { app, request };
 }
 
@@ -66,8 +64,8 @@ describe("forum", () => {
     const { request } = buildTestApp();
     const api = createClient(forumContract, { baseUrl: "http://test.local", fetch: jar(request) });
 
-    const err = await expectRejected(() =>
-      api.auth.register({ body: { username: "x", password: "hunter2" } }), // username min 2
+    const err = await expectRejected(
+      () => api.auth.register({ body: { username: "x", password: "hunter2" } }), // username min 2
     );
     expect(err.status).toBe(422);
     expect(err.code).toBe("validation_failed");
@@ -163,7 +161,7 @@ function jar(request: (path: string, init?: RequestInit) => Promise<Response>) {
     if (cookie !== "") headers.set("cookie", cookie);
     const res = await request(url, { ...init, headers });
     const set = res.headers.get("set-cookie");
-    if (set !== null) cookie = set.split(";")[0] + ";";
+    if (set !== null) cookie = `${set.split(";")[0]};`;
     return res;
   };
 }

@@ -41,7 +41,11 @@ test("routeTable returns frozen copies of registered routes", async () => {
 test("routeTable reflects bulk implement with def metadata", () => {
   const app = new Zebra({ container: new Container() });
   const router = {
-    create: zc.post("/blogs").status(201).errors({ bad: { status: 400 } }).meta({ tags: ["x"] }),
+    create: zc
+      .post("/blogs")
+      .status(201)
+      .errors({ bad: { status: 400 } })
+      .meta({ tags: ["x"] }),
     nested: { remove: zc.delete("/blogs/:id").status(204) },
   };
   app.implement(router, {

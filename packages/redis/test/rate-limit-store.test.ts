@@ -17,7 +17,7 @@ function makeStore(prefix = PREFIX): { store: RedisRateLimitStore; redis: FakeRe
 }
 
 test("contract: any implementation is assignable", () => {
-  const { store } = makeStore();
+  makeStore();
   expectTypeOf<RedisRateLimitStore>().toMatchTypeOf<RateLimitStore>();
   expectTypeOf<FakeRedis>().toMatchTypeOf<RedisLike>();
 });

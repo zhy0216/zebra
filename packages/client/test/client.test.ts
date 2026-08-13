@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { zc } from "@zebra/contract";
 import { z } from "zod";
-import { createClient, ClientError } from "../src/index.ts";
+import { ClientError, createClient } from "../src/index.ts";
 
 function fakeFetch(
   handler: (url: string, init: RequestInit) => Response | Promise<Response>,
@@ -12,11 +12,27 @@ function fakeFetch(
 const blog = z.object({ id: z.number(), title: z.string() });
 
 const contract = {
-  list: zc.get("/blogs").query(z.object({ page: z.coerce.number().min(1).default(1) })).output(z.array(blog)),
-  get: zc.get("/blogs/:id").params(z.object({ id: z.coerce.number().int() })).output(blog),
-  files: zc.get("/files/*splat").params(z.object({ splat: z.string() })).output(z.string()),
-  create: zc.post("/blogs").body(z.object({ title: z.string() })).output(blog).status(201),
-  remove: zc.delete("/blogs/:id").params(z.object({ id: z.coerce.number().int() })).status(204),
+  list: zc
+    .get("/blogs")
+    .query(z.object({ page: z.coerce.number().min(1).default(1) }))
+    .output(z.array(blog)),
+  get: zc
+    .get("/blogs/:id")
+    .params(z.object({ id: z.coerce.number().int() }))
+    .output(blog),
+  files: zc
+    .get("/files/*splat")
+    .params(z.object({ splat: z.string() }))
+    .output(z.string()),
+  create: zc
+    .post("/blogs")
+    .body(z.object({ title: z.string() }))
+    .output(blog)
+    .status(201),
+  remove: zc
+    .delete("/blogs/:id")
+    .params(z.object({ id: z.coerce.number().int() }))
+    .status(204),
 };
 
 test("GET with query: URL is built with baseUrl, path and query params", async () => {
@@ -67,7 +83,9 @@ test("missing path param throws before fetching", async () => {
     baseUrl: "http://x",
     fetch: fakeFetch(() => new Response("[]", { status: 200 })),
   });
-  expect(() => api.get({ params: {} as { id: number } })).toThrow(/Missing required path parameter/);
+  expect(() => api.get({ params: {} as { id: number } })).toThrow(
+    /Missing required path parameter/,
+  );
 });
 
 test("query skips undefined/null and stringifies values", async () => {
@@ -96,7 +114,9 @@ test("body is JSON-stringified with content-type header", async () => {
   expect(created).toEqual({ id: 1, title: "t" });
   expect(seen[0]!.init.method).toBe("POST");
   expect(seen[0]!.init.body).toBe('{"title":"hi"}');
-  expect((seen[0]!.init.headers as Record<string, string>)["content-type"]).toBe("application/json");
+  expect((seen[0]!.init.headers as Record<string, string>)["content-type"]).toBe(
+    "application/json",
+  );
 });
 
 test("FormData bodies pass through unstringified (no forced json content-type)", async () => {
@@ -142,11 +162,14 @@ test("headers: static (thunk) headers merged with per-call headers, per-call win
       return new Response("[]", { status: 200 });
     }),
   });
-  await api.list({ query: { page: 1 }, headers: { "x-per-call": "2", authorization: "Bearer xyz" } });
+  await api.list({
+    query: { page: 1 },
+    headers: { "x-per-call": "2", authorization: "Bearer xyz" },
+  });
   const headers = seen[0]!.init.headers as Record<string, string>;
   expect(headers["x-static"]).toBe("1");
   expect(headers["x-per-call"]).toBe("2");
-  expect(headers["authorization"]).toBe("Bearer xyz");
+  expect(headers.authorization).toBe("Bearer xyz");
 });
 
 test("200 with body parses JSON; 204 and empty body resolve to undefined", async () => {

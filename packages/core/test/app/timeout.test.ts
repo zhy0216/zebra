@@ -66,7 +66,7 @@ test("timeout abort carries the 504 HttpError as signal.reason", async () => {
 
 test("without requestTimeout, req.signal is Bun's raw client-disconnect signal", async () => {
   const app = new Zebra();
-  let seen: string[] = [];
+  const seen: string[] = [];
   app.get("/abort", async (req) => {
     seen.push(`same:${req.signal === req.raw.signal}`);
     req.signal.addEventListener(
@@ -187,9 +187,7 @@ test("timeout disposes request scopes and releases the session even for a hung h
   });
   app.injectRequest(Scoped);
   app.get("/dep", { dep: Scoped }, async () => HANG);
-  const res = await app.dispatch(
-    new Request("http://x/dep", { headers: { cookie: "sid=s1" } }),
-  );
+  const res = await app.dispatch(new Request("http://x/dep", { headers: { cookie: "sid=s1" } }));
   expect(res.status).toBe(504);
   // The deadline path disposes the request scope even though the handler never
   // settles, and the session record's activeRequests counter is released.

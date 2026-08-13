@@ -83,24 +83,54 @@ test("emits a weak ETag and honors If-None-Match", async () => {
 });
 
 test("serves a single byte range", async () => {
-  const res = await serveStatic(
-    root,
-    "hello.txt",
-    opts,
-    new Headers({ range: "bytes=0-4" }),
-  );
+  const res = await serveStatic(root, "hello.txt", opts, new Headers({ range: "bytes=0-4" }));
   expect(res.status).toBe(206);
   expect(res.headers.get("content-range")).toMatch(/^bytes 0-4\//);
   expect(await res.text()).toBe("hello");
 });
 
-test("returns 416 for an unsatisfiable range", async () => {
+test("a multi-range request is answered with the full 200, not a 416", async () => {
+  const res = await serveStatic(root, "hello.txt", opts, new Headers({ range: "bytes=0-1,4-5" }));
+  expect(res.status).toBe(200);
+  expect(await res.text()).toBe("hello world\n");
+});
+
+test("If-Modified-Since after the mtime yields 304", async () => {
   const res = await serveStatic(
     root,
     "hello.txt",
     opts,
-    new Headers({ range: "bytes=999-1000" }),
+    new Headers({ "if-modified-since": "Wed, 31 Dec 2099 23:59:59 GMT" }),
   );
+  expect(res.status).toBe(304);
+});
+
+test("If-Modified-Since before the mtime yields 200", async () => {
+  const res = await serveStatic(
+    root,
+    "hello.txt",
+    opts,
+    new Headers({ "if-modified-since": "Thu, 01 Jan 1970 00:00:00 GMT" }),
+  );
+  expect(res.status).toBe(200);
+});
+
+test("If-Modified-Since is ignored when If-None-Match is present", async () => {
+  const res = await serveStatic(
+    root,
+    "hello.txt",
+    opts,
+    new Headers({
+      "if-none-match": '"stale-etag"',
+      "if-modified-since": "Wed, 31 Dec 2099 23:59:59 GMT",
+    }),
+  );
+  // INM does not match and IMS must be ignored (RFC 9110 §13.1.3) → 200.
+  expect(res.status).toBe(200);
+});
+
+test("returns 416 for an unsatisfiable range", async () => {
+  const res = await serveStatic(root, "hello.txt", opts, new Headers({ range: "bytes=999-1000" }));
   expect(res.status).toBe(416);
   expect(res.headers.get("content-range")).toMatch(/^bytes \*\//);
 });
@@ -122,12 +152,7 @@ test("repeated requests hit the cache with identical headers and correct bodies"
   expect(again.headers.get("etag")).toBe(etag);
   expect(await again.text()).toBe("hello world\n");
 
-  const ranged = await serveStatic(
-    root,
-    "hello.txt",
-    opts,
-    new Headers({ range: "bytes=0-4" }),
-  );
+  const ranged = await serveStatic(root, "hello.txt", opts, new Headers({ range: "bytes=0-4" }));
   expect(ranged.status).toBe(206);
   expect(await ranged.text()).toBe("hello");
 
