@@ -1,6 +1,13 @@
 import { expect, test } from "bun:test";
 import { html, json, redirect, stream, text } from "../../src/http/response.ts";
 
+test("json(undefined) maps to an empty 204 (no invalid JSON body)", async () => {
+  const res = json(undefined);
+  expect(res.status).toBe(204);
+  expect(res.body).toBeNull();
+  expect(res.headers.has("content-type")).toBe(false);
+});
+
 test("json sets content-type and status defaults", async () => {
   const res = json({ a: 1 });
   expect(res.status).toBe(200);

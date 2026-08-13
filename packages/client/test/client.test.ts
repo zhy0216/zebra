@@ -99,6 +99,39 @@ test("body is JSON-stringified with content-type header", async () => {
   expect((seen[0]!.init.headers as Record<string, string>)["content-type"]).toBe("application/json");
 });
 
+test("FormData bodies pass through unstringified (no forced json content-type)", async () => {
+  const seen: Array<{ init: RequestInit }> = [];
+  const api = createClient(contract, {
+    baseUrl: "http://x",
+    fetch: fakeFetch((_url, init) => {
+      seen.push({ init });
+      return new Response("null", { status: 201 });
+    }),
+  });
+  const form = new FormData();
+  form.append("file", new Blob(["hello"], { type: "text/plain" }), "hello.txt");
+  // The contract body type is JSON-shaped; FormData only occurs at runtime
+  // (typed escape hatch), so cast through unknown.
+  await api.create({ body: form as unknown as { title: string } });
+  expect(seen[0]!.init.body).toBe(form);
+  const headers = seen[0]!.init.headers as Record<string, string> | undefined;
+  expect(headers?.["content-type"]).toBeUndefined();
+});
+
+test("Blob bodies pass through unstringified", async () => {
+  const seen: Array<{ init: RequestInit }> = [];
+  const api = createClient(contract, {
+    baseUrl: "http://x",
+    fetch: fakeFetch((_url, init) => {
+      seen.push({ init });
+      return new Response("null", { status: 201 });
+    }),
+  });
+  const blob = new Blob(["raw"], { type: "application/octet-stream" });
+  await api.create({ body: blob as unknown as { title: string } });
+  expect(seen[0]!.init.body).toBe(blob);
+});
+
 test("headers: static (thunk) headers merged with per-call headers, per-call wins", async () => {
   const seen: Array<{ init: RequestInit }> = [];
   const api = createClient(contract, {

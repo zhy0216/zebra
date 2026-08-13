@@ -65,10 +65,17 @@ function makeCall(
     };
     const mergedHeaders = { ...resolveHeaders(), ...headers };
     if (body !== undefined) {
-      if (mergedHeaders["content-type"] === undefined) {
-        mergedHeaders["content-type"] = "application/json";
+      if (body instanceof FormData || body instanceof Blob) {
+        // Native bodies pass through as-is: JSON.stringify would silently
+        // corrupt them (FormData → "{}", Blob → "{}"), and fetch derives the
+        // multipart boundary itself.
+        init.body = body;
+      } else {
+        if (mergedHeaders["content-type"] === undefined) {
+          mergedHeaders["content-type"] = "application/json";
+        }
+        init.body = JSON.stringify(body);
       }
-      init.body = JSON.stringify(body);
     }
     if (Object.keys(mergedHeaders).length > 0) init.headers = mergedHeaders;
 

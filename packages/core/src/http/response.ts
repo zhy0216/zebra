@@ -5,7 +5,7 @@
  *
  * | Helper     | Default `content-type`          | Default status |
  * | ---------- | ------------------------------- | -------------- |
- * | `json()`   | `application/json; charset=utf-8` | 200          |
+ * | `json()`   | `application/json; charset=utf-8` | 200 (`undefined` → 204) |
  * | `text()`   | `text/plain; charset=utf-8`     | 200            |
  * | `html()`   | `text/html; charset=utf-8`      | 200            |
  * | `stream()` | `application/octet-stream`      | 200            |
@@ -34,8 +34,15 @@ function withHeaders(init: ResponseInit, contentType: string): Headers {
   return headers;
 }
 
-/** JSON body with `application/json; charset=utf-8`, status 200. */
+/**
+ * JSON body with `application/json; charset=utf-8`, status 200.
+ * `undefined` has no JSON representation; it maps to an empty 204, mirroring
+ * the framework's handler semantics (`undefined → 204`).
+ */
 export function json(value: unknown, init: ResponseInit = {}): Response {
+  if (value === undefined) {
+    return new Response(null, { ...init, status: init.status ?? 204 });
+  }
   return new Response(JSON.stringify(value), {
     ...init,
     headers: withHeaders(init, "application/json; charset=utf-8"),

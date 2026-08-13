@@ -73,7 +73,7 @@ From `@zebra/core` (also re-exported by the `zebra` facade). Default content-typ
 
 | Helper | Default content-type | Default status |
 | --- | --- | --- |
-| `json(value)` | `application/json; charset=utf-8` | 200 |
+| `json(value)` | `application/json; charset=utf-8` | 200 (`undefined` → 204) |
 | `text(value)` | `text/plain; charset=utf-8` | 200 |
 | `html(value)` | `text/html; charset=utf-8` | 200 |
 | `stream(body)` | `application/octet-stream` | 200 |
@@ -83,6 +83,8 @@ From `@zebra/core` (also re-exported by the `zebra` facade). Default content-typ
 import { html, json, redirect, stream, text } from "zebra";
 
 z.get("/api", () => json({ ok: true }));
+// json(undefined) has no JSON representation → empty 204, mirroring the
+// handler semantics where `undefined` produces a 204.
 z.get("/plain", () => text("hello"));          // unquoted raw text
 z.get("/page", () => html("<h1>Hi</h1>"));
 z.get("/dl", () => stream(Bun.file("./x.bin")));
