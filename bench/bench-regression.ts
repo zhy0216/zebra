@@ -5,18 +5,34 @@
 //
 //   bun run bench:check
 //
-// Rebaseline after intentional performance changes with
+// Each scenario is measured RUNS times and the median (by rps) is compared —
+// single measurements are too noisy for a gate. Rebaseline after intentional
+// performance changes with
 // BENCH_DURATION_MS=3000 bun run bench/bench-regression.ts --update
 process.env.NODE_ENV = "production";
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { runScenario } from "./runner.ts";
-import { SCENARIOS } from "./scenarios.ts";
+import { type BenchOptions, SCENARIOS, type Scenario, type ScenarioResult } from "./scenarios.ts";
 import { start } from "./zebra-bench.ts";
 
 const RPS_THRESHOLD = 0.8;
 const P95_THRESHOLD = 1.25;
+const RUNS = 3;
+
+async function measureMedian(
+  baseUrl: string,
+  opts: BenchOptions,
+  scenario: Scenario,
+): Promise<ScenarioResult> {
+  const results: ScenarioResult[] = [];
+  for (let i = 0; i < RUNS; i++) {
+    results.push(await runScenario(baseUrl, opts, scenario));
+  }
+  results.sort((a, b) => a.rps - b.rps);
+  return results[Math.floor(results.length / 2)]!;
+}
 
 interface BaselineEntry {
   rps: number;
@@ -45,7 +61,7 @@ async function main(): Promise<void> {
   const failures: string[] = [];
   try {
     for (const scenario of SCENARIOS) {
-      const r = await runScenario(server.baseUrl, opts, scenario.name, scenario.path);
+      const r = await measureMedian(server.baseUrl, opts, scenario);
       const b = baseline.zebra[scenario.name];
       if (update || b === undefined) {
         baseline.zebra[scenario.name] = { rps: r.rps, p95: r.p95 };

@@ -1,4 +1,4 @@
-import { type BenchOptions, SCENARIOS, type ScenarioResult } from "./scenarios.ts";
+import { type BenchOptions, type Scenario, type ScenarioResult } from "./scenarios.ts";
 
 function pctile(sorted: number[], q: number): number {
   if (sorted.length === 0) return 0;
@@ -6,10 +6,23 @@ function pctile(sorted: number[], q: number): number {
   return sorted[idx]!;
 }
 
+/** Precomputed fetch init for a scenario (POST + JSON body, or a plain GET). */
+function fetchInit(scenario: Scenario): RequestInit | undefined {
+  if (scenario.method === "POST") {
+    return {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: scenario.body,
+    };
+  }
+  return undefined;
+}
+
 export async function hammer(
   url: string,
   opts: BenchOptions,
   record: boolean,
+  init?: RequestInit,
 ): Promise<ScenarioResult | null> {
   const latencies: number[] = [];
   let count = 0;
@@ -19,7 +32,7 @@ export async function hammer(
   const worker = async () => {
     while (running) {
       const t0 = performance.now();
-      const res = await fetch(url);
+      const res = await fetch(url, init);
       await res.arrayBuffer();
       if (res.status !== 200) throw new Error(`non-200 response: ${res.status}`);
       if (record) {
@@ -47,19 +60,26 @@ export async function hammer(
   };
 }
 
+/**
+ * Probes the scenario endpoint, warms it up, then measures. The warmup is a
+ * fixed 500ms (never longer than the measurement window) so the measured
+ * phase excludes JIT/connection setup.
+ */
 export async function runScenario(
   baseUrl: string,
   opts: BenchOptions,
-  name: string,
-  path: string,
+  scenario: Scenario,
 ): Promise<ScenarioResult> {
-  const url = baseUrl + path;
-  const probe = await fetch(url);
+  const url = baseUrl + scenario.path;
+  const init = fetchInit(scenario);
+  const probe = await fetch(url, init);
   const body = await probe.text();
-  const scenario = SCENARIOS.find((s) => s.name === name)!;
   if (probe.status !== 200 || !scenario.verify(body)) {
-    throw new Error(`${name}: unexpected response (${probe.status}) ${body.slice(0, 100)}`);
+    throw new Error(
+      `${scenario.name}: unexpected response (${probe.status}) ${body.slice(0, 100)}`,
+    );
   }
-  await hammer(url, opts, false);
-  return (await hammer(url, opts, true))!;
+  const warmupMs = Math.min(500, opts.durationMs);
+  await hammer(url, { ...opts, durationMs: warmupMs }, false, init);
+  return (await hammer(url, opts, true, init))!;
 }

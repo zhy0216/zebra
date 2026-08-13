@@ -12,6 +12,10 @@ export interface Scenario {
   name: string;
   path: string;
   verify: (body: string) => boolean;
+  /** HTTP method; defaults to GET. */
+  method?: string;
+  /** Precomputed request body (JSON string); only used when `method` is POST. */
+  body?: string;
 }
 
 export interface ScenarioResult {
@@ -62,4 +66,19 @@ export const SCENARIOS: Scenario[] = [
   // Static-file scenario: serve a real file from disk via each framework's
   // static handling (zebra: app.static()).
   { name: "static-file", path: "/static/hello.txt", verify: (b) => b === "static hello\n" },
+  // Body-parsing scenario: POST + JSON body echoed back by each framework.
+  {
+    name: "post-json",
+    path: "/post-json",
+    method: "POST",
+    body: JSON.stringify(JSON_PAYLOAD),
+    verify: (b) => {
+      try {
+        const j = JSON.parse(b);
+        return j.hello === "world" && Array.isArray(j.arr) && j.arr.length === 10;
+      } catch {
+        return false;
+      }
+    },
+  },
 ];

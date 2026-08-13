@@ -19,8 +19,8 @@
         "zebra": "workspace:*",
       },
       "devDependencies": {
-        "elysia": "^1.3.0",
-        "hono": "^4.7.0",
+        "elysia": "1.4.29",
+        "hono": "4.13.1",
       },
     },
     "examples/better-auth": {

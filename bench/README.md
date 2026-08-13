@@ -13,12 +13,13 @@ Zebra vs Hono vs Elysia — 路由吞吐 / 中间件链 / JSON 序列化对比�
 | json | `/json` | 返回 JSON 对象（`{"hello":"world","arr":[1..10]}`） |
 | di | `/di` | 路由 DI 依赖解析（zebra 走 container；hono/elysia 无 DI，直接返回同 body 的 JSON） |
 | static-file | `/static/hello.txt` | 真实文件静态服务（zebra `app.static()`，hono/elysia `Bun.file` handler） |
+| post-json | `/post-json` (POST) | JSON body 解析后回显（zebra `req.json()`；hono `c.req.json()`；elysia 自动 body 解析） |
 
 三个框架注册完全相同的路由集（见 `zebra-bench.ts` / `hono-bench.ts` / `elysia-bench.ts`），响应体做了一致性校验（200 + body 断言），不通过直接报错，避免假数据。
 
 ## 结果
 
-环境：macOS 26.5 (arm64, Apple Silicon 16 核) · Bun **1.3.14**（`bun --version` 记录）· 单进程本机回环 · 1.5s × 64 并发（`BENCH_DURATION_MS` / `BENCH_CONCURRENCY` 可调）· 2026-08-09（zero-cost fast path 之后）。
+环境：macOS 26.5 (arm64, Apple Silicon 16 核) · Bun **1.3.14**（`bun --version` 记录）· **elysia 1.4.29 / hono 4.13.1**（`bench/package.json` 精确锁版，结果随版本漂移时以锁定版本为准）· 单进程本机回环 · 1.5s × 64 并发（`BENCH_DURATION_MS` / `BENCH_CONCURRENCY` 可调）· 2026-08-09（zero-cost fast path 之后；下表数字先于版本锁定与中位数测量法，仅作历史参考）。
 
 吞吐 req/s（数字越高越好）：
 
@@ -57,6 +58,8 @@ zero-cost fast path 对比（改造前 / 后，zebra，1.5s × 64）：
 无 DI 的常规路由不再创建 Container child scope，`withResolvedDeps` 的 per-request 扫描/包装移到 boot 期预编译，因此吞吐整体提升约 5~9%、p95 下降 0.04~0.10ms；middleware 场景收益最大（+8.6%）。
 
 > **中间件场景的可比性注意**：三框架的"5 层中间件"机制不完全等价——zebra 每请求走 compose 嵌套，hono 是预组合链，elysia 的 `onRequest` 是扁平 hook 链且**全局生效**（static 等场景也背着这 5 个钩子，实测近零成本）。因此 middleware 行的绝对数值不能跨框架直接解读，相对排序（zebra < hono < elysia）可信。
+>
+> **static-file 场景的可比性注意**：功能不等价——zebra 走完整的 `app.static()`（路径穿越/symlink 逃逸防护、weak ETag、条件请求、Range、缓存），hono/elysia 是裸 `Bun.file` handler，无任何安全检查。该行数字是"完整实现 vs 最小实现"的对比，不是同功能对比。
 
 ## 复现
 
@@ -73,7 +76,7 @@ bun run bench
 # 或调参：
 BENCH_DURATION_MS=2000 BENCH_CONCURRENCY=32 bun run bench
 
-# 4) 性能回归门槛（zebra-only，默认 1s × 64，阈值：rps ≥ 基线 80% 且 p95 ≤ 基线 125%）
+# 4) 性能回归门槛（zebra-only，默认 1s × 64 × 3 次取中位数，阈值：rps ≥ 基线 80% 且 p95 ≤ 基线 125%；已接入 CI）
 bun run bench:check
 
 # 有意的性能改动后重录基线：

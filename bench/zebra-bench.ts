@@ -20,6 +20,7 @@ export async function start(): Promise<BenchServer> {
     (req) => new Response(req.params.tail, { headers: { "content-type": "text/plain" } }),
   );
   app.get("/json", () => JSON_PAYLOAD);
+  app.post("/post-json", async (req) => req.json());
 
   app.group("", (g) => {
     for (let i = 0; i < MIDDLEWARE_LAYERS; i++) {

@@ -41,7 +41,7 @@ async function main(): Promise<void> {
     const resultsFor = (results[framework.name] ??= {});
     try {
       for (const scenario of SCENARIOS) {
-        const r = await runScenario(server.baseUrl, opts, scenario.name, scenario.path);
+        const r = await runScenario(server.baseUrl, opts, scenario);
         resultsFor[scenario.name] = r;
         console.log(
           `${framework.name.padEnd(8)} ${scenario.name.padEnd(10)} ${String(r.rps.toFixed(0)).padStart(8)} req/s  ` +

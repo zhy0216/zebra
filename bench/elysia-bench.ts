@@ -11,6 +11,7 @@ export async function start(): Promise<BenchServer> {
   app.get("/user/:id", ({ params }) => params.id);
   app.get("/wild/*", ({ params }) => params["*"] as string);
   app.get("/json", () => JSON_PAYLOAD);
+  app.post("/post-json", async ({ body }) => body);
   app.get("/di", () => ({ di: "ok" }));
   app.get(
     "/static/*",

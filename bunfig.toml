@@ -3,3 +3,7 @@ exact = true
 
 [test]
 preload = ["./test-setup.ts"]
+# CI coverage gate (see .github/workflows/ci.yml): fails when total line
+# coverage of the tested files drops below this fraction. Current level:
+# ~94% on packages/core.
+coverageThreshold = 0.9
