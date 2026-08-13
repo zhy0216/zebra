@@ -1,4 +1,4 @@
-import type { WebSocketHandler as BunWebSocketHandler, Server, TLSOptions } from "bun";
+import type { TLSOptions } from "bun";
 import { buildContractHandler } from "../contract/implement.ts";
 import { type ContractProcedureDef, isContractProcedure } from "../contract/protocol.ts";
 import {
@@ -15,20 +15,11 @@ import { Container } from "../di/container.ts";
 import { ScopeKind } from "../di/scope.ts";
 import type { ClassConstructor, Identifier } from "../di/token.ts";
 import type { BodyOptions } from "../http/body.ts";
-import { HttpError } from "../http/errors.ts";
-import { type ZebraRequest, buildRequest } from "../http/request.ts";
 import { type StaticOptions, serveStatic } from "../http/static.ts";
-import { compose } from "../middleware/compose.ts";
-import { errorMiddleware } from "../middleware/error.ts";
-import { getMiddlewareDeps } from "../middleware/helper.ts";
 import type { Middleware } from "../middleware/types.ts";
-import { Router } from "../router/radix.ts";
-import { buildBunWebSocketHandler, buildWsData, buildWsDataWithUpgrade } from "../ws/handler.ts";
-import { WsRegistry } from "../ws/registry.ts";
-import type { WsData, WsHandler } from "../ws/types.ts";
-import { hasValidHandshakeHeaders, isWebSocketUpgrade, wsProblemResponse } from "../ws/upgrade.ts";
-import { validateGraph } from "./boot-validation.ts";
+import { buildBunWebSocketHandler } from "../ws/handler.ts";
 import { Group, type GroupApi } from "./group.ts";
+import { AppInternals } from "./internals.ts";
 import type { LifecycleEvent, LifecycleHandler } from "./lifecycle.ts";
 import type {
   DepsSpec,
@@ -41,7 +32,7 @@ import type {
 } from "./types.ts";
 import { type VerbTarget, registerVerb } from "./verbs.ts";
 
-const DEFAULT_BODY = {
+const DEFAULT_BODY: BodyOptions = {
   maxSize: 1024 * 1024,
   json: { limit: 1024 * 1024 },
   form: { limit: 1024 * 1024 },
@@ -50,118 +41,67 @@ const DEFAULT_BODY = {
 
 const DEFAULT_SESSION_TTL = 30 * 60 * 1000;
 const DEFAULT_GRACE_PERIOD = 10_000;
-const MAX_SESSION_ID_LENGTH = 512;
-
-interface SessionScopeRecord {
-  container: Container;
-  timer: ReturnType<typeof setTimeout> | undefined;
-  activeRequests: number;
-}
-
-interface RequestScopes {
-  request: Container;
-  ephemeralSession?: Container;
-  sessionId?: string;
-}
 
 /**
- * Precompiled per-route execution plan, built once at boot (freeze) so the
- * per-request path does no middleware scanning, dep inspection or array
- * concatenation. Routes without DI deps and without a session resolver get a
- * zero-cost fast path that skips Container child scope creation entirely.
+ * The Bun-first app. Public API for registration (routes, DI, middleware,
+ * lifecycle, WebSocket, static files, contracts); all request-pipeline
+ * machinery lives in `AppInternals` (see internals.ts / scope-registry.ts /
+ * ws-upgrade.ts).
  */
-interface RoutePlan {
-  /** Global middlewares + route middlewares, concatenated once at boot. */
-  middlewares: Middleware[];
-  /** Middlewares that need DI resolution, with their deps spec; empty when none. */
-  mwDeps: Array<{ index: number; deps: DepsSpec }>;
-  /** True when the route or any middleware declares DI deps. */
-  needsDeps: boolean;
-  /** True when a per-request Container child scope is required. */
-  needsScope: boolean;
-}
-
-/** A live per-request deadline: aborting `controller` fires `signal`. */
-interface RequestDeadline {
-  controller: AbortController;
-  timer: ReturnType<typeof setTimeout>;
-  ms: number;
-  /** Detaches the client-disconnect wiring once the dispatch has settled. */
-  detach: () => void;
-}
-
 export class Zebra {
-  protected container: Container;
-  protected router = new Router<RegisteredRoute>();
-  protected wsRegistry = new WsRegistry();
-  protected middlewares: Middleware[] = [];
-  protected routes: RegisteredRoute[] = [];
-  protected bodyOpts: BodyOptions;
-  protected exposeStack: boolean;
+  /** Internal state + dispatch pipeline; see AppInternals. */
+  private readonly internals: AppInternals;
   /** App-level trust statement for `x-forwarded-for` (see `ZebraOptions.trustProxy`). */
   readonly trustProxy: boolean;
   /** Registration sink shared by every verb method (see verbs.ts). */
-  private readonly verbs: VerbTarget = {
-    add: (method, path, handler) => this.route(method, path, handler),
-    addWithDeps: (method, path, deps, handler) => this.route(method, path, deps, handler),
-  };
-  protected frozen = false;
-  protected plans = new WeakMap<RegisteredRoute, RoutePlan>();
-  private fallbackPlan: RoutePlan | null = null;
-  protected hooks: Record<LifecycleEvent, LifecycleHandler[]> = {
-    boot: [],
-    ready: [],
-    shutdown: [],
-  };
-  protected server: Server<WsData> | null = null;
-  private readonly errorMw: Middleware;
-  private readonly sessionResolver: NonNullable<ZebraOptions["session"]>["resolver"];
-  private readonly wsSession: NonNullable<ZebraOptions["session"]>["wsSession"];
-  private readonly sessionTtl: number;
-  private readonly gracePeriod: number;
-  private readonly requestTimeout: number | undefined;
-  private readonly sessions = new Map<string, SessionScopeRecord>();
-  private signalHandler: (() => void) | null = null;
-  private stopping: Promise<void> | null = null;
-  private stopped = false;
-  private booted = false;
-  private booting: Promise<void> | null = null;
-  private inFlight = 0;
-  private drainWaiters = new Set<() => void>();
+  private readonly verbs: VerbTarget;
+  /** Root DI container (protected — same access surface as pre-split). */
+  protected get container(): Container {
+    return this.internals.container;
+  }
 
   constructor(opts: ZebraOptions = {}) {
-    this.container = opts.container ?? new Container();
-    this.bodyOpts = {
-      maxSize: opts.body?.maxSize ?? DEFAULT_BODY.maxSize,
-      json: { ...DEFAULT_BODY.json, ...(opts.body?.json ?? {}) },
-      form: { ...DEFAULT_BODY.form, ...(opts.body?.form ?? {}) },
-      multipart: { ...DEFAULT_BODY.multipart, ...(opts.body?.multipart ?? {}) },
-    };
-    this.exposeStack = opts.errors?.exposeStack ?? false;
-    this.trustProxy = opts.trustProxy ?? false;
-    this.errorMw = errorMiddleware({ exposeStack: this.exposeStack });
-    this.sessionResolver = opts.sessionResolver ?? opts.session?.resolver;
-    this.wsSession = opts.session?.wsSession;
-    this.sessionTtl = opts.sessionTtl ?? opts.session?.ttl ?? DEFAULT_SESSION_TTL;
-    this.gracePeriod = opts.gracePeriod ?? DEFAULT_GRACE_PERIOD;
-    this.requestTimeout = opts.requestTimeout;
-    if (this.sessionTtl <= 0) throw new RangeError("session.ttl must be greater than zero");
-    if (this.gracePeriod < 0) throw new RangeError("gracePeriod must not be negative");
-    if (this.requestTimeout !== undefined && this.requestTimeout <= 0) {
+    const sessionTtl = opts.sessionTtl ?? opts.session?.ttl ?? DEFAULT_SESSION_TTL;
+    const gracePeriod = opts.gracePeriod ?? DEFAULT_GRACE_PERIOD;
+    const requestTimeout = opts.requestTimeout;
+    if (sessionTtl <= 0) throw new RangeError("session.ttl must be greater than zero");
+    if (gracePeriod < 0) throw new RangeError("gracePeriod must not be negative");
+    if (requestTimeout !== undefined && requestTimeout <= 0) {
       throw new RangeError("requestTimeout must be greater than zero");
     }
+    this.trustProxy = opts.trustProxy ?? false;
+    const container = opts.container ?? new Container();
+    this.internals = new AppInternals({
+      container,
+      sessionResolver: opts.sessionResolver ?? opts.session?.resolver,
+      wsSession: opts.session?.wsSession,
+      sessionTtl,
+      gracePeriod,
+      requestTimeout,
+      exposeStack: opts.errors?.exposeStack ?? false,
+      bodyOpts: {
+        maxSize: opts.body?.maxSize ?? DEFAULT_BODY.maxSize,
+        json: { ...DEFAULT_BODY.json, ...(opts.body?.json ?? {}) },
+        form: { ...DEFAULT_BODY.form, ...(opts.body?.form ?? {}) },
+        multipart: { ...DEFAULT_BODY.multipart, ...(opts.body?.multipart ?? {}) },
+      },
+    });
+    this.verbs = {
+      add: (method, path, handler) => this.route(method, path, handler),
+      addWithDeps: (method, path, deps, handler) => this.route(method, path, deps, handler),
+    };
   }
 
   use(mw: Middleware): this {
     this.assertNotFrozen("middleware");
-    this.middlewares.push(mw);
+    this.internals.middlewares.push(mw);
     return this;
   }
 
   /** Frozen copies of all registered routes (OpenAPI/introspection seam). */
   get routeTable(): ReadonlyArray<RegisteredRoute> {
     return Object.freeze(
-      this.routes.map((route) => {
+      this.internals.routes.map((route) => {
         const copy: RegisteredRoute = {
           ...route,
           deps: route.deps ? Object.freeze({ ...route.deps }) : null,
@@ -175,16 +115,14 @@ export class Zebra {
 
   on(event: LifecycleEvent, fn: LifecycleHandler): this {
     this.assertNotFrozen("lifecycle hooks");
-    this.hooks[event].push(fn);
+    this.internals.hooks[event].push(fn);
     return this;
   }
 
   async listen(opts: ListenOptions): Promise<{ port: number }> {
-    if (this.stopped) throw new Error("Zebra has been stopped and cannot listen again");
-    if (this.server) throw new Error("Zebra is already listening");
+    if (this.internals.stopped) throw new Error("Zebra has been stopped and cannot listen again");
+    if (this.internals.server) throw new Error("Zebra is already listening");
     await this.prepare();
-    if (this.stopped) throw new Error("Zebra has been stopped and cannot listen again");
-    if (this.server) throw new Error("Zebra is already listening");
     const serveOpts: {
       port: number;
       hostname?: string;
@@ -192,11 +130,14 @@ export class Zebra {
       maxRequestBodySize?: number;
       reusePort?: boolean;
       tls?: TLSOptions | TLSOptions[];
-      fetch: (req: Request, server: Server<WsData>) => Promise<Response>;
-      websocket: BunWebSocketHandler<WsData>;
+      fetch: (
+        req: Request,
+        server: import("bun").Server<import("../ws/types.ts").WsData>,
+      ) => Promise<Response>;
+      websocket: import("bun").WebSocketHandler<import("../ws/types.ts").WsData>;
     } = {
       port: opts.port,
-      fetch: (req, server) => this.handleFetch(req, server),
+      fetch: (req, server) => this.internals.handleFetch(req, server),
       websocket: buildBunWebSocketHandler(),
     };
     if (opts.hostname !== undefined) serveOpts.hostname = opts.hostname;
@@ -206,57 +147,33 @@ export class Zebra {
     }
     if (opts.reusePort !== undefined) serveOpts.reusePort = opts.reusePort;
     if (opts.tls !== undefined) serveOpts.tls = opts.tls;
-    this.server = Bun.serve(serveOpts);
-    this.installSignalHandlers();
+    const server = Bun.serve(serveOpts);
+    this.internals.server = server;
+    this.internals.installSignalHandlers();
     try {
-      for (const h of this.hooks.ready) await h();
+      for (const h of this.internals.hooks.ready) await h();
     } catch (error) {
       await this.stop();
       throw error;
     }
-    return { port: this.server.port as number };
+    return { port: server.port as number };
   }
 
   async stop(): Promise<void> {
-    if (this.stopping) return this.stopping;
-    this.stopping = this.performStop();
-    return this.stopping;
+    return this.internals.stop();
   }
 
   async disposeSession(id: string): Promise<void> {
-    const record = this.sessions.get(id);
-    if (!record) return;
-    this.sessions.delete(id);
-    if (record.timer) clearTimeout(record.timer);
-    await record.container.dispose();
+    await this.internals.sessions.disposeSession(id);
   }
 
   protected async prepare(): Promise<void> {
-    if (this.booted) return;
-    if (this.booting) return this.booting;
-    this.booting = this.performPrepare();
-    try {
-      await this.booting;
-    } finally {
-      this.booting = null;
-    }
-  }
-
-  private async performPrepare(): Promise<void> {
-    for (const h of this.hooks.boot) await h();
-    validateGraph(this.container, this.routes, this.middlewares);
-    this.frozen = true;
-    // Precompile per-route execution plans (middleware chain, dep indices,
-    // scope requirement) once, so dispatch does zero per-request inspection.
-    for (const route of this.routes) this.plans.set(route, this.computePlan(route));
-    this.fallbackPlan = this.computePlan(undefined);
-    this.container.freeze();
-    this.booted = true;
+    await this.internals.prepare();
   }
 
   injectValue<T>(id: Identifier<T>, value: T): void {
     this.assertNotFrozen();
-    this.container.bind(id).toValue(value);
+    this.internals.container.bind(id).toValue(value);
   }
 
   injectSingleton<T>(id: Identifier<T>, impl?: ClassConstructor<T>): void {
@@ -319,7 +236,7 @@ export class Zebra {
     scope: ScopeKind,
   ): void {
     this.assertNotFrozen();
-    const builder = this.container.bind(id);
+    const builder = this.internals.container.bind(id);
     if (b === undefined) {
       // Lazy form: a is the factory fn
       builder.toFactory(a as (c: Container) => any);
@@ -336,7 +253,7 @@ export class Zebra {
     scope: ScopeKind,
   ): void {
     this.assertNotFrozen();
-    const b = this.container.bind(id);
+    const b = this.internals.container.bind(id);
     if (impl) b.to(impl);
     else b.toSelf();
     Zebra.applyScope(b, scope);
@@ -360,7 +277,7 @@ export class Zebra {
   }
 
   protected assertNotFrozen(kind = "bindings"): void {
-    if (this.frozen) {
+    if (this.internals.frozen) {
       throw new Error(`Cannot register ${kind} after app.listen()`);
     }
   }
@@ -382,8 +299,8 @@ export class Zebra {
       middlewares: extraMws,
       ...(contract !== undefined ? { contract } : {}),
     };
-    this.routes.push(route);
-    this.router.add(method, path, route);
+    this.internals.routes.push(route);
+    this.internals.router.add(method, path, route);
   }
 
   implement<Def extends ContractProcedureDef>(
@@ -447,7 +364,7 @@ export class Zebra {
     const middlewares = entryHandler.middlewares ?? [];
     if (opts?.middlewares) middlewares.push(...opts.middlewares);
     const wrapped = buildContractHandler(def, entryHandler.handler, {
-      exposeStack: this.exposeStack,
+      exposeStack: this.internals.exposeStack,
       validateOutput: opts?.validateOutput ?? true,
     });
     this.register(def.method, def.path, deps, wrapped, middlewares, def);
@@ -595,9 +512,9 @@ export class Zebra {
     const Path extends string,
     D extends DepsSpec = never,
     Up extends Record<string, unknown> = Record<string, unknown>,
-  >(path: Path, handler: WsHandler<D, Up>): this {
+  >(path: Path, handler: import("../ws/types.ts").WsHandler<D, Up>): this {
     this.assertNotFrozen("ws routes");
-    this.wsRegistry.add(path, handler);
+    this.internals.wsRegistry.add(path, handler);
     return this;
   }
 
@@ -627,506 +544,21 @@ export class Zebra {
     }
   }
 
-  /** fetch 包装层：先做 WebSocket upgrade 检测，再走正常 HTTP dispatch。 */
-  private async handleFetch(req: Request, server: Server<WsData>): Promise<Response> {
-    // Real socket peer address from Bun (never derived from headers; XFF
-    // trust is opt-in via `trustProxy`, see `ZebraRequest.ip`). Resolved
-    // lazily: `requestIP` is a native call most requests never need.
-    const getIp = (): string | undefined => server.requestIP(req)?.address;
-    if (!isWebSocketUpgrade(req)) return this.dispatch(req, getIp);
-
-    const url = new URL(req.url);
-    const matched = this.wsRegistry.find(url.pathname);
-    if (matched === null) {
-      return wsProblemResponse(
-        404,
-        "not_found",
-        `No WebSocket route for ${url.pathname}`,
-        url.pathname,
-      );
-    }
-
-    // Skip the expensive upgrade decision unless the handshake is at least
-    // well-formed: without Sec-WebSocket-Key / Version 13 the request can
-    // never upgrade, and running session resolution, DI and auth hooks for it
-    // would be free probing. Bun's server.upgrade() remains the authoritative
-    // full validation — this gate only decides whether the hooks may run.
-    if (!hasValidHandshakeHeaders(req)) {
-      return wsProblemResponse(401, "upgrade_failed", "WebSocket upgrade failed", url.pathname);
-    }
-
-    // C2+C4: 升级决策链。
-    // scope 取舍：upgrade 与 wsSession 都是单次请求决策，与 HTTP dispatch 一致走
-    // createRequestScopes()（session resolver 在本次升级请求上解析出 sessionId）；
-    // 决策完成后立即 dispose，因此 request-scoped 依赖只在钩子执行期间可用，
-    // 不要把它们挂在 ws.data 上跨连接使用。会话句柄（C4）是连接级对象，
-    // 由 wsSession 钩子构造后随 ws.data 缓存到连接生命周期。
-    // 异常路径取舍：upgrade() 抛错 / 依赖解析失败 / wsSession 抛错均视为内部错误
-    // → 500 upgrade_error；返回 false 才是客户端显式拒绝 → 401 upgrade_rejected
-    // （区别于传输层失败 401 upgrade_failed）。
-    const handler = matched.handler;
-    let data = buildWsData(handler, matched.params);
-    try {
-      const scopes = await this.createRequestScopes(req);
-      try {
-        if (handler.upgrade) {
-          const deps = this.resolveDeps(handler.onUpgrade ?? null, scopes.request);
-          const zebraReq = buildRequest<Record<string, string>>(
-            req,
-            matched.params,
-            this.bodyOpts,
-            undefined,
-            undefined,
-            url,
-            getIp,
-          );
-          const result = await handler.upgrade(zebraReq, deps as never, matched.params);
-          if (result === false) {
-            return wsProblemResponse(
-              401,
-              "upgrade_rejected",
-              "Upgrade rejected by route handler",
-              url.pathname,
-            );
-          }
-          if (result) {
-            data = buildWsDataWithUpgrade(handler, matched.params, result);
-          }
-        }
-        // C4: sessionId 复用 createRequestScopes 的解析结果；最后写入，upgrade()
-        // 的展开数据不能覆盖 session（session 为保留字段）。
-        if (this.wsSession) {
-          const session = await this.wsSession(req, scopes.sessionId);
-          if (session !== undefined) data.session = session;
-        }
-      } finally {
-        await this.disposeScopes(scopes);
-      }
-    } catch {
-      return wsProblemResponse(500, "upgrade_error", "WebSocket upgrade hook failed", url.pathname);
-    }
-    if (!server.upgrade(req, { data })) {
-      return wsProblemResponse(401, "upgrade_failed", "WebSocket upgrade failed", url.pathname);
-    }
-    return new Response(null, { status: 101 });
-  }
-
   /**
    * Dispatches a raw `Request` through the composed pipeline. `ip` is the
-   * socket peer address (`server.requestIP(req)?.address` from `handleFetch`);
-   * it may also be a thunk resolving the address on first use (what
-   * `handleFetch` passes — `requestIP` is only invoked when `req.ip` is
-   * actually read). `dispatch()` without it (tests, proxies) leaves
-   * `req.ip` undefined.
+   * socket peer address (`server.requestIP(req)?.address` from the fetch
+   * wrapper); it may also be a thunk resolving the address on first use.
+   * `dispatch()` without it (tests, proxies) leaves `req.ip` undefined.
    */
   async dispatch(raw: Request, ip?: string | (() => string | undefined)): Promise<Response> {
-    this.inFlight++;
-    const deadline = this.createDeadline(raw);
-    try {
-      const url = new URL(raw.url);
-      let matched = this.router.find(raw.method, url.pathname);
-      // HEAD falls back to the GET handler when no HEAD route is registered;
-      // the response body is stripped afterwards (see headFromGet).
-      let headFromGet = false;
-      if (matched === null && raw.method === "HEAD") {
-        matched = this.router.find("GET", url.pathname);
-        headFromGet = matched !== null;
-      }
-      const route = matched?.handler;
-      const req = buildRequest<Record<string, string>>(
-        raw,
-        matched?.params ?? {},
-        this.bodyOpts,
-        typeof ip === "function" ? undefined : ip,
-        deadline?.controller.signal,
-        url,
-        typeof ip === "function" ? ip : undefined,
-      );
-      const plan = this.planFor(route);
-
-      const res = await this.errorMw(req, async () => {
-        return this.raceDeadline(deadline, async () => {
-          if (plan.needsScope) {
-            const scopes = await this.createRequestScopes(raw);
-            let disposed = false;
-            const disposeOnce = async (): Promise<void> => {
-              if (disposed) return;
-              disposed = true;
-              await this.disposeScopes(scopes);
-            };
-            try {
-              return await this.raceDeadline(deadline, async () => {
-                try {
-                  return await this.runWithScopes(req, raw, url, route, scopes, plan);
-                } finally {
-                  await disposeOnce();
-                }
-              });
-            } catch (error) {
-              // Timeout / client-disconnect path: the background work may never
-              // settle (hung handler), so dispose the scopes here — the work's
-              // own finally is guarded idempotent. Cleanup failures must not
-              // mask the 504 that is about to be answered.
-              try {
-                await disposeOnce();
-              } catch {
-                // ignore — the deadline error takes precedence
-              }
-              throw error;
-            }
-          }
-          // Zero-cost fast path: no session resolver and no DI deps anywhere in
-          // the chain — no Container child scope, no dep resolution, the
-          // precompiled middleware array is run as-is and the handler gets {}.
-          return this.runWithoutScopes(req, raw, url, route, plan);
-        });
-      });
-      if (headFromGet && res.body !== null) {
-        return new Response(null, {
-          status: res.status,
-          statusText: res.statusText,
-          headers: res.headers,
-        });
-      }
-      return res;
-    } finally {
-      clearTimeout(deadline?.timer);
-      deadline?.detach();
-      this.inFlight--;
-      if (this.inFlight === 0) {
-        for (const resolve of this.drainWaiters) resolve();
-        this.drainWaiters.clear();
-      }
-    }
-  }
-
-  /**
-   * Creates the per-request deadline when `requestTimeout` is configured.
-   * The controller aborts on Bun's client-disconnect signal and on the
-   * timeout timer; `detach` removes the client-disconnect wiring once the
-   * dispatch has settled.
-   */
-  private createDeadline(raw: Request): RequestDeadline | null {
-    const ms = this.requestTimeout;
-    if (ms === undefined) return null;
-    const controller = new AbortController();
-    let detach = (): void => {};
-    const base = raw.signal;
-    if (base.aborted) {
-      controller.abort();
-    } else {
-      const onAbort = (): void => controller.abort();
-      base.addEventListener("abort", onAbort, { once: true });
-      detach = () => base.removeEventListener("abort", onAbort);
-    }
-    const timer = setTimeout(() => {
-      controller.abort(new HttpError(504, "request_timeout", "Request timed out", { limit: ms }));
-    }, ms);
-    timer.unref?.();
-    return { controller, timer, ms, detach };
-  }
-
-  /**
-   * Races the dispatch pipeline against the deadline signal: when the signal
-   * aborts (timeout fired, or client disconnect propagated), the request is
-   * answered with a 504 Problem+Json `request_timeout` via the error
-   * middleware. The underlying work keeps running in the background but can
-   * observe the abort on `req.signal`.
-   */
-  private raceDeadline(
-    deadline: RequestDeadline | null,
-    work: () => Promise<Response>,
-  ): Promise<Response> {
-    if (deadline === null) return work();
-    const { controller, ms } = deadline;
-    return Promise.race([
-      work(),
-      new Promise<never>((_, reject) => {
-        const onAbort = (): void => {
-          controller.signal.removeEventListener("abort", onAbort);
-          reject(new HttpError(504, "request_timeout", "Request timed out", { limit: ms }));
-        };
-        if (controller.signal.aborted) onAbort();
-        else controller.signal.addEventListener("abort", onAbort, { once: true });
-      }),
-    ]);
-  }
-
-  private async runWithScopes(
-    req: ZebraRequest<Record<string, string>>,
-    raw: Request,
-    url: URL,
-    route: RegisteredRoute | undefined,
-    scopes: RequestScopes,
-    plan: RoutePlan,
-  ): Promise<Response> {
-    return compose(
-      req,
-      this.withResolvedDeps(plan, scopes.request),
-      this.finalHandler(req, raw, url, route, scopes.request),
-    );
-  }
-
-  /** Fast path: plain precompiled middleware chain, handler receives `{}`. */
-  private async runWithoutScopes(
-    req: ZebraRequest<Record<string, string>>,
-    raw: Request,
-    url: URL,
-    route: RegisteredRoute | undefined,
-    plan: RoutePlan,
-  ): Promise<Response> {
-    return compose(req, plan.middlewares, this.finalHandler(req, raw, url, route, null));
-  }
-
-  /** The terminal handler: 404/405 for unmatched paths, deps + handler otherwise. */
-  private finalHandler(
-    req: ZebraRequest<Record<string, string>>,
-    raw: Request,
-    url: URL,
-    route: RegisteredRoute | undefined,
-    scope: Container | null,
-  ): () => Promise<Response> {
-    return async () => {
-      if (!route) {
-        const allowed = this.allowedMethodsFor(url.pathname);
-        if (allowed) {
-          // OPTIONS on a known path is answered automatically with 204 + Allow;
-          // an explicitly registered OPTIONS route already won the lookup above.
-          // Deliberate: the auto-response runs in the terminal handler, so
-          // route-level middlewares (e.g. auth guards) do NOT run for it —
-          // preflight requests must stay unauthenticated. Register an explicit
-          // OPTIONS route when a custom preflight (or guard) is required.
-          if (raw.method === "OPTIONS") {
-            return new Response(null, { status: 204, headers: { allow: allowed.join(", ") } });
-          }
-          throw new HttpError(405, "method_not_allowed", "Method Not Allowed", undefined, {
-            allow: allowed.join(", "),
-          });
-        }
-        throw new HttpError(404, "not_found", `No route for ${raw.method} ${url.pathname}`);
-      }
-
-      const resolved = scope === null ? {} : this.resolveDeps(route.deps, scope);
-      const result = await (route.handler as RouteHandler)(req, resolved);
-      return Zebra.toResponse(result);
-    };
-  }
-
-  private async disposeScopes(scopes: RequestScopes): Promise<void> {
-    let cleanupError: unknown;
-    try {
-      await scopes.request.dispose();
-    } catch (error) {
-      cleanupError = error;
-    }
-    if (scopes.ephemeralSession) {
-      try {
-        await scopes.ephemeralSession.dispose();
-      } catch (error) {
-        cleanupError ??= error;
-      }
-    } else if (scopes.sessionId !== undefined) {
-      this.releaseSession(scopes.sessionId);
-    }
-    if (cleanupError !== undefined) throw cleanupError;
-  }
-
-  private resolveDeps(deps: DepsSpec | null, scope: Container): Record<string, unknown> {
-    const resolved: Record<string, unknown> = {};
-    if (!deps) return resolved;
-    for (const [name, id] of Object.entries(deps)) resolved[name] = scope.resolve(id);
-    return resolved;
-  }
-
-  /** Methods supported on a known path; HEAD is implied by GET (RFC 9110 §9.3.2). */
-  private allowedMethodsFor(path: string): string[] | null {
-    const allowed = this.router.allowedMethods(path);
-    if (allowed === null) return null;
-    if (allowed.includes("GET") && !allowed.includes("HEAD")) return [...allowed, "HEAD"];
-    return allowed;
-  }
-
-  private withResolvedDeps(plan: RoutePlan, scope: Container): Middleware[] {
-    if (plan.mwDeps.length === 0) return plan.middlewares;
-    // Dep indices were precomputed at boot: only the middlewares that declare
-    // deps are wrapped (no scanning, no per-request map of every middleware).
-    const mws = [...plan.middlewares];
-    for (const { index, deps } of plan.mwDeps) {
-      const orig = mws[index]!;
-      mws[index] = (req, next) => orig(req, next, this.resolveDeps(deps, scope));
-    }
-    return mws;
-  }
-
-  /** Returns the precompiled plan, or computes one on the fly pre-listen (tests/proxies). */
-  private planFor(route: RegisteredRoute | undefined): RoutePlan {
-    if (this.booted) {
-      if (route !== undefined) return this.plans.get(route) ?? this.computePlan(route);
-      return this.fallbackPlan ?? this.computePlan(undefined);
-    }
-    return this.computePlan(route);
-  }
-
-  /** Builds the execution plan: precomputed chain + dep indices + scope requirement. */
-  private computePlan(route: RegisteredRoute | undefined): RoutePlan {
-    const middlewares =
-      route !== undefined && route.middlewares.length > 0
-        ? [...this.middlewares, ...route.middlewares]
-        : this.middlewares;
-    const mwDeps: Array<{ index: number; deps: DepsSpec }> = [];
-    middlewares.forEach((mw, index) => {
-      const deps = getMiddlewareDeps(mw);
-      if (deps !== null) mwDeps.push({ index, deps });
-    });
-    const needsDeps = mwDeps.length > 0 || (route !== undefined && route.deps !== null);
-    return {
-      middlewares,
-      mwDeps,
-      needsDeps,
-      needsScope: needsDeps || this.sessionResolver !== undefined,
-    };
-  }
-
-  private async createRequestScopes(raw: Request): Promise<RequestScopes> {
-    const resolved = await this.sessionResolver?.(raw);
-    const sessionId =
-      typeof resolved === "string" &&
-      resolved.length > 0 &&
-      resolved.length <= MAX_SESSION_ID_LENGTH
-        ? resolved
-        : undefined;
-    if (sessionId === undefined) {
-      const session = this.container.createChildScope(ScopeKind.Session);
-      return {
-        request: session.createChildScope(ScopeKind.Request),
-        ephemeralSession: session,
-      };
-    }
-
-    let record = this.sessions.get(sessionId);
-    if (!record) {
-      const container = this.container.createChildScope(ScopeKind.Session);
-      record = { container, timer: undefined, activeRequests: 0 };
-      this.sessions.set(sessionId, record);
-    } else if (record.timer) {
-      clearTimeout(record.timer);
-      record.timer = undefined;
-    }
-    record.activeRequests++;
-    return {
-      request: record.container.createChildScope(ScopeKind.Request),
-      sessionId,
-    };
-  }
-
-  private releaseSession(id: string): void {
-    const record = this.sessions.get(id);
-    if (!record) return;
-    record.activeRequests = Math.max(0, record.activeRequests - 1);
-    if (record.activeRequests === 0) {
-      // Drop any stale timer before arming a fresh one — an orphaned timer
-      // must never fire against a session that has since been re-activated.
-      if (record.timer) {
-        clearTimeout(record.timer);
-        record.timer = undefined;
-      }
-      record.timer = this.scheduleSessionExpiry(id);
-    }
-  }
-
-  private scheduleSessionExpiry(id: string): ReturnType<typeof setTimeout> {
-    const timer = setTimeout(() => {
-      void this.expireSession(id);
-    }, this.sessionTtl);
-    timer.unref?.();
-    return timer;
-  }
-
-  /**
-   * Timer-driven expiry: re-arms when a request re-entered the session in the
-   * meantime instead of disposing a live container. The public
-   * `disposeSession(id)` remains the explicit, unconditional escape hatch.
-   */
-  private async expireSession(id: string): Promise<void> {
-    const record = this.sessions.get(id);
-    if (!record) return;
-    if (record.activeRequests > 0) {
-      record.timer = this.scheduleSessionExpiry(id);
-      return;
-    }
-    await this.disposeSession(id);
-  }
-
-  private static toResponse(result: unknown): Response {
-    if (result instanceof Response) return result;
-    if (result === undefined) return new Response(null, { status: 204 });
-    let body: string;
-    try {
-      body = JSON.stringify(result);
-    } catch {
-      // BigInt, circular structures, etc.: surface a structured 500 instead of
-      // letting the raw TypeError escape the pipeline.
-      throw new HttpError(500, "response_serialization", "Response value is not JSON-serializable");
-    }
-    return new Response(body, {
-      status: 200,
-      headers: { "content-type": "application/json; charset=utf-8" },
-    });
-  }
-
-  private installSignalHandlers(): void {
-    if (this.signalHandler) return;
-    this.signalHandler = () => {
-      void this.stop();
-    };
-    process.on("SIGTERM", this.signalHandler);
-    process.on("SIGINT", this.signalHandler);
-  }
-
-  private removeSignalHandlers(): void {
-    if (!this.signalHandler) return;
-    process.off("SIGTERM", this.signalHandler);
-    process.off("SIGINT", this.signalHandler);
-    this.signalHandler = null;
-  }
-
-  private async performStop(): Promise<void> {
-    this.stopped = true;
-    this.removeSignalHandlers();
-    const server = this.server;
-    this.server = null;
-
-    const gracefulStop = Promise.all([
-      server?.stop(false) ?? Promise.resolve(),
-      this.waitForDrain(),
-    ]).then(() => undefined);
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const timedOut = await Promise.race([
-      gracefulStop.then(() => false),
-      new Promise<boolean>((resolve) => {
-        timer = setTimeout(() => resolve(true), this.gracePeriod);
-        timer.unref?.();
-      }),
-    ]);
-    if (timer) clearTimeout(timer);
-    if (timedOut && server) await server.stop(true);
-
-    for (const id of [...this.sessions.keys()]) await this.disposeSession(id);
-    await this.container.dispose();
-    for (const h of this.hooks.shutdown) await h();
-  }
-
-  private waitForDrain(): Promise<void> {
-    if (this.inFlight === 0) return Promise.resolve();
-    return new Promise((resolve) => this.drainWaiters.add(resolve));
+    return this.internals.dispatch(raw, ip);
   }
 }
 
 function deepFreeze<T>(value: T): T {
-  if (value === null || typeof value !== "object" || Object.isFrozen(value)) return value;
-  Object.freeze(value);
-  for (const key of Object.keys(value)) {
-    deepFreeze((value as Record<string, unknown>)[key]);
+  for (const key of Object.keys(value as object) as Array<keyof T>) {
+    const v = value[key];
+    if (v !== null && typeof v === "object") deepFreeze(v);
   }
-  return value;
+  return Object.freeze(value);
 }
