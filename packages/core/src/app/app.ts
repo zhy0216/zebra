@@ -631,9 +631,10 @@ export class Zebra {
   /** fetch 包装层：先做 WebSocket upgrade 检测，再走正常 HTTP dispatch。 */
   private async handleFetch(req: Request, server: Server<WsData>): Promise<Response> {
     // Real socket peer address from Bun (never derived from headers; XFF
-    // trust is opt-in via `trustProxy`, see `ZebraRequest.ip`).
-    const ip = server.requestIP(req)?.address;
-    if (!isWebSocketUpgrade(req)) return this.dispatch(req, ip);
+    // trust is opt-in via `trustProxy`, see `ZebraRequest.ip`). Resolved
+    // lazily: `requestIP` is a native call most requests never need.
+    const getIp = (): string | undefined => server.requestIP(req)?.address;
+    if (!isWebSocketUpgrade(req)) return this.dispatch(req, getIp);
 
     const url = new URL(req.url);
     const matched = this.wsRegistry.find(url.pathname);
@@ -675,9 +676,10 @@ export class Zebra {
             req,
             matched.params,
             this.bodyOpts,
-            ip,
+            undefined,
             undefined,
             url,
+            getIp,
           );
           const result = await handler.upgrade(zebraReq, deps as never, matched.params);
           if (result === false) {
@@ -713,9 +715,12 @@ export class Zebra {
   /**
    * Dispatches a raw `Request` through the composed pipeline. `ip` is the
    * socket peer address (`server.requestIP(req)?.address` from `handleFetch`);
-   * `dispatch()` without it (tests, proxies) leaves `req.ip` undefined.
+   * it may also be a thunk resolving the address on first use (what
+   * `handleFetch` passes — `requestIP` is only invoked when `req.ip` is
+   * actually read). `dispatch()` without it (tests, proxies) leaves
+   * `req.ip` undefined.
    */
-  async dispatch(raw: Request, ip?: string): Promise<Response> {
+  async dispatch(raw: Request, ip?: string | (() => string | undefined)): Promise<Response> {
     this.inFlight++;
     const deadline = this.createDeadline(raw);
     try {
@@ -733,9 +738,10 @@ export class Zebra {
         raw,
         matched?.params ?? {},
         this.bodyOpts,
-        ip,
+        typeof ip === "function" ? undefined : ip,
         deadline?.controller.signal,
         url,
+        typeof ip === "function" ? ip : undefined,
       );
       const plan = this.planFor(route);
 

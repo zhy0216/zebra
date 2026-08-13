@@ -49,7 +49,7 @@ export interface ZebraRequest<P = Record<string, string>, B = unknown, Q = Recor
    * `undefined` when dispatched directly without a Bun server (e.g.
    * `app.dispatch()` in tests).
    */
-  ip?: string;
+  ip?: string | undefined;
   /**
    * The abort signal for this request. When `ZebraOptions.requestTimeout` is
    * configured it combines Bun's raw `Request.signal` (aborts when the
@@ -67,6 +67,132 @@ const DEFAULT_BODY: BodyOptions = {
   multipart: { limit: 16 * 1024 * 1024, maxFiles: 10, maxFileSize: 8 * 1024 * 1024 },
 };
 
+/**
+ * Internal implementation: methods live on the prototype so a request costs
+ * one allocation instead of one plus a closure per body helper. The frozen
+ * surface is the `ZebraRequest` interface / `buildRequest` signature.
+ */
+class ZebraRequestImpl<P, B> implements ZebraRequest<P, B> {
+  readonly raw: Request;
+  readonly params: P;
+  readonly headers: Headers;
+  readonly url: URL;
+  readonly signal: AbortSignal;
+  private readonly bodyOpts: BodyOptions;
+  private readonly contentType: string;
+  private readonly ct: string;
+  private readonly getIp: (() => string | undefined) | undefined;
+  private queryValue: Record<string, string> | null = null;
+  private ctxValue: Map<symbol, unknown> | null = null;
+  private ipValue: string | undefined;
+  private ipResolved: boolean;
+  private bodyPromise: Promise<B> | null = null;
+  private bytesPromise: Promise<Uint8Array> | null = null;
+  private jsonPromise: Promise<unknown> | null = null;
+  private textPromise: Promise<string> | null = null;
+  private formPromise: Promise<FormData> | null = null;
+
+  constructor(
+    raw: Request,
+    params: P,
+    bodyOpts: BodyOptions,
+    ip: string | undefined,
+    signal: AbortSignal | undefined,
+    url: URL | undefined,
+    getIp: (() => string | undefined) | undefined,
+  ) {
+    this.raw = raw;
+    this.params = params;
+    this.bodyOpts = bodyOpts;
+    this.headers = raw.headers;
+    this.url = url ?? new URL(raw.url);
+    this.signal = signal ?? raw.signal;
+    this.contentType = raw.headers.get("content-type") ?? "";
+    this.ct = this.contentType.toLowerCase();
+    this.ipValue = ip;
+    this.ipResolved = ip !== undefined;
+    this.getIp = getIp;
+  }
+
+  /** Lazy: built from `url.searchParams` on first access; assignment (the
+   * contract pipeline writes the coerced value back) replaces it. */
+  get query(): Record<string, string> {
+    if (this.queryValue === null) {
+      const built = Object.create(null) as Record<string, string>;
+      for (const [k, v] of this.url.searchParams) built[k] = v;
+      this.queryValue = built;
+    }
+    return this.queryValue;
+  }
+
+  set query(value: Record<string, string>) {
+    this.queryValue = value;
+  }
+
+  /** Lazy: the vast majority of requests never attach middleware state. */
+  get ctx(): Map<symbol, unknown> {
+    if (this.ctxValue === null) this.ctxValue = new Map();
+    return this.ctxValue;
+  }
+
+  /** Lazy: `server.requestIP` is a native call that most requests never need. */
+  get ip(): string | undefined {
+    if (!this.ipResolved) {
+      this.ipValue = this.getIp?.();
+      this.ipResolved = true;
+    }
+    return this.ipValue;
+  }
+
+  body(): Promise<B> {
+    this.bodyPromise ??= parseBody(this.raw, this.bodyOpts) as Promise<B>;
+    return this.bodyPromise;
+  }
+
+  json(): Promise<unknown> {
+    this.jsonPromise ??= this.bytes().then((body) => {
+      try {
+        const text = decoder.decode(body);
+        return text === "" ? null : JSON.parse(text);
+      } catch (error) {
+        if (error instanceof HttpError) throw error;
+        throw new HttpError(400, "invalid_json", "Body is not valid JSON");
+      }
+    });
+    return this.jsonPromise;
+  }
+
+  text(): Promise<string> {
+    this.textPromise ??= this.bytes().then((body) => decoder.decode(body));
+    return this.textPromise;
+  }
+
+  form(): Promise<FormData> {
+    this.formPromise ??= this.bytes().then((body) =>
+      parseForm(body, this.bodyOpts, this.contentType),
+    );
+    return this.formPromise;
+  }
+
+  stream(): ReadableStream<Uint8Array> {
+    if (!this.raw.body) {
+      return new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.close();
+        },
+      });
+    }
+    return this.raw.body.pipeThrough(limitStream(effectiveLimit(this.bodyOpts, this.ct)));
+  }
+
+  /** Buffers the body once (limits enforced); `json` / `text` / `form` share
+   * the same bytes (the raw stream is single-consumption). */
+  private bytes(): Promise<Uint8Array> {
+    this.bytesPromise ??= readBody(this.raw, effectiveLimit(this.bodyOpts, this.ct));
+    return this.bytesPromise;
+  }
+}
+
 export function buildRequest<P, B = unknown>(
   raw: Request,
   params: P,
@@ -76,83 +202,11 @@ export function buildRequest<P, B = unknown>(
   // Pre-parsed URL from the dispatcher: avoids a second `new URL(raw.url)`
   // per request (the dispatcher needs one for routing anyway).
   url?: URL,
+  // Lazy ip resolver (Bun's `server.requestIP`) — only invoked when `ip` is
+  // actually read.
+  getIp?: () => string | undefined,
 ): ZebraRequest<P, B> {
-  const parsedUrl = url ?? new URL(raw.url);
-  // Lazy per-request state: the vast majority of requests never read `query`
-  // or `ctx` — allocate only on first access. `query` keeps a setter because
-  // the contract pipeline assigns the coerced value back onto the request.
-  let query: Record<string, string> | null = null;
-  let ctx: Map<symbol, unknown> | null = null;
-  let bodyPromise: Promise<B> | null = null;
-  let bytesPromise: Promise<Uint8Array> | null = null;
-  let jsonPromise: Promise<unknown> | null = null;
-  let textPromise: Promise<string> | null = null;
-  let formPromise: Promise<FormData> | null = null;
-  const contentType = raw.headers.get("content-type") ?? "";
-  const ct = contentType.toLowerCase();
-  // Buffers the body once (limits enforced) and lets `json` / `text` / `form`
-  // derive from the same bytes: the raw stream is single-consumption.
-  const bytes = (): Promise<Uint8Array> => {
-    bytesPromise ??= readBody(raw, effectiveLimit(bodyOpts, ct));
-    return bytesPromise;
-  };
-  return {
-    raw,
-    params,
-    get query() {
-      if (query === null) {
-        const built = Object.create(null) as Record<string, string>;
-        for (const [k, v] of parsedUrl.searchParams) built[k] = v;
-        query = built;
-      }
-      return query;
-    },
-    set query(value: Record<string, string>) {
-      query = value;
-    },
-    headers: raw.headers,
-    url: parsedUrl,
-    ...(ip === undefined ? {} : { ip }),
-    signal: signal ?? raw.signal,
-    body: () => {
-      bodyPromise ??= parseBody(raw, bodyOpts) as Promise<B>;
-      return bodyPromise;
-    },
-    json: () => {
-      jsonPromise ??= bytes().then((body) => {
-        try {
-          const text = decoder.decode(body);
-          return text === "" ? null : JSON.parse(text);
-        } catch (error) {
-          if (error instanceof HttpError) throw error;
-          throw new HttpError(400, "invalid_json", "Body is not valid JSON");
-        }
-      });
-      return jsonPromise;
-    },
-    text: () => {
-      textPromise ??= bytes().then((body) => decoder.decode(body));
-      return textPromise;
-    },
-    form: () => {
-      formPromise ??= bytes().then((body) => parseForm(body, bodyOpts, contentType));
-      return formPromise;
-    },
-    stream: () => {
-      if (!raw.body) {
-        return new ReadableStream<Uint8Array>({
-          start(controller) {
-            controller.close();
-          },
-        });
-      }
-      return raw.body.pipeThrough(limitStream(effectiveLimit(bodyOpts, ct)));
-    },
-    get ctx() {
-      if (ctx === null) ctx = new Map();
-      return ctx;
-    },
-  };
+  return new ZebraRequestImpl<P, B>(raw, params, bodyOpts, ip, signal, url, getIp);
 }
 
 const decoder = new TextDecoder();
