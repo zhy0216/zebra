@@ -81,6 +81,9 @@ export class RedisRateLimitStore implements RateLimitStore {
         return { count: 1, resetAt: now + windowMs };
       }
     }
+    // `start` can still be null here when the re-claim above lost to a
+    // concurrent writer: derive a best-effort resetAt from now. The window
+    // owner's clock is authoritative and overwrites the counter on rotation.
     const resetAt = start === null ? Number.NaN : Number(start) + windowMs;
     return { count, resetAt: Number.isNaN(resetAt) ? now + windowMs : resetAt };
   }

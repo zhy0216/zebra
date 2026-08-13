@@ -59,3 +59,24 @@ test("parameter names belong to each method's registered route", () => {
   expect(r.find("GET", "/users/1")?.params).toEqual({ id: "1" });
   expect(r.find("POST", "/users/2")?.params).toEqual({ userId: "2" });
 });
+
+test("param values are percent-decoded", () => {
+  const r = new Router<string>();
+  r.add("GET", "/users/:id", "h");
+  expect(r.find("GET", "/users/foo%20bar")?.params).toEqual({ id: "foo bar" });
+  // Encoded separators decode into the value only; matching happens on the
+  // raw segment, so %2F never reaches the router as a path split.
+  expect(r.find("GET", "/users/a%2Fb")?.params).toEqual({ id: "a/b" });
+});
+
+test("malformed percent-encoding keeps the raw value", () => {
+  const r = new Router<string>();
+  r.add("GET", "/users/:id", "h");
+  expect(r.find("GET", "/users/%zz")?.params).toEqual({ id: "%zz" });
+});
+
+test("wildcard captures are not percent-decoded", () => {
+  const r = new Router<string>();
+  r.add("GET", "/files/*path", "h");
+  expect(r.find("GET", "/files/a%2Fb/c%20d")?.params).toEqual({ path: "a%2Fb/c%20d" });
+});

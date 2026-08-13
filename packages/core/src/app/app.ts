@@ -1016,7 +1016,15 @@ export class Zebra {
   private static toResponse(result: unknown): Response {
     if (result instanceof Response) return result;
     if (result === undefined) return new Response(null, { status: 204 });
-    return new Response(JSON.stringify(result), {
+    let body: string;
+    try {
+      body = JSON.stringify(result);
+    } catch {
+      // BigInt, circular structures, etc.: surface a structured 500 instead of
+      // letting the raw TypeError escape the pipeline.
+      throw new HttpError(500, "response_serialization", "Response value is not JSON-serializable");
+    }
+    return new Response(body, {
       status: 200,
       headers: { "content-type": "application/json; charset=utf-8" },
     });

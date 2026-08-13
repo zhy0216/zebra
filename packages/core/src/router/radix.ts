@@ -4,7 +4,7 @@ interface Node<T> {
   static: Map<string, Node<T>>;
   param?: Node<T>;
   wildcard?: Node<T>;
-  handlers: Map<string, { handler: T; paramNames: string[] }>;
+  handlers: Map<string, { handler: T; paramNames: string[]; wildcardName?: string }>;
 }
 
 function newNode<T>(): Node<T> {
@@ -48,7 +48,13 @@ export class Router<T> {
         `Duplicate route: ${upperMethod} ${path} is already registered (with the same parameter layout)`,
       );
     }
-    node.handlers.set(upperMethod, { handler, paramNames });
+    const entry: { handler: T; paramNames: string[]; wildcardName?: string } = {
+      handler,
+      paramNames,
+    };
+    const lastSeg = segs.at(-1);
+    if (lastSeg?.kind === "wildcard") entry.wildcardName = lastSeg.name;
+    node.handlers.set(upperMethod, entry);
   }
 
   find(method: string, path: string): MatchResult<T> | null {
@@ -119,12 +125,29 @@ export class Router<T> {
     return null;
   }
 
-  private toMatch(entry: { handler: T; paramNames: string[] }, captures: string[]): MatchResult<T> {
+  private toMatch(
+    entry: { handler: T; paramNames: string[]; wildcardName?: string },
+    captures: string[],
+  ): MatchResult<T> {
     const params: Record<string, string> = Object.create(null);
     for (let i = 0; i < entry.paramNames.length; i++) {
-      params[entry.paramNames[i]!] = captures[i]!;
+      const name = entry.paramNames[i]!;
+      // Matching happens on the raw (still-encoded) pathname segments, so an
+      // encoded separator like %2F can never shadow a static route; only the
+      // captured value is decoded. Wildcard captures keep their raw form:
+      // they carry path separators whose encoding state is ambiguous.
+      params[name] = name === entry.wildcardName ? captures[i]! : decodeParam(captures[i]!);
     }
     return { handler: entry.handler, params };
+  }
+}
+
+/** Decodes one param capture; malformed encodings are kept verbatim. */
+function decodeParam(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
   }
 }
 

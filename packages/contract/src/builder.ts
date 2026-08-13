@@ -125,6 +125,9 @@ export class ContractProcedureImpl<Def extends ContractProcedureDef>
   }
 
   status<const S extends number>(status: S): ContractProcedure<Next<Def, "status", S>> {
+    if (!Number.isInteger(status) || status < 100 || status > 599) {
+      throw new Error(`contract: status must be an integer between 100 and 599, got ${status}`);
+    }
     const next = {
       version: 1,
       method: this.def.method,

@@ -6,7 +6,7 @@
 // - HTTP 与 ws 路由同一 app 共存互不干扰的端到端验证（双向都走真实服务器）。
 
 import "reflect-metadata";
-import { expect, test } from "bun:test";
+import { expect, spyOn, test } from "bun:test";
 import { Zebra } from "../src/app/app.ts";
 import { Container } from "../src/di/container.ts";
 
@@ -106,6 +106,49 @@ test("close cleanup: close fires exactly once and the server-side socket reaches
     for (let i = 0; i < 50 && closeCount === 0; i++) await Bun.sleep(10);
     expect(closeCount).toBe(1);
     expect(serverSocket.readyState).toBe(3); // WebSocket.CLOSED：连接已完全回收
+  } finally {
+    void app.stop();
+  }
+});
+
+test("message handler exceptions are contained and don't kill the connection", async () => {
+  const app = startApp((a) =>
+    a.ws("/boom", {
+      message(ws, _data, m) {
+        if (m === "die") throw new Error("boom");
+        ws.send(`echo ${m}`);
+      },
+    }),
+  );
+  const { port } = await app.listen({ port: 0 });
+  try {
+    const ws = new WebSocket(`ws://localhost:${port}/boom`);
+    const messages: string[] = [];
+    ws.onmessage = (e) => {
+      messages.push(String(e.data));
+      ws.close();
+    };
+    let wsErrorReported = false;
+    const errorSpy = spyOn(console, "error").mockImplementation(() => {
+      wsErrorReported = true;
+    });
+    try {
+      ws.onopen = () => {
+        ws.send("die");
+        ws.send("ok");
+      };
+      await new Promise<void>((resolve, reject) => {
+        ws.onerror = () => reject(new Error("ws connection failed"));
+        ws.onclose = () => resolve();
+        setTimeout(() => reject(new Error("timeout waiting for ws close")), 3000);
+      });
+    } finally {
+      errorSpy.mockRestore();
+    }
+    // The throw on "die" was reported to the console instead of becoming an
+    // unhandled rejection, and the connection still processed the next frame.
+    expect(wsErrorReported).toBe(true);
+    expect(messages).toEqual(["echo ok"]);
   } finally {
     void app.stop();
   }

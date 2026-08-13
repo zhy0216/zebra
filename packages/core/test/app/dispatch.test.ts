@@ -39,6 +39,22 @@ test("dispatch forwards the socket ip to handlers (trustProxy never turns it int
   expect(seen).toBe("127.0.0.1");
 });
 
+test("non-JSON-serializable handler results become a structured 500", async () => {
+  const app = new Zebra({ container: new Container() });
+  app.get("/bigint", async () => 1n);
+  const circular: Record<string, unknown> = {};
+  circular.self = circular;
+  app.get("/circular", async () => circular);
+
+  for (const path of ["/bigint", "/circular"]) {
+    const res = await app.dispatch(new Request(`http://x${path}`));
+    expect(res.status).toBe(500);
+    expect(res.headers.get("content-type")).toContain("application/problem+json");
+    const problem = (await res.json()) as { type: string };
+    expect(problem.type).toContain("response_serialization");
+  }
+});
+
 test("listen() plumbs the real peer address into req.ip", async () => {
   const app = new Zebra({ container: new Container() });
   let seen: string | undefined;

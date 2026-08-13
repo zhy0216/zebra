@@ -32,22 +32,42 @@ function wsHandlerOf(ws: ServerWebSocket<WsData>): WsHandler<any, any> | undefin
 export function buildBunWebSocketHandler(): BunWebSocketHandler<WsData> {
   return {
     open(ws) {
-      void wsHandlerOf(ws)?.open?.(ws, ws.data);
+      invokeWsCallback(ws, wsHandlerOf(ws)?.open, [ws, ws.data]);
     },
     message(ws, message) {
-      void wsHandlerOf(ws)?.message?.(ws, ws.data, message);
+      invokeWsCallback(ws, wsHandlerOf(ws)?.message, [ws, ws.data, message]);
     },
     close(ws, code, reason) {
-      void wsHandlerOf(ws)?.close?.(ws, ws.data, code, reason);
+      invokeWsCallback(ws, wsHandlerOf(ws)?.close, [ws, ws.data, code, reason]);
     },
     drain(ws) {
-      void wsHandlerOf(ws)?.drain?.(ws, ws.data);
+      invokeWsCallback(ws, wsHandlerOf(ws)?.drain, [ws, ws.data]);
     },
     ping(ws, payload) {
-      void wsHandlerOf(ws)?.ping?.(ws, ws.data, payload);
+      invokeWsCallback(ws, wsHandlerOf(ws)?.ping, [ws, ws.data, payload]);
     },
     pong(ws, payload) {
-      void wsHandlerOf(ws)?.pong?.(ws, ws.data, payload);
+      invokeWsCallback(ws, wsHandlerOf(ws)?.pong, [ws, ws.data, payload]);
     },
   };
+}
+
+/**
+ * Invokes one WS handler callback without letting a throw (sync or async)
+ * become an unhandled rejection — there is no HTTP error channel for these.
+ */
+function invokeWsCallback(_ws: ServerWebSocket<WsData>, fn: unknown, args: unknown[]): void {
+  if (typeof fn !== "function") return;
+  try {
+    const result = (fn as (...a: unknown[]) => unknown)(...args);
+    if (result instanceof Promise) {
+      result.catch((error) => reportWsError(error));
+    }
+  } catch (error) {
+    reportWsError(error);
+  }
+}
+
+function reportWsError(error: unknown): void {
+  console.error("[zebra:ws] handler callback failed:", error);
 }

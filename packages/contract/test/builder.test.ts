@@ -91,6 +91,14 @@ test("POST .body() does not throw", () => {
   expect(() => zc.post("/x").body(z.object({}))).not.toThrow();
 });
 
+test(".status() rejects invalid status codes at build time", () => {
+  expect(() => zc.get("/x").status(99)).toThrow(/status must be an integer between 100 and 599/);
+  expect(() => zc.get("/x").status(600)).toThrow();
+  expect(() => zc.get("/x").status(1.5)).toThrow();
+  expect(() => zc.get("/x").status(Number.NaN)).toThrow();
+  expect(() => zc.get("/x").status(200)).not.toThrow();
+});
+
 test("def is frozen: mutating it throws in strict mode", () => {
   const proc = zc.get("/x");
   expect(() => {

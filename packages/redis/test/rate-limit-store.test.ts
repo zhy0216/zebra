@@ -103,4 +103,22 @@ describe("RedisRateLimitStore", () => {
     redis.fail("del");
     await expect(store.reset("k")).rejects.toThrow(/simulated network error/);
   });
+
+  test("resetAt never comes back NaN across window rotations", async () => {
+    const { store, redis } = makeStore();
+    const results: number[] = [];
+    // Each call advances halfway through the window, so the start/count keys
+    // rotate twice over the loop and the mid-flight re-claim path is hit.
+    for (let i = 0; i < 5; i++) {
+      results.push((await store.increment("k", 10)).resetAt);
+      redis.now += 5;
+    }
+    for (const resetAt of results) {
+      // resetAt may reference the window that opened two rotations ago, but
+      // never NaN and never further ahead than the current window's end.
+      expect(resetAt).not.toBeNaN();
+      expect(resetAt).toBeGreaterThan(redis.now - 20);
+      expect(resetAt).toBeLessThanOrEqual(redis.now + 10);
+    }
+  });
 });

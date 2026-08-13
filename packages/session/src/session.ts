@@ -52,7 +52,9 @@ export interface CreateSessionOptions {
 
 export function createSession(options: CreateSessionOptions): RequestSessionInternal {
   let cached: Record<string, unknown> | undefined =
-    typeof options.initial === "object" && options.initial !== null ? options.initial : undefined;
+    typeof options.initial === "object" && options.initial !== null
+      ? cloneRecord(options.initial)
+      : undefined;
   let dirty = false;
   let destroyed = false;
 
@@ -60,7 +62,9 @@ export function createSession(options: CreateSessionOptions): RequestSessionInte
     if (cached === undefined) {
       const stored = await options.store.get(options.id);
       cached =
-        stored !== null && typeof stored === "object" ? (stored as Record<string, unknown>) : {};
+        stored !== null && typeof stored === "object"
+          ? cloneRecord(stored as Record<string, unknown>)
+          : {};
     }
     return cached;
   };
@@ -110,6 +114,16 @@ export function createSession(options: CreateSessionOptions): RequestSessionInte
       dirty = false;
     },
   };
+}
+
+/**
+ * Shallow-copies session data so concurrent requests on the same session id
+ * never share (and silently overwrite) the same top-level object. Nested
+ * objects are still shared between requests — treat them as immutable, or
+ * replace them wholesale via `set`/`delete` (only those are persisted).
+ */
+function cloneRecord(record: Record<string, unknown>): Record<string, unknown> {
+  return { ...record };
 }
 
 /**

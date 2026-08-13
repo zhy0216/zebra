@@ -6,7 +6,7 @@
 import { expect, test } from "bun:test";
 import { Zebra, type ZebraRequest } from "@zebra/core";
 
-import { MemoryStore, getSession, sessionMiddleware } from "../src/index.ts";
+import { MemoryStore, createSession, getSession, sessionMiddleware } from "../src/index.ts";
 import type { SessionStore } from "../src/store.ts";
 import { verify } from "../src/sign.ts";
 
@@ -128,4 +128,28 @@ test("TTL-expired session: old cookie is treated as a new visitor, not revived",
   expect(body.id).not.toBe(sid);
   expect(await store.get(sid)).toBeUndefined();
   expect(res.headers.get("set-cookie")).not.toBeNull();
+});
+
+test("session writes are isolated from the store and sibling sessions until flushed", async () => {
+  const store = new MemoryStore({ ttl: 30_000 });
+  await store.set("s1", { a: 1 });
+  const initial = (await store.get("s1")) as Record<string, unknown>;
+
+  const first = createSession({ id: "s1", isNew: false, store, initial });
+  await first.set("a", 2);
+  // Uncommitted writes stay in the session handle: neither the store nor a
+  // sibling handle opened on the same id sees them.
+  expect(await store.get("s1")).toEqual({ a: 1 });
+  const sibling = createSession({ id: "s1", isNew: false, store, initial });
+  expect(await sibling.get<number>("a")).toBe(1);
+
+  await first.flush();
+  expect(await store.get("s1")).toEqual({ a: 2 });
+  // The sibling keeps its own snapshot even after another handle flushes.
+  expect(await sibling.get<number>("a")).toBe(1);
+  // A handle opened without `initial` also clones on load instead of aliasing
+  // the store record.
+  const late = createSession({ id: "s1", isNew: false, store });
+  await late.set("a", 3);
+  expect(await store.get("s1")).toEqual({ a: 2 });
 });
