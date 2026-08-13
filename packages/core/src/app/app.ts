@@ -26,7 +26,7 @@ import { Router } from "../router/radix.ts";
 import { buildBunWebSocketHandler, buildWsData, buildWsDataWithUpgrade } from "../ws/handler.ts";
 import { WsRegistry } from "../ws/registry.ts";
 import type { WsData, WsHandler } from "../ws/types.ts";
-import { isWebSocketUpgrade, wsProblemResponse } from "../ws/upgrade.ts";
+import { hasValidHandshakeHeaders, isWebSocketUpgrade, wsProblemResponse } from "../ws/upgrade.ts";
 import { validateGraph } from "./boot-validation.ts";
 import { Group, type GroupApi } from "./group.ts";
 import type { LifecycleEvent, LifecycleHandler } from "./lifecycle.ts";
@@ -640,6 +640,15 @@ export class Zebra {
         `No WebSocket route for ${url.pathname}`,
         url.pathname,
       );
+    }
+
+    // Skip the expensive upgrade decision unless the handshake is at least
+    // well-formed: without Sec-WebSocket-Key / Version 13 the request can
+    // never upgrade, and running session resolution, DI and auth hooks for it
+    // would be free probing. Bun's server.upgrade() remains the authoritative
+    // full validation — this gate only decides whether the hooks may run.
+    if (!hasValidHandshakeHeaders(req)) {
+      return wsProblemResponse(401, "upgrade_failed", "WebSocket upgrade failed", url.pathname);
     }
 
     // C2+C4: 升级决策链。

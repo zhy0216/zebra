@@ -18,6 +18,14 @@ class AuthService {
   }
 }
 
+/** Headers of a well-formed handshake — required for the upgrade hooks to run
+ * (see the pre-validation gate); plain `Upgrade: websocket` alone is rejected. */
+const HANDSHAKE_HEADERS = {
+  Upgrade: "websocket",
+  "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+  "Sec-WebSocket-Version": "13",
+};
+
 function connectAndWait(port: number, path: string, headers?: Record<string, string>) {
   const ws = new WebSocket(`ws://localhost:${port}${path}`, headers ? { headers } : undefined);
   return {
@@ -241,7 +249,7 @@ test("upgrade() returning false rejects with 401 problem+json", async () => {
   const { port } = await app.listen({ port: 0 });
   try {
     const res = await fetch(`http://localhost:${port}/auth`, {
-      headers: { Upgrade: "websocket" },
+      headers: HANDSHAKE_HEADERS,
     });
     expect(res.status).toBe(401);
     expect(res.headers.get("content-type")).toContain("application/problem+json");
@@ -265,12 +273,40 @@ test("upgrade() throwing is treated as internal error (500)", async () => {
   const { port } = await app.listen({ port: 0 });
   try {
     const res = await fetch(`http://localhost:${port}/boom`, {
-      headers: { Upgrade: "websocket" },
+      headers: HANDSHAKE_HEADERS,
     });
     expect(res.status).toBe(500);
     expect(res.headers.get("content-type")).toContain("application/problem+json");
     const body = (await res.json()) as Record<string, unknown>;
     expect(body.type).toBe("https://errors.zebra.dev/upgrade_error");
+  } finally {
+    await app.stop();
+  }
+});
+
+test("a request with Upgrade but no handshake headers is rejected before hooks run", async () => {
+  let upgrades = 0;
+  const app = startApp((a) => {
+    a.injectSingleton(AuthService);
+    a.ws("/auth", {
+      onUpgrade: { auth: AuthService },
+      upgrade: () => {
+        upgrades++;
+        return {};
+      },
+    });
+  });
+  const { port } = await app.listen({ port: 0 });
+  try {
+    const res = await fetch(`http://localhost:${port}/auth`, {
+      headers: { Upgrade: "websocket" },
+    });
+    expect(res.status).toBe(401);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.type).toBe("https://errors.zebra.dev/upgrade_failed");
+    // The expensive upgrade decision (session resolution + DI + auth hook)
+    // never ran for a request that can never upgrade.
+    expect(upgrades).toBe(0);
   } finally {
     await app.stop();
   }
@@ -286,7 +322,7 @@ test("unbound onUpgrade dep is an internal error (500), not a client rejection",
   const { port } = await app.listen({ port: 0 });
   try {
     const res = await fetch(`http://localhost:${port}/unbound`, {
-      headers: { Upgrade: "websocket" },
+      headers: HANDSHAKE_HEADERS,
     });
     expect(res.status).toBe(500);
     const body = (await res.json()) as Record<string, unknown>;
@@ -326,7 +362,7 @@ test("upgrade hook receives path params for path-based auth (room checks)", asyn
 
   // Non-lobby rooms are rejected at the upgrade decision (401, no socket).
   const denied = await fetch(`http://localhost:${port}/chat/secret`, {
-    headers: { Upgrade: "websocket" },
+    headers: HANDSHAKE_HEADERS,
   });
   expect(denied.status).toBe(401);
   const body = (await denied.json()) as Record<string, unknown>;
