@@ -1,5 +1,6 @@
 import type { Middleware } from "../middleware/types.ts";
 import type { DepsSpec, JoinPath, PathParams, ResolvedDeps, RouteHandler } from "./types.ts";
+import { type VerbTarget, registerVerb } from "./verbs.ts";
 
 export interface GroupApi<Prefix extends string = string> {
   use(mw: Middleware): this;
@@ -96,6 +97,11 @@ export class Group<Prefix extends string = string> implements GroupApi<Prefix> {
   routes: GroupedRoute[] = [];
   private prefix: string;
   private inherited: Middleware[];
+  /** Registration sink shared by every verb method (see verbs.ts). */
+  private readonly verbs: VerbTarget = {
+    add: (method, path, handler) => this.register(method, path, null, handler),
+    addWithDeps: (method, path, deps, handler) => this.register(method, path, deps, handler),
+  };
 
   constructor(prefix: Prefix, inherited: Middleware[] = []) {
     this.prefix = prefix.replace(/\/+$/, "");
@@ -148,8 +154,7 @@ export class Group<Prefix extends string = string> implements GroupApi<Prefix> {
     handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
   ): void;
   get(path: string, a: any, b?: any): void {
-    if (b === undefined) this.register("GET", path, null, a);
-    else this.register("GET", path, a, b);
+    registerVerb(this.verbs, "GET", path, a, b);
   }
   post<const Path extends string>(
     path: Path,
@@ -161,8 +166,7 @@ export class Group<Prefix extends string = string> implements GroupApi<Prefix> {
     handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
   ): void;
   post(path: string, a: any, b?: any): void {
-    if (b === undefined) this.register("POST", path, null, a);
-    else this.register("POST", path, a, b);
+    registerVerb(this.verbs, "POST", path, a, b);
   }
   put<const Path extends string>(
     path: Path,
@@ -174,8 +178,7 @@ export class Group<Prefix extends string = string> implements GroupApi<Prefix> {
     handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
   ): void;
   put(path: string, a: any, b?: any): void {
-    if (b === undefined) this.register("PUT", path, null, a);
-    else this.register("PUT", path, a, b);
+    registerVerb(this.verbs, "PUT", path, a, b);
   }
   patch<const Path extends string>(
     path: Path,
@@ -187,8 +190,7 @@ export class Group<Prefix extends string = string> implements GroupApi<Prefix> {
     handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
   ): void;
   patch(path: string, a: any, b?: any): void {
-    if (b === undefined) this.register("PATCH", path, null, a);
-    else this.register("PATCH", path, a, b);
+    registerVerb(this.verbs, "PATCH", path, a, b);
   }
   delete<const Path extends string>(
     path: Path,
@@ -200,8 +202,7 @@ export class Group<Prefix extends string = string> implements GroupApi<Prefix> {
     handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
   ): void;
   delete(path: string, a: any, b?: any): void {
-    if (b === undefined) this.register("DELETE", path, null, a);
-    else this.register("DELETE", path, a, b);
+    registerVerb(this.verbs, "DELETE", path, a, b);
   }
   head<const Path extends string>(
     path: Path,
@@ -213,8 +214,7 @@ export class Group<Prefix extends string = string> implements GroupApi<Prefix> {
     handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
   ): void;
   head(path: string, a: any, b?: any): void {
-    if (b === undefined) this.register("HEAD", path, null, a);
-    else this.register("HEAD", path, a, b);
+    registerVerb(this.verbs, "HEAD", path, a, b);
   }
   options<const Path extends string>(
     path: Path,
@@ -226,8 +226,7 @@ export class Group<Prefix extends string = string> implements GroupApi<Prefix> {
     handler: RouteHandler<ResolvedDeps<D>, PathParams<JoinPath<Prefix, Path>>>,
   ): void;
   options(path: string, a: any, b?: any): void {
-    if (b === undefined) this.register("OPTIONS", path, null, a);
-    else this.register("OPTIONS", path, a, b);
+    registerVerb(this.verbs, "OPTIONS", path, a, b);
   }
 
   group<const ChildPrefix extends string>(

@@ -123,6 +123,21 @@ for (const pkg of packages) {
   }
 }
 
+// --- keep core's VERSION constant in lockstep -------------------------------
+// The freeze doc declares VERSION's *value* unstable (it tracks the package
+// version); the release script rewrites it so the runtime constant never
+// drifts from the published version.
+const CORE_INDEX = join(ROOT, "packages/core/src/index.ts");
+const versionSource = readFileSync(CORE_INDEX, "utf8");
+const versionedSource = versionSource.replace(
+  /export const VERSION = "[^"]*";/,
+  `export const VERSION = "${version}";`,
+);
+if (versionSource === versionedSource) {
+  console.error("error: VERSION constant not found in packages/core/src/index.ts");
+  process.exit(1);
+}
+
 // --- publish order: topological sort by dependencies (deps first) ----------
 const state = new Map<string, "visiting" | "done">();
 const order: Pkg[] = [];
@@ -242,6 +257,9 @@ if (dryRun) {
       .map((l) => `  | ${l}`)
       .join("\n"),
   );
+  console.log(
+    `[release] would rewrite ${versionSource.match(/export const VERSION = "[^"]*";/)?.[0] ?? "VERSION"} -> "${version}" in packages/core/src/index.ts`,
+  );
   console.log("[release] planned commands (dry-run — not executed):");
   const steps: string[] = [];
   if (verify) steps.push("bun run typecheck", "bun run test");
@@ -254,8 +272,9 @@ if (dryRun) {
 if (verify) verifyStep();
 
 for (const pkg of packages) writeJson(pkg.path, pkg.data);
+writeFileSync(CORE_INDEX, versionedSource);
 writeChangelog(changelogSection);
-console.log("[release] wrote version bumps + CHANGELOG.md");
+console.log("[release] wrote version bumps + core VERSION + CHANGELOG.md");
 
 for (const pkg of order) {
   console.log(`[release] publish ${pkg.name} (${pkg.dir})`);

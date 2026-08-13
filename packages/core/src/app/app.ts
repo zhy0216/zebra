@@ -39,6 +39,7 @@ import type {
   RouteHandler,
   ZebraOptions,
 } from "./types.ts";
+import { type VerbTarget, registerVerb } from "./verbs.ts";
 
 const DEFAULT_BODY = {
   maxSize: 1024 * 1024,
@@ -99,6 +100,11 @@ export class Zebra {
   protected exposeStack: boolean;
   /** App-level trust statement for `x-forwarded-for` (see `ZebraOptions.trustProxy`). */
   readonly trustProxy: boolean;
+  /** Registration sink shared by every verb method (see verbs.ts). */
+  private readonly verbs: VerbTarget = {
+    add: (method, path, handler) => this.route(method, path, handler),
+    addWithDeps: (method, path, deps, handler) => this.route(method, path, deps, handler),
+  };
   protected frozen = false;
   protected plans = new WeakMap<RegisteredRoute, RoutePlan>();
   private fallbackPlan: RoutePlan | null = null;
@@ -519,8 +525,7 @@ export class Zebra {
     handler: RouteHandler<ResolvedDeps<D>, PathParams<Path>>,
   ): void;
   get(path: string, a: any, b?: any): void {
-    if (b === undefined) this.route("GET", path, a);
-    else this.route("GET", path, a, b);
+    registerVerb(this.verbs, "GET", path, a, b);
   }
   post<const Path extends string>(path: Path, handler: RouteHandler<never, PathParams<Path>>): void;
   post<const Path extends string, D extends DepsSpec>(
@@ -529,8 +534,7 @@ export class Zebra {
     handler: RouteHandler<ResolvedDeps<D>, PathParams<Path>>,
   ): void;
   post(path: string, a: any, b?: any): void {
-    if (b === undefined) this.route("POST", path, a);
-    else this.route("POST", path, a, b);
+    registerVerb(this.verbs, "POST", path, a, b);
   }
   put<const Path extends string>(path: Path, handler: RouteHandler<never, PathParams<Path>>): void;
   put<const Path extends string, D extends DepsSpec>(
@@ -539,8 +543,7 @@ export class Zebra {
     handler: RouteHandler<ResolvedDeps<D>, PathParams<Path>>,
   ): void;
   put(path: string, a: any, b?: any): void {
-    if (b === undefined) this.route("PUT", path, a);
-    else this.route("PUT", path, a, b);
+    registerVerb(this.verbs, "PUT", path, a, b);
   }
   patch<const Path extends string>(
     path: Path,
@@ -552,8 +555,7 @@ export class Zebra {
     handler: RouteHandler<ResolvedDeps<D>, PathParams<Path>>,
   ): void;
   patch(path: string, a: any, b?: any): void {
-    if (b === undefined) this.route("PATCH", path, a);
-    else this.route("PATCH", path, a, b);
+    registerVerb(this.verbs, "PATCH", path, a, b);
   }
   delete<const Path extends string>(
     path: Path,
@@ -565,8 +567,7 @@ export class Zebra {
     handler: RouteHandler<ResolvedDeps<D>, PathParams<Path>>,
   ): void;
   delete(path: string, a: any, b?: any): void {
-    if (b === undefined) this.route("DELETE", path, a);
-    else this.route("DELETE", path, a, b);
+    registerVerb(this.verbs, "DELETE", path, a, b);
   }
   head<const Path extends string>(path: Path, handler: RouteHandler<never, PathParams<Path>>): void;
   head<const Path extends string, D extends DepsSpec>(
@@ -575,8 +576,7 @@ export class Zebra {
     handler: RouteHandler<ResolvedDeps<D>, PathParams<Path>>,
   ): void;
   head(path: string, a: any, b?: any): void {
-    if (b === undefined) this.route("HEAD", path, a);
-    else this.route("HEAD", path, a, b);
+    registerVerb(this.verbs, "HEAD", path, a, b);
   }
   options<const Path extends string>(
     path: Path,
@@ -588,8 +588,7 @@ export class Zebra {
     handler: RouteHandler<ResolvedDeps<D>, PathParams<Path>>,
   ): void;
   options(path: string, a: any, b?: any): void {
-    if (b === undefined) this.route("OPTIONS", path, a);
-    else this.route("OPTIONS", path, a, b);
+    registerVerb(this.verbs, "OPTIONS", path, a, b);
   }
 
   ws<

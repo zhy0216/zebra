@@ -155,6 +155,13 @@ The built-in error middleware converts it to:
 
 With `exposeStack: true`, unknown errors (not HttpError/ValidationError) include a `stack` field.
 
+> **Middleware error-response coordination**: middleware that must attach
+> headers to error responses (e.g. `@zebra/session` issuing a sid cookie to a
+> first-time visitor whose handler threw) stashes them on `req.ctx` under
+> `PENDING_SET_COOKIES` (`Symbol.for("zebra.set-cookie")`); the core error
+> middleware appends each value as its own `Set-Cookie` header on the problem
+> response. Custom error-response decorators can use the same mechanism.
+
 ## Static files
 
 `app.static(routePath, root, opts)` — see the [Routing guide](02-routing.md#static-files-appstatic). Key points:

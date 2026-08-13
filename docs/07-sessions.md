@@ -40,6 +40,14 @@ The key wiring:
 3. `.wsSession` goes into `session: { wsSession }` — WebSocket connections get a session handle (see [WebSocket](10-websockets.md)).
 4. `app.use(session)` mounts the middleware: it puts a read/write `RequestSession` on `req.ctx.session` and persists on the response path.
 
+> **Two entry points for the same options**: `ZebraOptions` accepts the session
+> resolver/ttl either nested (`session: { resolver, ttl }`, recommended — it
+> also carries `wsSession`) or at the top level (`sessionResolver`,
+> `sessionTtl` — kept for compatibility; the nested form wins where both are
+> given for `wsSession`, and `opts.sessionResolver ?? opts.session?.resolver`
+> resolves the resolver). The middleware's `.resolver` property is the
+> cookie-parsing function to pass through either entry point.
+
 ## RequestSession API
 
 `getSession(req)` returns the current request's session handle (`undefined` when the middleware didn't run):
