@@ -21,3 +21,7 @@ coverage/
 # Logs
 *.log
 .omo/
+
+# Docs site
+docs/.vitepress/cache/
+docs/.vitepress/dist/
