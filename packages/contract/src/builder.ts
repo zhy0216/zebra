@@ -3,6 +3,8 @@ import type {
   ContractProcedure,
   ContractProcedureDef,
   ErrorSpec,
+  McpDeclaration,
+  McpOptions,
   Method,
   ProcedureMeta,
 } from "./types.ts";
@@ -18,6 +20,7 @@ type BaseDef<M extends Method, Path extends string> = {
   readonly status: 200;
   readonly errors: {};
   readonly meta: undefined;
+  readonly mcp: undefined;
 };
 
 type Next<Def extends ContractProcedureDef, K extends keyof Def, V> = Omit<Def, K> & {
@@ -47,6 +50,7 @@ export class ContractProcedureImpl<Def extends ContractProcedureDef>
       status: 200,
       errors: {},
       meta: undefined,
+      mcp: undefined,
     });
   }
 
@@ -67,6 +71,7 @@ export class ContractProcedureImpl<Def extends ContractProcedureDef>
       status: this.def.status,
       errors: this.def.errors,
       meta: this.def.meta,
+      mcp: this.def.mcp,
     } as Next<Def, "params", S>;
     return new ContractProcedureImpl<Next<Def, "params", S>>(next);
   }
@@ -83,6 +88,7 @@ export class ContractProcedureImpl<Def extends ContractProcedureDef>
       status: this.def.status,
       errors: this.def.errors,
       meta: this.def.meta,
+      mcp: this.def.mcp,
     } as Next<Def, "query", S>;
     return new ContractProcedureImpl<Next<Def, "query", S>>(next);
   }
@@ -104,6 +110,7 @@ export class ContractProcedureImpl<Def extends ContractProcedureDef>
       status: this.def.status,
       errors: this.def.errors,
       meta: this.def.meta,
+      mcp: this.def.mcp,
     } as Next<Def, "body", S>;
     return new ContractProcedureImpl<Next<Def, "body", S>>(next);
   }
@@ -120,6 +127,7 @@ export class ContractProcedureImpl<Def extends ContractProcedureDef>
       status: this.def.status,
       errors: this.def.errors,
       meta: this.def.meta,
+      mcp: this.def.mcp,
     } as Next<Def, "output", S>;
     return new ContractProcedureImpl<Next<Def, "output", S>>(next);
   }
@@ -139,6 +147,7 @@ export class ContractProcedureImpl<Def extends ContractProcedureDef>
       status,
       errors: this.def.errors,
       meta: this.def.meta,
+      mcp: this.def.mcp,
     } as Next<Def, "status", S>;
     return new ContractProcedureImpl<Next<Def, "status", S>>(next);
   }
@@ -157,6 +166,7 @@ export class ContractProcedureImpl<Def extends ContractProcedureDef>
       status: this.def.status,
       errors: { ...this.def.errors, ...es } as Def["errors"] & E,
       meta: this.def.meta,
+      mcp: this.def.mcp,
     } as Next<Def, "errors", Def["errors"] & E>;
     return new ContractProcedureImpl<Next<Def, "errors", Def["errors"] & E>>(next);
   }
@@ -173,8 +183,45 @@ export class ContractProcedureImpl<Def extends ContractProcedureDef>
       status: this.def.status,
       errors: this.def.errors,
       meta,
+      mcp: this.def.mcp,
     } as Next<Def, "meta", M>;
     return new ContractProcedureImpl<Next<Def, "meta", M>>(next);
+  }
+
+  mcp(
+    nameOrDecl: string | McpDeclaration,
+    description?: string,
+    options?: McpOptions,
+  ): ContractProcedure<Next<Def, "mcp", McpDeclaration>> {
+    let decl: McpDeclaration;
+    if (typeof nameOrDecl === "string") {
+      if (typeof description !== "string") {
+        throw new Error("contract: .mcp() requires a name and a description string");
+      }
+      decl = { name: nameOrDecl, description, ...(options ?? {}) };
+    } else {
+      decl = nameOrDecl;
+    }
+    if (typeof decl.name !== "string" || decl.name.trim() === "") {
+      throw new Error("contract: .mcp() name must be a non-empty string");
+    }
+    if (typeof decl.description !== "string" || decl.description.trim() === "") {
+      throw new Error("contract: .mcp() description must be a non-empty string");
+    }
+    const next = {
+      version: 1,
+      method: this.def.method,
+      path: this.def.path,
+      params: this.def.params,
+      query: this.def.query,
+      body: this.def.body,
+      output: this.def.output,
+      status: this.def.status,
+      errors: this.def.errors,
+      meta: this.def.meta,
+      mcp: decl,
+    } as Next<Def, "mcp", McpDeclaration>;
+    return new ContractProcedureImpl<Next<Def, "mcp", McpDeclaration>>(next);
   }
 }
 

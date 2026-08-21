@@ -34,6 +34,7 @@ Zebra is a Bun-first TypeScript web framework with first-class dependency inject
 | Guide | What it covers |
 | --- | --- |
 | [11-contract-first](11-contract-first.md) | Contract building, `app.implement`, type-safe client, error handling |
+| [16-mcp](16-mcp.md) | MCP tools from the same contract (`@zebra/mcp`, `@zebra/schema-zod`) |
 
 ### Middleware packages
 

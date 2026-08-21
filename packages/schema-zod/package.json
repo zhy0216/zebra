@@ -1,0 +1,23 @@
+{
+  "name": "@zebra/schema-zod",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": ["src"],
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "build": "bun build src/index.ts --outdir dist --target bun --packages external"
+  },
+  "dependencies": {
+    "zod": "^3.24.0",
+    "zod-to-json-schema": "^3.25.0"
+  },
+  "devDependencies": {
+    "@zebra/contract": "workspace:*"
+  }
+}

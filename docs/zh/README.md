@@ -34,6 +34,7 @@ Zebra 是一个 Bun-first 的 TypeScript Web 框架，把依赖注入（DI）当
 | 篇章 | 内容 |
 | --- | --- |
 | [11-contract-first](11-contract-first.md) | 契约构建、`app.implement`、类型安全客户端、错误处理 |
+| [16-mcp](16-mcp.md) | 从同一契约导出 MCP 工具（`@zebra/mcp`、`@zebra/schema-zod`） |
 
 ### 中间件包
 

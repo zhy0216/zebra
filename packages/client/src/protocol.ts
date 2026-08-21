@@ -7,6 +7,21 @@ export interface ErrorSpec {
   status: number;
 }
 
+/** MCP annotations for a procedure exposed as a tool (parity with @zebra/contract). */
+export interface McpOptions {
+  title?: string;
+  readOnly?: boolean;
+  destructive?: boolean;
+  idempotent?: boolean;
+  openWorld?: boolean;
+}
+
+/** Resolved `.mcp()` declaration (parity with @zebra/contract). */
+export interface McpDeclaration extends McpOptions {
+  readonly name: string;
+  readonly description: string;
+}
+
 /**
  * Frozen pure-data description of a contract procedure. Structurally identical
  * to @zebra/contract's ContractProcedureDef. All fields required-but-undefined
@@ -23,6 +38,7 @@ export interface ContractProcedureDef {
   readonly status: number;
   readonly errors: Record<string, ErrorSpec>;
   readonly meta: Readonly<Record<string, unknown>> | undefined;
+  readonly mcp: McpDeclaration | undefined;
 }
 
 /** Minimal RFC 9457 Problem+Json shape (mirrors core's ProblemJson wire format). */

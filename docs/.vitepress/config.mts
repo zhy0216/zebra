@@ -32,7 +32,10 @@ const enSidebar = [
   },
   {
     text: "Contract-first",
-    items: [{ text: "Contract-first APIs", link: "/11-contract-first" }],
+    items: [
+      { text: "Contract-first APIs", link: "/11-contract-first" },
+      { text: "MCP Tools", link: "/16-mcp" },
+    ],
   },
   {
     text: "Middleware Packages",
@@ -72,7 +75,10 @@ const zhSidebar = [
   },
   {
     text: "契约优先",
-    items: [{ text: "契约优先 API", link: "/zh/11-contract-first" }],
+    items: [
+      { text: "契约优先 API", link: "/zh/11-contract-first" },
+      { text: "MCP 工具", link: "/zh/16-mcp" },
+    ],
   },
   {
     text: "中间件包",

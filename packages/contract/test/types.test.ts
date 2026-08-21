@@ -90,3 +90,28 @@ test("chain is immutable: later calls do not mutate earlier procedures", () => {
   expectTypeOf(withOutput.def.params).toEqualTypeOf<undefined>();
   expectTypeOf(withOutput.def.output).toEqualTypeOf<typeof Blog>();
 });
+
+test(".mcp() flips Def['mcp'] from undefined to a declaration", () => {
+  const bare = zc.get("/blogs");
+  expectTypeOf(bare.def.mcp).toEqualTypeOf<undefined>();
+
+  const exposed = bare.mcp("list_blogs", "列出博客", { readOnly: true });
+  expectTypeOf(exposed.def.mcp).not.toEqualTypeOf<undefined>();
+  expectTypeOf(exposed.def.mcp?.name).toEqualTypeOf<string>();
+  expectTypeOf(exposed.def.mcp?.description).toEqualTypeOf<string>();
+  expectTypeOf(exposed.def.mcp?.readOnly).toEqualTypeOf<boolean | undefined>();
+
+  const objectForm = bare.mcp({ name: "list_blogs", description: "列出博客" });
+  expectTypeOf(objectForm.def.mcp).not.toEqualTypeOf<undefined>();
+});
+
+test(".mcp() chains after other builders and keeps the method/path literals", () => {
+  const proc = zc
+    .get("/blogs/:id")
+    .params(z.object({ id: z.coerce.number().int() }))
+    .output(Blog)
+    .mcp("get_blog", "获取博客", { readOnly: true });
+  expectTypeOf(proc.def.method).toEqualTypeOf<"GET">();
+  expectTypeOf(proc.def.path).toEqualTypeOf<"/blogs/:id">();
+  expectTypeOf(proc.def.mcp?.readOnly).toEqualTypeOf<boolean | undefined>();
+});

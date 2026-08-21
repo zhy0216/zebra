@@ -186,6 +186,8 @@ import { createTestApp } from "@zebra/testing";
 import { accessLog, errorReporter, health, metrics, requestId } from "@zebra/observability";
 import { RedisRateLimitStore, RedisSessionStore } from "@zebra/redis";
 import { Zebra as FacadeZebra } from "zebra";
+import { createMcpServer } from "@zebra/mcp";
+import { zodSchemaAdapter } from "@zebra/schema-zod";
 
 function expectType(value: unknown, what: string): void {
   if (typeof value !== "function") throw new Error("export " + what + " is not a function");
@@ -213,6 +215,8 @@ expectType(RedisSessionStore, "RedisSessionStore");
 expectType(RedisRateLimitStore, "RedisRateLimitStore");
 expectType(FacadeZebra, "facade Zebra");
 expectType(new FacadeZebra().get, "facade Zebra().get");
+expectType(createMcpServer, "createMcpServer");
+expectObject(zodSchemaAdapter(), "zodSchemaAdapter()");
 
 console.log("all exports verified from installed tarballs");
 `;

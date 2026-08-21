@@ -49,6 +49,7 @@ export const blogContract = {
 | `.status(n)` | response status (default 200) | — |
 | `.errors({ code: { status } })` | declare error codes | documentation / type-level error contract |
 | `.meta(record)` | arbitrary metadata (OpenAPI summary, etc.) | — |
+| `.mcp(name, description, options?)` | expose as an MCP tool (see [MCP Tools](16-mcp.md)) | — |
 
 Schemas are **Standard Schema V1**-compatible validators (zod v3, valibot, ...). Every call returns a new frozen procedure — safe to share and compose.
 

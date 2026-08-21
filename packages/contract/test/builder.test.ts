@@ -14,6 +14,7 @@ test("bare zc.get returns a valid frozen procedure with default def", () => {
   expect(proc.def.status).toBe(200);
   expect(proc.def.errors).toEqual({});
   expect(proc.def.meta).toBeUndefined();
+  expect(proc.def.mcp).toBeUndefined();
   expect(Object.isFrozen(proc.def)).toBe(true);
   expect(Object.isFrozen(proc)).toBe(true);
 });
@@ -105,4 +106,50 @@ test("def is frozen: mutating it throws in strict mode", () => {
     (proc.def as { path: string }).path = "/y";
   }).toThrow();
   expect(proc.def.path).toBe("/x");
+});
+
+test(".mcp() positional form sets a declaration", () => {
+  const proc = zc.get("/topics/:id").mcp("get_topic", "获取主题", { readOnly: true });
+  expect(proc.def.mcp).toEqual({ name: "get_topic", description: "获取主题", readOnly: true });
+});
+
+test(".mcp() object form is accepted and merges options", () => {
+  const proc = zc
+    .get("/topics/:id")
+    .mcp({ name: "get_topic", description: "获取主题", destructive: true });
+  expect(proc.def.mcp).toEqual({
+    name: "get_topic",
+    description: "获取主题",
+    destructive: true,
+  });
+});
+
+test(".mcp() keeps the rest of the def intact", () => {
+  const proc = zc
+    .post("/topics")
+    .body(z.object({ title: z.string() }))
+    .output(z.object({ id: z.number() }))
+    .mcp("create_topic", "创建主题");
+  expect(proc.def.method).toBe("POST");
+  expect(proc.def.path).toBe("/topics");
+  expect(proc.def.mcp?.name).toBe("create_topic");
+  expect(proc.def.body).toBeDefined();
+  expect(proc.def.output).toBeDefined();
+});
+
+test(".mcp() is immutable: earlier procedure stays unexposed", () => {
+  const bare = zc.get("/topics/:id");
+  const exposed = bare.mcp("get_topic", "获取主题");
+  expect(bare.def.mcp).toBeUndefined();
+  expect(exposed.def.mcp?.name).toBe("get_topic");
+});
+
+test(".mcp() rejects empty names and descriptions at build time", () => {
+  expect(() => zc.get("/x").mcp("", "desc")).toThrow(/name must be a non-empty string/);
+  expect(() => zc.get("/x").mcp("  ", "desc")).toThrow(/name must be a non-empty string/);
+  expect(() => zc.get("/x").mcp("name", "")).toThrow(/description must be a non-empty string/);
+  expect(() => zc.get("/x").mcp({ name: "n", description: " " })).toThrow(
+    /description must be a non-empty string/,
+  );
+  expect(() => zc.get("/x").mcp("ok", "desc")).not.toThrow();
 });

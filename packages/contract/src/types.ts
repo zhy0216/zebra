@@ -11,6 +11,25 @@ export interface ErrorSpec {
 export type ProcedureMeta = Readonly<Record<string, unknown>>;
 
 /**
+ * MCP-specific annotations for a procedure exposed as a tool. These are
+ * descriptions/annotations only — never an authorization decision. Real auth
+ * stays in Zebra middleware, session and DI.
+ */
+export interface McpOptions {
+  title?: string;
+  readOnly?: boolean;
+  destructive?: boolean;
+  idempotent?: boolean;
+  openWorld?: boolean;
+}
+
+/** Resolved `.mcp()` declaration: `name` and `description` are required. */
+export interface McpDeclaration extends McpOptions {
+  readonly name: string;
+  readonly description: string;
+}
+
+/**
  * Frozen pure-data description of a contract procedure. All fields are
  * required-but-undefined (never optional) to sidestep exactOptionalPropertyTypes
  * variance issues across the three vendored copies.
@@ -26,6 +45,7 @@ export interface ContractProcedureDef {
   readonly status: number;
   readonly errors: Record<string, ErrorSpec>;
   readonly meta: Readonly<Record<string, unknown>> | undefined;
+  readonly mcp: McpDeclaration | undefined;
 }
 
 /** Chained, immutable contract procedure builder. Every call returns a new frozen procedure. */
@@ -48,6 +68,12 @@ export interface ContractProcedure<Def extends ContractProcedureDef = ContractPr
     es: E,
   ): ContractProcedure<Omit<Def, "errors"> & { errors: Def["errors"] & E }>;
   meta<const M extends ProcedureMeta>(meta: M): ContractProcedure<Omit<Def, "meta"> & { meta: M }>;
+  mcp(
+    name: string,
+    description: string,
+    options?: McpOptions,
+  ): ContractProcedure<Omit<Def, "mcp"> & { mcp: McpDeclaration }>;
+  mcp(decl: McpDeclaration): ContractProcedure<Omit<Def, "mcp"> & { mcp: McpDeclaration }>;
 }
 
 export interface ContractRouter {

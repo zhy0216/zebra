@@ -6,6 +6,8 @@ export type {
   ContractProcedureDef,
   ContractRouter,
   ErrorSpec,
+  McpDeclaration,
+  McpOptions,
   Method,
   ProcedureMeta,
 } from "./types.ts";
