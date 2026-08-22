@@ -1,6 +1,6 @@
 # 生命周期
 
-Zebra 的生命周期分为三个事件钩子与一个显式的优雅停机过程。所有钩子在 `listen()` / `stop()` 的固定时点触发。
+Zebra 的生命周期分为三个事件钩子与一个显式的优雅停机过程。所有钩子在 `listen()` / `stop()` 的固定时点触发。钩子本身是统一、类型安全、异步事件总线上的事件，该总线同样承载请求级与中间件级事件。
 
 ## 事件钩子
 
@@ -18,7 +18,7 @@ z.on("shutdown", async () => {
 });
 ```
 
-`LifecycleEvent = "boot" | "ready" | "shutdown"`，`on()` 返回 `this` 可链式调用，`listen()` 之后注册钩子会抛错。
+`LifecycleEvent = "boot" | "ready" | "shutdown"`，`on()` 返回 `this` 可链式调用，`listen()` 之后注册生命周期钩子会抛错——请求、中间件和自定义事件在运行时仍可注册。
 
 ### 顺序
 
@@ -40,6 +40,76 @@ z.listen()
 - **boot 钩子失败**：`listen()` 直接抛错，服务器不会启动。
 - **ready 钩子失败**：自动 `stop()` 并抛出该错误——不会留下半启动的服务器。
 - **shutdown 钩子**：在容器 dispose 之后运行。此时所有 singleton 实例已释放，适合做最后一类清理（关闭外部连接、刷缓冲）。注意不要在这里依赖容器。
+
+## 事件总线
+
+所有事件——生命周期、请求、中间件与自定义事件——都流经同一个异步 `EventBus`。它是类型安全的：每个事件**至多携带一个 payload**，无 payload 的事件用 `undefined` 表示，调用处无需传参。
+
+```ts
+z.on("user.created", (user) => {
+  // user: { id: string; email: string }
+});
+await z.emit("user.created", { id: "u1", email: "a@example.com" });
+z.off("user.created", handler);
+
+z.once("boot", () => {});            // 只触发一次，随后自动退订
+await z.emit("ready");               // undefined payload → 无需参数
+```
+
+语义要点：
+
+- listener 按注册顺序执行并被**串行 await**；某个 listener 抛错（或返回 rejected Promise）会让当前 `emit()` reject，并停止后续 listener。
+- `once()` listener 在触发前先退订——即使抛错也不会再次触发。
+- `off()` 按原始 handler 移除，对 `once()` 注册的同样有效；同一事件同一 handler 重复注册会被去重。
+- dispatch 前快照 listener 集合：listener 在 emit 过程中增删只影响下一次 emit。
+- 没有 listener 时 `emit()` 立即返回，不吞错、也不隐式打印日志。
+
+`z.events` 暴露同一个 `EventBus` 实例（`EventEmitter` 是它的兼容别名），并提供 `removeAllListeners()` / `listenerCount()`。
+
+### 声明事件
+
+Zebra **不**通过泛型传入事件类型。事件表是一个全局接口，可在任意 `.d.ts` 中扩展：
+
+```ts
+// zebra-events.d.ts
+import type { UserCreated } from "./domain";
+
+declare global {
+  interface ZebraEvents {
+    "user.created": UserCreated;
+  }
+}
+
+export {};
+```
+
+之后 `z.on("user.created", ...)` 与 `z.emit("user.created", ...)` 即获得完整类型检查。拼错的事件名与不匹配的 payload 都会被 TypeScript 拒绝（`ZebraEvents` 没有字符串索引签名）。第三方中间件可用同样方式扩展 `ZebraMiddlewareEvents` 发布自己的事件。导出的 `ZebraEventMap` 是 `ZebraEvents` 的类型别名。
+
+### 请求事件
+
+```ts
+z.on("before.request", ({ request, route }) => {
+  // 路由匹配之后、进入 middleware/handler pipeline 之前
+});
+z.on("after.request", ({ response, duration }) => {
+  // 最终响应生成之后（含 2xx/4xx/5xx）、dispatch 返回之前
+});
+z.on("request.error", ({ error, duration }) => {
+  // 原始 pipeline 异常，尚未转换为 Problem+Json
+});
+```
+
+请求失败时 `request.error` 与 `after.request` 都会触发（先 `request.error`，随后 `after.request` 携带 Problem+Json 响应）。事件 listener 抛错按普通 pipeline 错误处理：不会绕过现有 Problem+Json 错误中间件，也不会绕过请求超时语义。
+
+### 中间件事件
+
+```ts
+z.on("before.middleware", ({ middleware, index }) => {});
+z.on("after.middleware", ({ middleware, index, response, duration }) => {});
+z.on("middleware.error", ({ middleware, index, error, duration }) => {});
+```
+
+按预编译 route plan 的顺序（`index`）逐个触发，`middleware` 是原始函数引用（不依赖不稳定的 `Function.name`）。包装器在 boot 时编译一次；没有 listener 时请求 pipeline 保持零开销 fast path。抛错的 `middleware.error` listener 永远不会掩盖原始中间件错误。
 
 ## 优雅停机 `stop()`
 

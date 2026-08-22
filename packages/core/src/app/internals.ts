@@ -1,5 +1,6 @@
 import type { Server } from "bun";
 import { Container } from "../di/container.ts";
+import { EventBus } from "../events.ts";
 import type { BodyOptions } from "../http/body.ts";
 import { HttpError } from "../http/errors.ts";
 import { type ZebraRequest, buildRequest } from "../http/request.ts";
@@ -12,10 +13,16 @@ import { WsRegistry } from "../ws/registry.ts";
 import type { WsData } from "../ws/types.ts";
 import { isWebSocketUpgrade } from "../ws/upgrade.ts";
 import { validateGraph } from "./boot-validation.ts";
-import type { LifecycleEvent, LifecycleHandler } from "./lifecycle.ts";
 import { type RequestScopes, SessionScopeRegistry } from "./scope-registry.ts";
 import type { DepsSpec, RegisteredRoute, RouteHandler } from "./types.ts";
 import { handleWsUpgrade } from "./ws-upgrade.ts";
+
+const REQUEST_EVENT_NAMES = ["before.request", "after.request", "request.error"] as const;
+const MIDDLEWARE_EVENT_NAMES = [
+  "before.middleware",
+  "after.middleware",
+  "middleware.error",
+] as const;
 
 /**
  * Precompiled per-route execution plan, built once at boot (freeze) so the
@@ -76,11 +83,8 @@ export class AppInternals {
   readonly sessions: SessionScopeRegistry;
   readonly requestTimeout: number | undefined;
   readonly gracePeriod: number;
-  readonly hooks: Record<LifecycleEvent, LifecycleHandler[]> = {
-    boot: [],
-    ready: [],
-    shutdown: [],
-  };
+  /** The app event bus — lifecycle, request and middleware events all flow here. */
+  readonly events: EventBus<ZebraEvents>;
 
   frozen = false;
   server: Server<WsData> | null = null;
@@ -101,6 +105,7 @@ export class AppInternals {
     this.wsSession = opts.wsSession;
     this.requestTimeout = opts.requestTimeout;
     this.gracePeriod = opts.gracePeriod;
+    this.events = new EventBus<ZebraEvents>();
     this.errorMw = errorMiddleware({ exposeStack: this.exposeStack });
     this.sessions = new SessionScopeRegistry(this.container, opts.sessionResolver, opts.sessionTtl);
   }
@@ -147,49 +152,43 @@ export class AppInternals {
         typeof ip === "function" ? ip : undefined,
       );
       const plan = this.planFor(route);
+      const listenRequestEvents = this.events.hasAnyOf(REQUEST_EVENT_NAMES);
+      const startedAt = listenRequestEvents ? performance.now() : 0;
 
-      const res = await this.errorMw(req, async () => {
-        return this.raceDeadline(deadline, async () => {
-          if (plan.needsScope) {
-            const scopes = await this.sessions.createRequestScopes(raw);
-            let disposed = false;
-            const disposeOnce = async (): Promise<void> => {
-              if (disposed) return;
-              disposed = true;
-              await this.sessions.disposeScopes(scopes);
-            };
+      let res: Response;
+      if (listenRequestEvents) {
+        res = await this.errorMw(req, async () => {
+          return this.raceDeadline(deadline, async () => {
             try {
-              return await this.raceDeadline(deadline, async () => {
-                try {
-                  return await this.runWithScopes(req, raw, url, route, scopes, plan);
-                } finally {
-                  await disposeOnce();
-                }
-              });
+              await this.events.emit("before.request", { request: req, route });
+              return await this.runPipeline(plan, req, raw, url, route, deadline);
             } catch (error) {
-              // Timeout / client-disconnect path: the background work may never
-              // settle (hung handler), so dispose the scopes here — the work's
-              // own finally is guarded idempotent. Cleanup failures must not
-              // mask the 504 that is about to be answered.
-              try {
-                await disposeOnce();
-              } catch {
-                // ignore — the deadline error takes precedence
-              }
+              await this.emitRequestError(req, route, error, startedAt);
               throw error;
             }
-          }
-          // Zero-cost fast path: no session resolver and no DI deps anywhere in
-          // the chain — no Container child scope, no dep resolution, the
-          // precompiled middleware array is run as-is and the handler gets {}.
-          return this.runWithoutScopes(req, raw, url, route, plan);
+          });
         });
-      });
+      } else {
+        // Zero-listeners fast path: identical pipeline, no event wrapping.
+        res = await this.errorMw(req, async () => {
+          return this.raceDeadline(deadline, async () =>
+            this.runPipeline(plan, req, raw, url, route, deadline),
+          );
+        });
+      }
       if (headFromGet && res.body !== null) {
-        return new Response(null, {
+        res = new Response(null, {
           status: res.status,
           statusText: res.statusText,
           headers: res.headers,
+        });
+      }
+      if (listenRequestEvents) {
+        await this.events.emit("after.request", {
+          request: req,
+          route,
+          response: res,
+          duration: performance.now() - startedAt,
         });
       }
       return res;
@@ -216,7 +215,7 @@ export class AppInternals {
   }
 
   private async performPrepare(): Promise<void> {
-    for (const h of this.hooks.boot) await h();
+    await this.events.emit("boot");
     validateGraph(this.container, this.routes, this.middlewares);
     this.frozen = true;
     // Precompile per-route execution plans (middleware chain, dep indices,
@@ -272,7 +271,7 @@ export class AppInternals {
 
     await this.sessions.disposeAll();
     await this.container.dispose();
-    for (const h of this.hooks.shutdown) await h();
+    await this.events.emit("shutdown");
   }
 
   private waitForDrain(): Promise<void> {
@@ -330,6 +329,72 @@ export class AppInternals {
         else controller.signal.addEventListener("abort", onAbort, { once: true });
       }),
     ]);
+  }
+
+  /**
+   * Runs the composed pipeline (scope path or zero-cost fast path). Extracted
+   * so `dispatch` can wrap it with the `request.error` emission uniformly.
+   */
+  private async runPipeline(
+    plan: RoutePlan,
+    req: ZebraRequest<Record<string, string>>,
+    raw: Request,
+    url: URL,
+    route: RegisteredRoute | undefined,
+    deadline: RequestDeadline | null,
+  ): Promise<Response> {
+    if (plan.needsScope) {
+      const scopes = await this.sessions.createRequestScopes(raw);
+      let disposed = false;
+      const disposeOnce = async (): Promise<void> => {
+        if (disposed) return;
+        disposed = true;
+        await this.sessions.disposeScopes(scopes);
+      };
+      try {
+        return await this.raceDeadline(deadline, async () => {
+          try {
+            return await this.runWithScopes(req, raw, url, route, scopes, plan);
+          } finally {
+            await disposeOnce();
+          }
+        });
+      } catch (error) {
+        // Timeout / client-disconnect path: the background work may never
+        // settle (hung handler), so dispose the scopes here — the work's
+        // own finally is guarded idempotent. Cleanup failures must not
+        // mask the 504 that is about to be answered.
+        try {
+          await disposeOnce();
+        } catch {
+          // ignore — the deadline error takes precedence
+        }
+        throw error;
+      }
+    }
+    // Zero-cost fast path: no session resolver and no DI deps anywhere in
+    // the chain — no Container child scope, no dep resolution, the
+    // precompiled middleware array is run as-is and the handler gets {}.
+    return this.runWithoutScopes(req, raw, url, route, plan);
+  }
+
+  private async emitRequestError(
+    req: ZebraRequest,
+    route: RegisteredRoute | undefined,
+    error: unknown,
+    startedAt: number,
+  ): Promise<void> {
+    try {
+      await this.events.emit("request.error", {
+        request: req,
+        route,
+        error,
+        duration: performance.now() - startedAt,
+      });
+    } catch {
+      // The request already failed; a throwing `request.error` listener must
+      // not mask the original error or the Problem+Json response that follows.
+    }
   }
 
   private async runWithScopes(
@@ -441,11 +506,58 @@ export class AppInternals {
     });
     const needsDeps = mwDeps.length > 0 || (route !== undefined && route.deps !== null);
     const hasSessionResolver = this.sessions.hasResolver();
+    // Middleware-event wrappers are created once at plan-compile time (the
+    // `middleware` payload keeps the original function reference, not a
+    // `Function.name` string). Each wrapper short-circuits on the bus's live
+    // listener state, so listener-less runs stay near zero-cost.
+    const eventWrapped = middlewares.map((mw, index) => this.wrapForMiddlewareEvents(mw, index));
     return {
-      middlewares,
+      middlewares: eventWrapped,
       mwDeps,
       needsDeps,
       needsScope: needsDeps || hasSessionResolver,
+    };
+  }
+
+  /**
+   * Wraps a middleware to fire `before.middleware` / `after.middleware` /
+   * `middleware.error` around its execution. `index` is the precompiled plan
+   * position. A throwing `before.*` / `after.*` listener propagates as a normal
+   * pipeline error (→ Problem+Json); a throwing error-listener never masks the
+   * original middleware error.
+   */
+  private wrapForMiddlewareEvents(mw: Middleware, index: number): Middleware {
+    return (req, next, deps) => {
+      if (!this.events.hasAnyOf(MIDDLEWARE_EVENT_NAMES)) return mw(req, next, deps);
+      const startedAt = performance.now();
+      return (async () => {
+        await this.events.emit("before.middleware", { request: req, middleware: mw, index });
+        let response: Response;
+        try {
+          response = await mw(req, next, deps);
+        } catch (error) {
+          try {
+            await this.events.emit("middleware.error", {
+              request: req,
+              middleware: mw,
+              index,
+              error,
+              duration: performance.now() - startedAt,
+            });
+          } catch {
+            // never mask the original middleware error
+          }
+          throw error;
+        }
+        await this.events.emit("after.middleware", {
+          request: req,
+          middleware: mw,
+          index,
+          response,
+          duration: performance.now() - startedAt,
+        });
+        return response;
+      })();
     };
   }
 

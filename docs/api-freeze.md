@@ -117,12 +117,26 @@ packages.
 - App: `Zebra`, type `ZebraOptions`, `RouteHandler`, `DepsSpec`, `ResolvedDeps`,
   `RegisteredRoute`, `GroupApi`, `LifecycleEvent`, `LifecycleHandler`,
   `PathParams`, `JoinPath`, `SessionOptions`, `validateGraph`, `VERSION`.
-  `Zebra` instance members: `use`, `on`, `listen`, `stop`, `disposeSession`,
+  `Zebra` instance members: `use`, `on`, `once`, `off`, `emit`, `events`,
+  `listen`, `stop`, `disposeSession`,
   `injectValue`, `injectSingleton`, `injectRequest`, `injectTransient`,
   `injectSession`, `injectFactorySingleton`, `injectFactoryRequest`,
   `injectFactoryTransient`, `injectFactorySession`, `implement`, `get`, `post`,
   `put`, `patch`, `delete`, `head`, `options`, `route`, `group`, `static`, `ws`,
   `dispatch`, `routeTable`.
+- Events: `EventBus`, `EventEmitter` (compat alias of `EventBus`), types
+  `EventHandler`, `EventPayload`, `EventArgs`, `Awaitable`, `EventPublisher`,
+  `ZebraEventMap`, `BeforeRequestEvent`, `AfterRequestEvent`,
+  `RequestErrorEvent`, `BeforeMiddlewareEvent`, `AfterMiddlewareEvent`,
+  `MiddlewareErrorEvent`.
+- Event-name stability: the built-in event names (`boot`, `ready`, `shutdown`,
+  `before.request`, `after.request`, `request.error`, `before.middleware`,
+  `after.middleware`, `middleware.error`) and their payload shapes are stable for
+  the whole `1.x` line. The global `ZebraEvents` / `ZebraMiddlewareEvents`
+  interfaces are intentionally extensible (via `declare global`) — additions are
+  always backwards compatible; renaming/removing a built-in event or changing its
+  payload shape is breaking (major). Lifecycle listeners freeze at `listen()`;
+  other events remain registerable at runtime.
 - Contract (implement): `isContractProcedure`, types `ContractProcedureDef`,
   `ContractHandler`, `ContractRequest`, `ContractParams`, `ContractQuery`,
   `ContractBody`, `ContractReturn`, `ContractProcedure`, `ContractRouter`,

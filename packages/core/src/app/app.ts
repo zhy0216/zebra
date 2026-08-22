@@ -14,13 +14,13 @@ import type { BindingBuilder } from "../di/binding.ts";
 import { Container } from "../di/container.ts";
 import { ScopeKind } from "../di/scope.ts";
 import type { ClassConstructor, Identifier } from "../di/token.ts";
+import { type EventArgs, EventBus, type EventHandler } from "../events.ts";
 import type { BodyOptions } from "../http/body.ts";
 import { type StaticOptions, serveStatic } from "../http/static.ts";
 import type { Middleware } from "../middleware/types.ts";
 import { buildBunWebSocketHandler } from "../ws/handler.ts";
 import { Group, type GroupApi } from "./group.ts";
 import { AppInternals } from "./internals.ts";
-import type { LifecycleEvent, LifecycleHandler } from "./lifecycle.ts";
 import type {
   DepsSpec,
   ListenOptions,
@@ -113,10 +113,48 @@ export class Zebra {
     );
   }
 
-  on(event: LifecycleEvent, fn: LifecycleHandler): this {
-    this.assertNotFrozen("lifecycle hooks");
-    this.internals.hooks[event].push(fn);
+  /**
+   * Registers an event listener. Lifecycle events (`boot` / `ready` /
+   * `shutdown`) may only be registered before `listen()`; request, middleware
+   * and user-defined events remain registerable at runtime.
+   */
+  on<K extends keyof ZebraEvents & string>(event: K, handler: EventHandler<ZebraEvents[K]>): this {
+    this.assertLifecycleRegisterable(event);
+    this.internals.events.on(event, handler);
     return this;
+  }
+
+  /** Registers a one-shot listener, removed before the first dispatch. */
+  once<K extends keyof ZebraEvents & string>(
+    event: K,
+    handler: EventHandler<ZebraEvents[K]>,
+  ): this {
+    this.assertLifecycleRegisterable(event);
+    this.internals.events.once(event, handler);
+    return this;
+  }
+
+  /** Removes a listener by its original handler (works for `once` registrations). */
+  off<K extends keyof ZebraEvents & string>(event: K, handler: EventHandler<ZebraEvents[K]>): this {
+    this.internals.events.off(event, handler);
+    return this;
+  }
+
+  /**
+   * Dispatches an event: listeners run in registration order, awaited
+   * sequentially. A throwing listener rejects the returned promise and stops
+   * the remaining listeners. `undefined`-payload events take no arguments.
+   */
+  emit<K extends keyof ZebraEvents & string>(
+    event: K,
+    ...args: EventArgs<ZebraEvents[K]>
+  ): Promise<void> {
+    return this.internals.events.emit(event, ...args);
+  }
+
+  /** The app's event bus — same table as `Zebra.on/once/off/emit`. */
+  get events(): EventBus<ZebraEvents> {
+    return this.internals.events;
   }
 
   async listen(opts: ListenOptions): Promise<{ port: number }> {
@@ -151,7 +189,7 @@ export class Zebra {
     this.internals.server = server;
     this.internals.installSignalHandlers();
     try {
-      for (const h of this.internals.hooks.ready) await h();
+      await this.internals.events.emit("ready");
     } catch (error) {
       await this.stop();
       throw error;
@@ -279,6 +317,13 @@ export class Zebra {
   protected assertNotFrozen(kind = "bindings"): void {
     if (this.internals.frozen) {
       throw new Error(`Cannot register ${kind} after app.listen()`);
+    }
+  }
+
+  /** Lifecycle hooks freeze at `listen()`; other events stay open at runtime. */
+  private assertLifecycleRegisterable(event: string): void {
+    if (event === "boot" || event === "ready" || event === "shutdown") {
+      this.assertNotFrozen("lifecycle hooks");
     }
   }
 

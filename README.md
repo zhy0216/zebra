@@ -103,6 +103,7 @@ const z = new Zebra({ container });
 - **HTTP** — `ZebraRequest` with lazy body parsing, content-type-aware body parser with size limits, request helpers (`json()` / `text()` / `form()` / `stream()`), response helpers (`json` / `text` / `html` / `redirect` / `stream`), `HttpError` for structured failures.
 - **Static files** — `app.static()` with path-traversal and symlink-escape defense (realpath containment), weak ETags, conditional requests, and byte ranges.
 - **Lifecycle** — boot/ready/shutdown hooks, graceful draining, and disposable cleanup wired to `Bun.serve`.
+- **Events** — unified async `EventBus` (`on` / `once` / `off` / `emit`, single payload per event, type-safe via a global `ZebraEvents` interface you extend), plus built-in request (`before.request` / `after.request` / `request.error`) and middleware (`before.middleware` / `after.middleware` / `middleware.error`) events.
 - **Session-scoped DI** — session-id resolution, idle TTL, explicit `disposeSession()`, and request-local anonymous sessions.
 - **Cookie sessions** — `@zebra/session` middleware: HMAC-SHA256 signed `sid` cookies, `req.ctx.session` read/write with `getSession(req)`, pluggable `SessionStore` (in-memory default), rolling TTL renewal, and session-fixation protection (destroyed/expired ids are never revived). Cookies are `HttpOnly` + `SameSite=Lax` by default; `cookie: { preset: "plain" }` restores a flag-free cookie.
 - **CORS** — `@zebra/cors` middleware: origin allowlists (string/array/RegExp/predicate), preflight handling (204 + full header set), credentials with exact-origin echo, `Vary: Origin` on dynamic matches.
@@ -138,7 +139,7 @@ bun --filter example-better-auth test         # in-process integration tests
 | Package           | What it is                                          |
 | ----------------- | --------------------------------------------------- |
 | `zebra`           | Public facade — re-exports `@zebra/core`, `@zebra/session` |
-| `@zebra/core`     | App, DI container, router, HTTP, middleware, `implement` |
+| `@zebra/core`     | App, DI container, router, HTTP, middleware, `implement`, event bus |
 | `@zebra/contract` | Contract builder + protocol (Standard Schema V1, zero deps) |
 | `@zebra/client`   | Derived type-safe client (zero deps)                |
 | `@zebra/session`  | Cookie sessions: HMAC-signed `sid`, pluggable store, fixation-safe |

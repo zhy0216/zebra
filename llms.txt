@@ -35,6 +35,7 @@ Core principles:
 The complete frozen export list for every package is in [`docs/api-freeze.md`](docs/api-freeze.md) — the authoritative v1 surface (stability promise + SemVer policy + per-package export lists). Summary of the core package surface (`packages/core/src/index.ts`):
 
 - App: `Zebra`, `ZebraOptions`, `ListenOptions`, `RouteHandler`, `DepsSpec`, `ResolvedDeps`, `RegisteredRoute`, `GroupApi`, `LifecycleEvent`, `LifecycleHandler`, `PathParams`, `JoinPath`, `SessionOptions`, `validateGraph`, `VERSION`
+- Events: `EventBus`, `EventEmitter`, `ZebraEventMap`, `EventHandler`, `EventPayload`, `EventArgs`, `Awaitable`, `EventPublisher`, built-in request/middleware event payload types (`BeforeRequestEvent`, `AfterRequestEvent`, `RequestErrorEvent`, `BeforeMiddlewareEvent`, `AfterMiddlewareEvent`, `MiddlewareErrorEvent`); extensible global `ZebraEvents` / `ZebraMiddlewareEvents`
 - Contract (core): `implement` (on `Zebra`), `routeTable` (on `Zebra`), `ContractHandler`, `ContractProcedure`, `RouterImpl`, `ImplementOptions`, `isContractProcedure`
 - Contract (shared): `zc` chain (`@zebra/contract`), `prefix`, `StandardSchemaV1`, `InferParams/Query/Body/Output`
 - Client: `createClient`, `ClientError`, `ContractClient`, `ClientOptions` (`@zebra/client`)

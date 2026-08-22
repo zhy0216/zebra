@@ -29,6 +29,13 @@ test("rate-limit exports are present with the documented aliases", () => {
   expect(facade.MemoryStore).toBe(session.MemoryStore);
 });
 
+test("event system exports are re-exported by the facade", () => {
+  expect(facade.EventBus).toBe(core.EventBus);
+  expect(facade.EventEmitter).toBe(core.EventEmitter);
+  // Type-level exports are part of the surface even though they erase at runtime;
+  // the value exports above are checked at runtime, the rest are type-checked.
+});
+
 test("contract / client / testing / observability / redis are not re-exported", () => {
   // Kept out of the facade on purpose (tree-shakeable facade, see the freeze
   // doc); import them from their own packages.

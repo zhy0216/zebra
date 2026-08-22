@@ -1,6 +1,14 @@
 import "reflect-metadata";
 
 export { Zebra } from "./app/app.ts";
+export { EventBus, EventEmitter } from "./events.ts";
+export type {
+  EventHandler,
+  EventPayload,
+  EventArgs,
+  Awaitable,
+  EventPublisher,
+} from "./events.ts";
 export {
   isContractProcedure,
   type ContractProcedureDef,
@@ -61,7 +69,17 @@ export type {
   RegisteredRoute,
 } from "./app/types.ts";
 export type { GroupApi } from "./app/group.ts";
-export type { LifecycleEvent, LifecycleHandler } from "./app/lifecycle.ts";
+export type {
+  LifecycleEvent,
+  LifecycleHandler,
+  ZebraEventMap,
+  BeforeRequestEvent,
+  AfterRequestEvent,
+  RequestErrorEvent,
+  BeforeMiddlewareEvent,
+  AfterMiddlewareEvent,
+  MiddlewareErrorEvent,
+} from "./app/lifecycle.ts";
 export { validateGraph } from "./app/boot-validation.ts";
 export type { WsHandler, WsData, WsRoute } from "./ws/types.ts";
 export const VERSION = "1.0.0";
