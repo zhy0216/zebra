@@ -17,6 +17,7 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "verify:packages": "bun scripts/verify-packages.ts",
+    "check:coverage": "bun scripts/check-coverage.ts",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"

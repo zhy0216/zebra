@@ -2,7 +2,8 @@
 exact = true
 
 [test]
-# CI coverage gate (see .github/workflows/ci.yml): fails when total line
-# coverage of the tested files drops below this fraction. Current level:
-# ~94% on packages/core.
-coverageThreshold = 0.9
+# No coverageThreshold here: Bun 1.4 enforces it per file (one small file
+# below the threshold fails the run even when the suite overall is well
+# covered). The CI coverage gate lives in scripts/check-coverage.ts, which
+# checks the *global* line coverage of the lcov report against 90%
+# (see .github/workflows/ci.yml, coverage job).
