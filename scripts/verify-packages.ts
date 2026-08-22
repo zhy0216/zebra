@@ -225,7 +225,7 @@ console.log("all exports verified from installed tarballs");
   const verify = run("bun", ["verify.ts"], projectDir);
   if (!verify.ok) fail(`import checks failed:\n${verify.stderr}`);
 
-  // --- types resolution: tsc against the installed tarballs ------------------
+  // --- types resolution: tsgo against the installed tarballs -----------------
 
   writeFileSync(
     join(projectDir, "tsconfig.json"),
@@ -248,13 +248,19 @@ console.log("all exports verified from installed tarballs");
       2,
     ),
   );
-  const typesInstall = run("bun", ["add", "-d", "typescript", "@types/bun"], projectDir);
+  const typesInstall = run(
+    "bun",
+    ["add", "-d", "@typescript/native-preview@7.0.0-dev.20260707.2", "@types/bun"],
+    projectDir,
+  );
   if (!typesInstall.ok)
-    fail(`could not add typescript/@types/bun to smoke project:\n${typesInstall.stderr}`);
-  const tsc = run("bun", ["x", "tsc", "--noEmit"], projectDir);
-  if (!tsc.ok) {
     fail(
-      `typecheck of installed tarballs failed (main/types/exports do not resolve):\n${tsc.stderr}${tsc.stdout}`,
+      `could not add @typescript/native-preview/@types/bun to smoke project:\n${typesInstall.stderr}`,
+    );
+  const tsgo = run("bun", ["x", "tsgo", "--noEmit"], projectDir);
+  if (!tsgo.ok) {
+    fail(
+      `typecheck of installed tarballs failed (main/types/exports do not resolve):\n${tsgo.stderr}${tsgo.stdout}`,
     );
   }
 

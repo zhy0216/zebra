@@ -10,7 +10,7 @@
   "files": ["src"],
   "scripts": {
     "test": "bun test",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsgo --noEmit",
     "build": "bun build src/index.ts --outdir dist --target bun --packages external"
   },
   "devDependencies": {

@@ -74,7 +74,12 @@ test("client args: keys exist per declaration with correct optionality", () => {
   type ListArgs = ClientArgs<(typeof blogContract)["list"]["def"]>;
   type CreateArgs = ClientArgs<(typeof blogContract)["create"]["def"]>;
 
-  expectTypeOf<ListArgs["query"]>().toEqualTypeOf<{ page?: number }>();
+  // page has a zod `.default()`, so its input type is `{ page?: number | undefined }`.
+  // Under the native compiler (exactOptionalPropertyTypes) this does NOT equal
+  // `{ page?: number }`: the client runtime also accepts `{ page: undefined }`
+  // (serialization skips undefined query values), so the optional-with-undefined
+  // form is the true contract.
+  expectTypeOf<ListArgs["query"]>().toEqualTypeOf<{ page?: number | undefined }>();
   const _headers: Record<string, string> | undefined = null as unknown as ListArgs["headers"];
   void _headers;
   const _listRequiresArgs: {} extends ListArgs ? true : false = false;

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, expectTypeOf, test } from "bun:test";
 import * as core from "@zebra/core";
 import * as cors from "@zebra/cors";
 import * as rateLimit from "@zebra/rate-limit";
@@ -25,7 +25,11 @@ test("rate-limit exports are present with the documented aliases", () => {
   // MemoryStore collides with session's re-export and is aliased (frozen,
   // documented in docs/api-freeze.md §3 "zebra").
   expect(facade.RateLimitMemoryStore).toBe(rateLimit.MemoryStore);
-  expect(facade.RateLimitMemoryStoreOptions).toBe(rateLimit.MemoryStoreOptions);
+  // RateLimitMemoryStoreOptions is a type-only alias (erases at runtime), so it
+  // cannot be compared with `.toBe(...)` — verify the alias resolves to the
+  // same type instead. Surfaced by the native-compiler migration, which
+  // typechecks this test file.
+  expectTypeOf<facade.RateLimitMemoryStoreOptions>().toEqualTypeOf<rateLimit.MemoryStoreOptions>();
   expect(facade.MemoryStore).toBe(session.MemoryStore);
 });
 

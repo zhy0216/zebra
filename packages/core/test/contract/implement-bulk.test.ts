@@ -100,9 +100,9 @@ test("opts.middlewares apply per implementation", async () => {
 test("missing implementation throws at call time listing dotted keys + method/path", () => {
   const app = new Zebra({ container: new Container() });
   expect(() =>
-    // @ts-expect-error nested.bye has no implementation
     app.implement(router, {
       hello: (req) => req.params.name,
+      // @ts-expect-error nested.bye has no implementation
       nested: {},
     }),
   ).toThrow(/missing: nested\.bye \(DELETE \/bye\/:name\)/);
@@ -111,11 +111,11 @@ test("missing implementation throws at call time listing dotted keys + method/pa
 test("extra implementation keys throw at call time", () => {
   const app = new Zebra({ container: new Container() });
   expect(() =>
-    // @ts-expect-error ghost/stray are not in the router
     app.implement(router, {
       hello: (req) => req.params.name,
       nested: {
         bye: () => undefined,
+        // @ts-expect-error ghost/stray are not in the router
         ghost: () => "nope",
       },
       stray: () => "nope",

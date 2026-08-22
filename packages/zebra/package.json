@@ -9,7 +9,7 @@
   },
   "files": ["src"],
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsgo --noEmit",
     "build": "bun build src/index.ts --outdir dist --target bun --packages external"
   },
   "dependencies": {
