@@ -23,19 +23,12 @@ jobs:
       - run: bun run test
       - run: bun run verify:packages
 
-  # Performance regression gate (bench:check, median of 3 per scenario, wide
-  # thresholds for CI noise). Requires the full workspace because the bench
-  # package depends on the workspace zebra packages.
-  bench:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.4"
-      - run: bun install --frozen-lockfile
-      - run: bun run bench:check
-
+  # Performance regression gate (bench:check) is deliberately NOT part of CI:
+  # the baseline is recorded on a specific machine (16-core Apple Silicon) and
+  # GitHub's shared ubuntu-latest runners reach only ~half its throughput with
+  # high run-to-run noise, so the gate would fail on hardware drift, not on
+  # code regressions. Run `bun run bench:check` locally before perf changes.
+  #
   # Coverage gate, scoped to packages/core (keeps workspace dist files out of
   # the report); the threshold lives in bunfig.toml ([test] coverageThreshold).
   # The lcov reporter is deliberately not combined with the threshold run —

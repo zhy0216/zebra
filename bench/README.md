@@ -93,7 +93,7 @@ bun run bench
 # 或调参：
 BENCH_DURATION_MS=2000 BENCH_CONCURRENCY=32 bun run bench
 
-# 4) 性能回归门槛（zebra-only，默认 1s × 64 × 3 次取中位数，阈值：rps ≥ 基线 80% 且 p95 ≤ 基线 125%；已接入 CI）
+# 4) 性能回归门槛（zebra-only，默认 1s × 64 × 3 次取中位数，阈值：rps ≥ 基线 80% 且 p95 ≤ 基线 125%；基线按本机录制，仅在本地运行，不接入 CI——共享 CI runner 吞吐只有本机约一半且噪声大）
 bun run bench:check
 
 # 有意的性能改动后重录基线：

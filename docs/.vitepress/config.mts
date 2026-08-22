@@ -112,10 +112,7 @@ export default defineConfig({
 
   head: [
     ["link", { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }],
-    [
-      "meta",
-      { name: "theme-color", content: "#4f46e5" },
-    ],
+    ["meta", { name: "theme-color", content: "#4f46e5" }],
   ],
 
   themeConfig: {
@@ -123,9 +120,7 @@ export default defineConfig({
     search: {
       provider: "local",
     },
-    socialLinks: [
-      { icon: "github", link: "https://github.com/zhy0216/zebra" },
-    ],
+    socialLinks: [{ icon: "github", link: "https://github.com/zhy0216/zebra" }],
     editLink: {
       pattern: "https://github.com/zhy0216/zebra/edit/master/docs/:path",
       text: "Edit this page on GitHub",

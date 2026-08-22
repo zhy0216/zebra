@@ -15,6 +15,9 @@ bun.lockb
 .env
 .env.local
 
+# Test fixture (tracked on purpose: packages/core static dotfiles tests)
+!packages/core/test/http/fixtures/static/.env
+
 # Test coverage
 coverage/
 
