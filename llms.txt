@@ -2,7 +2,7 @@
 
 > A Bun-first TypeScript web framework with first-class dependency injection. Built on `Bun.serve` and Web Standard `Request`/`Response` — no Node compat layer. Every app is built around a DI `Container` whose graph is validated at boot.
 
-Zebra v2 (current) is a rewrite. v1 (2019) is archived on the `v1-archive` git tag. The framework is at v1.0: the public API surface is frozen (`docs/api-freeze.md` defines the stability promise and SemVer policy) across the facade `zebra` and the packages `@zebra/core` (DI, radix router, middleware, lifecycle, static files, WebSocket), `@zebra/contract`, `@zebra/client`, `@zebra/testing`, `@zebra/session`, `@zebra/cors`, and `@zebra/rate-limit`. All packages are versioned in lockstep at 1.0.0.
+The framework is at v1.0: the public API surface is frozen (`docs/api-freeze.md` defines the stability promise and SemVer policy) across the facade `zebra` and the packages `@zebra/core` (DI, radix router, middleware, lifecycle, static files, WebSocket), `@zebra/contract`, `@zebra/client`, `@zebra/testing`, `@zebra/session`, `@zebra/cors`, and `@zebra/rate-limit`. All packages are versioned in lockstep at 1.0.0.
 
 Core principles:
 - DI is mandatory, not bolted on. Routes and middleware declare their dependencies via a named-object spec (`{ svc: Service }`); the container resolves them and validates the full graph (circular deps, scope violations) at boot. The `Zebra` instance exposes `injectSingleton` / `injectRequest` / `injectTransient` / `injectSession` (class bindings), `injectFactorySingleton`/`injectFactoryRequest`/… (factory bindings, with optional declared-deps form for boot validation), and `injectValue` (value bindings) — so most apps never construct a `Container` directly.
@@ -14,9 +14,6 @@ Core principles:
 ## Docs
 
 - [README](README.md): install, quick start, features, package layout
-- [Design spec (v0.1 → v1.0 surface)](docs/superpowers/specs/2026-05-16-zebra-v2-design.md): the authoritative design document for the rewrite
-- [Contract-first design spec](docs/superpowers/specs/2026-08-09-zebra-contract-first-design.md): the v0.2 contract-first design (claims the v0.2 slot; OpenAPI slips to v0.3)
-- [v2 MVP plan](docs/superpowers/plans/2026-05-16-zebra-v2-mvp.md): implementation plan and milestones
 - [LICENSE](LICENSE): MIT
 
 ## Packages

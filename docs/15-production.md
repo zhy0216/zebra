@@ -10,7 +10,7 @@ Zebra is Bun-first: run the source directly with Bun in production. **No build s
 
 ```sh
 # Dockerfile (illustrative)
-FROM oven/bun:1.3
+FROM oven/bun:1.4
 WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --production
@@ -75,23 +75,24 @@ bun run bench            # full comparison
 bun run bench:check      # regression check (against baseline.json)
 ```
 
-Scenarios: static / param / wildcard / middleware (5 layers) / json / di / static-file.
+Scenarios: static / param / wildcard / middleware (5 layers) / json / di / static-file / post-json.
 
-Reference results (macOS arm64 16-core, Bun 1.3.14, single-process loopback, 1.5s × 64 concurrency, after the 2026-08-09 zero-cost fast path):
+Current zebra results (this machine: macOS arm64 16-core, Bun 1.4.0 — `bun --version` reports `1.4.0` — single-process loopback, 3000ms × 64 concurrency, median of 3 runs, recorded via `BENCH_DURATION_MS=3000 bun run bench/bench-regression.ts --update`):
 
-| scenario | zebra | hono | elysia |
-| --- | ---: | ---: | ---: |
-| static | 75,599 | 103,931 | 107,089 |
-| param | 75,072 | 102,000 | 109,834 |
-| wildcard | 75,498 | 100,944 | 108,505 |
-| middleware | 73,650 | 93,832 | 106,666 |
-| json | 74,230 | 92,524 | 104,653 |
-| di | 70,310 | 78,802 | 103,118 |
-| static-file | 31,296 | 37,037 | 39,962 |
+| scenario | req/s | p95 (ms) |
+| --- | ---: | ---: |
+| static | 86,364 | 1.21 |
+| param | 84,332 | 1.24 |
+| wildcard | 82,662 | 1.27 |
+| middleware | 78,242 | 1.32 |
+| json | 80,250 | 1.31 |
+| di | 78,454 | 1.34 |
+| static-file | 32,700 | 2.97 |
+| post-json | 26,732 | 3.69 |
 
-Zebra latency (p50/p95/p99 ms): static 0.91/1.35/1.73, middleware 0.96/1.35/1.65, di 1.01/1.41/1.73.
+Cross-framework comparison numbers (Hono / Elysia) and the earlier measurements from the 2026-08-09 zero-cost fast-path work (Bun 1.3.14) are historical reference in [bench/README](../bench/README.md) — re-run `bun run bench` on your current Bun to reproduce.
 
-Key optimization: **the zero-cost fast path** — routes without DI deps and without a session resolver create no Container child scope; middleware dep scanning/wrapping moved to boot-time precompilation. Throughput +5–9% overall, p95 down 0.04–0.10ms (biggest win on middleware, +8.6%).
+Key optimization: **the zero-cost fast path** — routes without DI deps and without a session resolver create no Container child scope; middleware dep scanning/wrapping moved to boot-time precompilation. At the time it measured +5–9% overall throughput, p95 down 0.04–0.10ms (biggest win on middleware, +8.6%).
 
 > **Comparability note**: the three frameworks' "5-layer middleware" mechanisms aren't exactly equivalent (zebra composes per request, hono pre-composes the chain, elysia uses a flat `onRequest` hook chain that applies globally). Don't read the middleware row's absolute numbers across frameworks; the relative ordering (zebra < hono < elysia) is meaningful.
 

@@ -18,8 +18,8 @@ bun add @zebra/observability @zebra/redis
 
 ## 运行环境
 
-- **Bun ≥ 1.1.30**（运行时）。仓库测试套件使用 Bun 1.3 新增的 API（`expectTypeOf`、WebSocket 客户端 helpers），因此测试与 CI 需要 Bun ≥ 1.3。
-- **TypeScript ≥ 5.6**。
+- **Bun ≥ 1.4.0**（运行时）。仓库固定为 `packageManager bun@1.4.0`，测试与 CI 跑在同一个 Bun 上。
+- **类型检查**通过 `tsgo`——原生 TypeScript 编译器（`@typescript/native-preview`）。
 - `reflect-metadata` 在入口处导入一次，且 `tsconfig.json` 开启装饰器支持：
 
 ```json

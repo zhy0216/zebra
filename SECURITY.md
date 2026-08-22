@@ -32,9 +32,9 @@ deliberate.
   outside it is not served). Keep static roots to content you actually want to
   serve, and never mount a directory that contains secrets or source.
 - **Sessions** — `@zebra/session` ids are HMAC-SHA256 signed; destroyed or
-  expired ids are never revived (fixation-safe). For `HttpOnly` +
-  `SameSite=Lax`, opt in with `cookie: { preset: "secure" }` or `SECURE_COOKIE`
-  — the plain default cookie is frozen v1 behavior.
+  expired ids are never revived (fixation-safe). The default cookie carries
+  `HttpOnly` + `SameSite=Lax` (`SECURE_COOKIE`); opt out with
+  `cookie: { preset: "plain" }` for a flag-free cookie.
 - **Bodies** — app-level body limits (per content-type) compose with Bun's
   transport-level `maxRequestBodySize`; keep the transport limit ≥ the largest
   app limit so the parser's structured 413s stay authoritative.

@@ -2,8 +2,6 @@
 
 A Bun-first TypeScript web framework with first-class DI.
 
-> v2 is a rewrite. v1 (2019) is archived on the `v1-archive` tag.
-
 ## Why Zebra
 
 - **Bun-first.** Uses `Bun.serve`, `Bun.file`, and Web Standard `Request`/`Response`. No Node compat layer.
@@ -38,10 +36,10 @@ Import `reflect-metadata` once at your entry point, before anything else.
 
 ## Requirements
 
-- **Bun ≥ 1.1.30** at runtime (tested on 1.3.x). The repository's test suite
-  uses `bun:test` APIs added in Bun 1.3 (`expectTypeOf`, WebSocket client
-  helpers), so tests and CI run on Bun ≥ 1.3.
-- **TypeScript ≥ 5.6** (root devDependency).
+- **Bun ≥ 1.4.0** at runtime (the repo is pinned to `packageManager bun@1.4.0`;
+  tests and CI run on the same Bun).
+- **Typecheck** via `tsgo` — the native TypeScript compiler
+  (`@typescript/native-preview`), configured in the root devDependencies.
 - `reflect-metadata` imported once at the entry point, and
   `experimentalDecorators` + `emitDecoratorMetadata` enabled (see Install).
 
@@ -175,7 +173,7 @@ part of the published tarball** (`files: ["src"]` excludes it).
 
 `bun run verify:packages` packs every publishable package into a tarball and
 smoke-tests each one from a fresh install: contents (`src/index.ts` present,
-no `dist/` leakage), exports/types resolution, runtime imports, and a tsc
+no `dist/` leakage), exports/types resolution, runtime imports, and a tsgo
 typecheck of the installed packages. It guards the src-direct strategy above.
 
 Versions are bumped in lockstep across all packages by

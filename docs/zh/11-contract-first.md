@@ -50,7 +50,7 @@ export const blogContract = {
 | `.errors({ code: { status } })` | 声明错误码 | 文档 / 类型层面的错误契约 |
 | `.meta(record)` | 任意元数据（OpenAPI 摘要等） | — |
 
-schema 是 **Standard Schema V1** 兼容的任何校验器（zod v3、valibot 等）。每次调用返回新的冻结 procedure，可安全共享与组合。
+schema 是 **Standard Schema V1** 兼容的任何校验器（zod 4、valibot 等）。每次调用返回新的冻结 procedure，可安全共享与组合。
 
 ### 组合：嵌套路由与 `prefix()`
 

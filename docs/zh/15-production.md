@@ -10,7 +10,7 @@ Zebra 是 Bun-first 的：生产环境用 Bun 直接跑源码即可，**不需�
 
 ```sh
 # Dockerfile（示意）
-FROM oven/bun:1.3
+FROM oven/bun:1.4
 WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --production
@@ -62,7 +62,7 @@ bun run verify:packages
 
 1. `bun pm pack` 打包；
 2. 校验 tarball 内容（`src/index.ts` 存在、无 `dist/` 泄漏、`main`/`types`/`exports` 引用的路径都在）；
-3. 装进一个全新的临时项目，逐个验证：resolved、runtime import、`tsc` typecheck。
+3. 装进一个全新的临时项目，逐个验证：resolved、runtime import、`tsgo` typecheck。
 
 这守护了 src-direct 策略——tarball 只带 `src/`，且 exports map 必须能从干净安装工作。
 
@@ -75,23 +75,24 @@ bun run bench            # 全量对比
 bun run bench:check      # 回归检查（对比 baseline.json）
 ```
 
-场景：static / param / wildcard / middleware（5 层链）/ json / di / static-file。
+场景：static / param / wildcard / middleware（5 层链）/ json / di / static-file / post-json。
 
-参考结果（macOS arm64 16 核，Bun 1.3.14，单进程本机回环，1.5s × 64 并发，2026-08-09 zero-cost fast path 之后）：
+当前 zebra 结果（本机：macOS arm64 16 核，Bun 1.4.0——`bun --version` 报告 `1.4.0`——单进程本机回环，3000ms × 64 并发，3 次取中位数，通过 `BENCH_DURATION_MS=3000 bun run bench/bench-regression.ts --update` 录制）：
 
-| scenario | zebra | hono | elysia |
-| --- | ---: | ---: | ---: |
-| static | 75,599 | 103,931 | 107,089 |
-| param | 75,072 | 102,000 | 109,834 |
-| wildcard | 75,498 | 100,944 | 108,505 |
-| middleware | 73,650 | 93,832 | 106,666 |
-| json | 74,230 | 92,524 | 104,653 |
-| di | 70,310 | 78,802 | 103,118 |
-| static-file | 31,296 | 37,037 | 39,962 |
+| scenario | req/s | p95 (ms) |
+| --- | ---: | ---: |
+| static | 86,364 | 1.21 |
+| param | 84,332 | 1.24 |
+| wildcard | 82,662 | 1.27 |
+| middleware | 78,242 | 1.32 |
+| json | 80,250 | 1.31 |
+| di | 78,454 | 1.34 |
+| static-file | 32,700 | 2.97 |
+| post-json | 26,732 | 3.69 |
 
-Zebra 延迟（p50/p95/p99 ms）：static 0.91/1.35/1.73，middleware 0.96/1.35/1.65，di 1.01/1.41/1.73。
+跨框架对比数字（Hono / Elysia）与 2026-08-09 zero-cost fast path 时的早期测量（Bun 1.3.14）在 [bench/README](../../bench/README.md) 中仅作历史参考——请在你当前的 Bun 上重跑 `bun run bench` 复现。
 
-关键优化：**zero-cost fast path** —— 无 DI 依赖、无 session resolver 的路由不创建 Container 子作用域；中间件依赖扫描与包装移到 boot 期预编译。改造后整体吞吐 +5~9%、p95 下降 0.04~0.10ms（middleware 场景收益最大 +8.6%）。
+关键优化：**zero-cost fast path** —— 无 DI 依赖、无 session resolver 的路由不创建 Container 子作用域；中间件依赖扫描与包装移到 boot 期预编译。当时测得整体吞吐 +5~9%、p95 下降 0.04~0.10ms（middleware 场景收益最大 +8.6%）。
 
 > **可比性注意**：三框架的「5 层中间件」机制不完全等价（zebra 每请求 compose 嵌套、hono 预组合链、elysia 扁平 hook 且全局生效），middleware 行的绝对数值不能跨框架直接解读；相对排序（zebra < hono < elysia）可信。
 

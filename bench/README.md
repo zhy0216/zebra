@@ -19,6 +19,23 @@ Zebra vs Hono vs Elysia — 路由吞吐 / 中间件链 / JSON 序列化对比�
 
 ## 结果
 
+### 当前基线（Bun 1.4.0，zebra）
+
+环境：macOS (arm64, Apple Silicon 16 核) · Bun **1.4.0**（`bun --version` 记录）· 单进程本机回环 · 3000ms × 64 并发 · 3 次取中位数 · 录制命令 `BENCH_DURATION_MS=3000 bun run bench/bench-regression.ts --update`（即 `baseline.json`，`bun run bench:check` 以此为回归门槛）。
+
+| scenario | req/s | p95 (ms) |
+| --- | ---: | ---: |
+| static | 86,364 | 1.21 |
+| param | 84,332 | 1.24 |
+| wildcard | 82,662 | 1.27 |
+| middleware | 78,242 | 1.32 |
+| json | 80,250 | 1.31 |
+| di | 78,454 | 1.34 |
+| static-file | 32,700 | 2.97 |
+| post-json | 26,732 | 3.69 |
+
+### 历史参考（Bun 1.3.14，跨框架对比，不作为当前基线）
+
 环境：macOS 26.5 (arm64, Apple Silicon 16 核) · Bun **1.3.14**（`bun --version` 记录）· **elysia 1.4.29 / hono 4.13.1**（`bench/package.json` 精确锁版，结果随版本漂移时以锁定版本为准）· 单进程本机回环 · 1.5s × 64 并发（`BENCH_DURATION_MS` / `BENCH_CONCURRENCY` 可调）· 2026-08-09（zero-cost fast path 之后；下表数字先于版本锁定与中位数测量法，仅作历史参考）。
 
 吞吐 req/s（数字越高越好）：

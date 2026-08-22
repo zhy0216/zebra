@@ -18,8 +18,10 @@ bun add @zebra/observability @zebra/redis
 
 ## Runtime requirements
 
-- **Bun ≥ 1.1.30** (runtime). The repo's test suite uses APIs added in Bun 1.3 (`expectTypeOf`, WebSocket client helpers), so tests and CI run on Bun ≥ 1.3.
-- **TypeScript ≥ 5.6**.
+- **Bun ≥ 1.4.0** (runtime). The repo is pinned to `packageManager bun@1.4.0`;
+  tests and CI run on the same Bun.
+- **Typecheck** via `tsgo` — the native TypeScript compiler
+  (`@typescript/native-preview`).
 - `reflect-metadata` imported once at the entry point, and decorators enabled in `tsconfig.json`:
 
 ```json

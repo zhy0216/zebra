@@ -78,17 +78,18 @@ interface RequestSession {
 
 - 默认 cookie 名 `sid`，路径 `/`。
 - 值 = `HMAC-SHA256(secret, id)` 签名的 id。`parseSignedCookie` 校验签名；篡改的 cookie 视为匿名。
-- **默认 cookie 没有任何安全属性**（这是冻结的 v1 行为）。需要硬化时用 `preset: "secure"`（`HttpOnly` + `SameSite=Lax`），或显式传属性（会覆盖 preset）：
+- **默认 cookie 携带 `HttpOnly` + `SameSite=Lax`。** 用 `preset: "plain"` 退出（无任何标志的 cookie——最初的默认），或按属性显式覆盖（显式属性总是覆盖 preset）：
 
 ```ts
 sessionMiddleware({
   secret,
-  cookie: { preset: "secure" },            // HttpOnly + SameSite=Lax
+  // 默认：HttpOnly + SameSite=Lax
+  cookie: { preset: "plain" },            // 无标志
   // 或显式：cookie: { httpOnly: true, sameSite: "strict", secure: true }
 });
 ```
 
-`SECURE_COOKIE` 常量即 `{ httpOnly: true, sameSite: "lax" }`；也可用 `SECURE_COOKIE` 环境变量控制。
+`SECURE_COOKIE` 是冻结的 `{ httpOnly: true, sameSite: "lax" }` 常量，默认应用。
 
 ## 防会话固定攻击
 

@@ -6,19 +6,20 @@
 bun install
 ```
 
-Requires Bun ≥ 1.1.30 to develop (the test suite needs ≥ 1.3 — see
-[README](README.md#requirements)). TypeScript ≥ 5.6.
+Requires Bun ≥ 1.4.0 to develop (see [README](README.md#requirements)).
+Typechecking uses `tsgo` (the native TypeScript compiler via
+`@typescript/native-preview`) rather than `tsc`.
 
 ## Before a PR
 
 All of these must pass from the repo root:
 
 ```sh
-bun run typecheck   # tsc --noEmit across all workspaces
+bun run typecheck   # tsgo --noEmit across all workspaces
 bun run lint        # biome check .
 bun run build       # dist/ bundles for every package
 bun run test        # bun test (includes the fuzz/property suites)
-bun run verify:packages  # tarball smoke test (pack + install + import + tsc)
+bun run verify:packages  # tarball smoke test (pack + install + import + tsgo)
 ```
 
 `bun run format` reformats the tree with biome.

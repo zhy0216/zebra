@@ -352,7 +352,7 @@ interface EventPublisher<Events> {
 
 ### 类型测试
 
-使用 `expectTypeOf` 或独立 `tsc` fixture 验证：
+使用 `expectTypeOf` 或独立 `tsgo` fixture 验证：
 
 - 内置生命周期事件 payload；
 - `before.request` / `after.request` / middleware 事件 payload；
