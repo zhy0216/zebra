@@ -27,6 +27,6 @@
     "@typescript/native-preview": "7.0.0-dev.20260707.2",
     "reflect-metadata": "^0.2.2",
     "vitepress": "1.6.4",
-    "zod": "^3.24.0"
+    "zod": "^4"
   }
 }

@@ -6,10 +6,10 @@
  * packages/client/src/standard-schema.ts (guarded by parity type tests).
  *
  * NOTE: `FailureResult` omits `value?: undefined` and `PathSegment` omits
- * `value` compared to the spec's reference copy. Verified empirically:
- * zod v3's vendored interface omits them too, so a copy that keeps them is
- * NOT structurally assignable to zod schemas. Omitting them accepts both
- * zod (v3) and official-spec-conformant schemas.
+ * `value` compared to the spec's reference copy. Verified against zod 4's own
+ * vendored copy (zod/v4/core/standard-schema.d.ts): it omits them too, so a
+ * copy that keeps them is NOT structurally assignable to zod schemas.
+ * Omitting them accepts both zod 4 and official-spec-conformant schemas.
  */
 export interface StandardSchemaV1<Input = unknown, Output = Input> {
   readonly "~standard": StandardSchemaV1.Props<Input, Output>;

@@ -15,6 +15,6 @@
   },
   "devDependencies": {
     "@zebra/core": "workspace:*",
-    "zod": "^3.24.0"
+    "zod": "^4"
   }
 }

@@ -76,7 +76,7 @@ test("createTestClient surfaces 422 as ClientError with problem errors", async (
     expect(e.status).toBe(422);
     expect(e.code).toBe("validation_failed");
     expect(e.problem.errors).toEqual([
-      { path: "body.title", message: "String must contain at least 1 character(s)" },
+      { path: "body.title", message: "Too small: expected string to have >=1 characters" },
     ]);
   }
 });

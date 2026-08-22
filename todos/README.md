@@ -8,7 +8,7 @@
 | ---: | --- | --- | --- | --- | --- | --- |
 | 01 | P0 | [01-bun-1.4.md](done/01-bun-1.4.md) | `BUN-1` | Bun 1.4 运行时基线 | 无 | ✅ |
 | 02 | P0 | [02-tsgo.md](done/02-tsgo.md) | `TSGO-1` | `tsc` → `tsgo` | 01 | ✅ |
-| 03 | P0 | [03-zod-4.md](03-zod-4.md) | `ZOD-1` | Zod 3 → Zod 4 | 02 | pending |
+| 03 | P0 | [03-zod-4.md](done/03-zod-4.md) | `ZOD-1` | Zod 3 → Zod 4 | 02 | ✅ |
 | 04 | P0 | [04-docs-current-baseline.md](04-docs-current-baseline.md) | `DOC-1` | 文档切换到当前项目基线 | 01–03 | pending |
 
 当前项目是新项目。文档以当前技术基线为准，不新增旧项目迁移说明，也不承诺对旧运行时、旧编译器或旧依赖的向后兼容。

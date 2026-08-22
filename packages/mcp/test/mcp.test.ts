@@ -148,12 +148,21 @@ test("inputSchema is generated from the contract schema, namespaced by part", as
   const mcp = makeServer(buildApp());
   const { tools } = await mcp.listTools();
   const getTopic = tools.find((t) => t.name === "get_topic")!;
+  // z.coerce.number().int() now carries safe-integer bounds under zod 4's
+  // native toJSONSchema (the old converter emitted a bare { type: "integer" });
+  // re-asserted per the new contract.
   expect(getTopic.inputSchema).toEqual({
     type: "object",
     properties: {
       params: {
         type: "object",
-        properties: { id: { type: "integer" } },
+        properties: {
+          id: {
+            type: "integer",
+            minimum: -9007199254740991,
+            maximum: 9007199254740991,
+          },
+        },
         required: ["id"],
         additionalProperties: false,
       },

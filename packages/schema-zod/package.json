@@ -14,8 +14,7 @@
     "build": "bun build src/index.ts --outdir dist --target bun --packages external"
   },
   "dependencies": {
-    "zod": "^3.24.0",
-    "zod-to-json-schema": "^3.25.0"
+    "zod": "^4"
   },
   "devDependencies": {
     "@zebra/contract": "workspace:*"

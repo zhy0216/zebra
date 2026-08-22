@@ -10,7 +10,7 @@
         "@typescript/native-preview": "7.0.0-dev.20260707.2",
         "reflect-metadata": "^0.2.2",
         "vitepress": "1.6.4",
-        "zod": "^3.24.0",
+        "zod": "^4",
       },
     },
     "bench": {
@@ -47,7 +47,7 @@
         "@zebra/client": "workspace:*",
         "@zebra/contract": "workspace:*",
         "zebra": "workspace:*",
-        "zod": "^3.24.0",
+        "zod": "^4",
       },
     },
     "examples/forum": {
@@ -58,7 +58,7 @@
         "@zebra/contract": "workspace:*",
         "@zebra/session": "workspace:*",
         "zebra": "workspace:*",
-        "zod": "^3.24.0",
+        "zod": "^4",
       },
     },
     "examples/hello": {
@@ -73,7 +73,7 @@
       "version": "1.0.0",
       "devDependencies": {
         "@zebra/contract": "workspace:*",
-        "zod": "^3.24.0",
+        "zod": "^4",
       },
     },
     "packages/contract": {
@@ -81,7 +81,7 @@
       "version": "1.0.0",
       "devDependencies": {
         "@zebra/core": "workspace:*",
-        "zod": "^3.24.0",
+        "zod": "^4",
       },
     },
     "packages/core": {
@@ -92,7 +92,7 @@
       },
       "devDependencies": {
         "@zebra/contract": "workspace:*",
-        "zod": "^3.24.0",
+        "zod": "^4",
       },
     },
     "packages/cors": {
@@ -114,7 +114,7 @@
         "@zebra/core": "workspace:*",
         "@zebra/schema-zod": "workspace:*",
         "@zebra/testing": "workspace:*",
-        "zod": "^3.24.0",
+        "zod": "^4",
       },
     },
     "packages/observability": {
@@ -147,8 +147,7 @@
       "name": "@zebra/schema-zod",
       "version": "1.0.0",
       "dependencies": {
-        "zod": "^3.24.0",
-        "zod-to-json-schema": "^3.25.0",
+        "zod": "^4",
       },
       "devDependencies": {
         "@zebra/contract": "workspace:*",
@@ -171,7 +170,7 @@
       },
       "devDependencies": {
         "@zebra/contract": "workspace:*",
-        "zod": "^3.24.0",
+        "zod": "^4",
       },
     },
     "packages/zebra": {
@@ -856,17 +855,11 @@
 
     "zebra-bench": ["zebra-bench@workspace:bench"],
 
-    "zod": ["zod@3.25.76", "https://registry.npmmirror.com/zod/-/zod-3.25.76.tgz", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
+    "zod": ["zod@4.4.3", "https://registry.npmmirror.com/zod/-/zod-4.4.3.tgz", {}, "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="],
 
     "zod-to-json-schema": ["zod-to-json-schema@3.25.2", "https://registry.npmmirror.com/zod-to-json-schema/-/zod-to-json-schema-3.25.2.tgz", { "peerDependencies": { "zod": "^3.25.28 || ^4" } }, "sha512-O/PgfnpT1xKSDeQYSCfRI5Gy3hPf91mKVDuYLUHZJMiDFptvP41MSnWofm8dnCm0256ZNfZIM7DSzuSMAFnjHA=="],
 
     "zwitch": ["zwitch@2.0.4", "https://registry.npmmirror.com/zwitch/-/zwitch-2.0.4.tgz", {}, "sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A=="],
-
-    "@better-auth/core/zod": ["zod@4.4.3", "https://registry.npmmirror.com/zod/-/zod-4.4.3.tgz", {}, "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="],
-
-    "@modelcontextprotocol/sdk/zod": ["zod@4.4.3", "https://registry.npmmirror.com/zod/-/zod-4.4.3.tgz", {}, "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="],
-
-    "better-auth/zod": ["zod@4.4.3", "https://registry.npmmirror.com/zod/-/zod-4.4.3.tgz", {}, "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="],
 
     "body-parser/content-type": ["content-type@2.1.0", "https://registry.npmmirror.com/content-type/-/content-type-2.1.0.tgz", {}, "sha512-mj7UPXE0jaqaOsukNZRUEfEi2AcL7C/vwmwcHV0O97eO1E1pxBZuyjlZrx5seTaNBg1U6+o35wpa35Qfcc+7ag=="],
 

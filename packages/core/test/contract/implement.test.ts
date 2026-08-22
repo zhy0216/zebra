@@ -51,8 +51,8 @@ test("params + query validation failures aggregate into one 422 with prefixed pa
   expect(res.status).toBe(422);
   const body = await json(res);
   expect(body.errors).toEqual([
-    { path: "params.id", message: "Expected number, received nan" },
-    { path: "query.page", message: "Expected number, received nan" },
+    { path: "params.id", message: "Invalid input: expected number, received NaN" },
+    { path: "query.page", message: "Invalid input: expected number, received NaN" },
   ]);
 });
 
@@ -82,7 +82,7 @@ test("body validation failure → 422 with body. prefix", async () => {
   expect(res.status).toBe(422);
   const body = await json(res);
   expect(body.errors).toEqual([
-    { path: "body.title", message: "String must contain at least 1 character(s)" },
+    { path: "body.title", message: "Too small: expected string to have >=1 characters" },
   ]);
 });
 
@@ -171,7 +171,9 @@ test("output validation failure → 500 output_validation_failed; issues only in
   const res2 = await app2.dispatch(new Request("http://x/blogs/1"));
   const body2 = await json(res2);
   expect(body2.status).toBe(500);
-  expect(body2.detail).toEqual([{ path: "id", message: "Expected number, received string" }]);
+  expect(body2.detail).toEqual([
+    { path: "id", message: "Invalid input: expected number, received string" },
+  ]);
 });
 
 test("raw Response from handler passes through unchanged (skips output validation and status)", async () => {
