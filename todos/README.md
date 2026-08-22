@@ -6,7 +6,7 @@
 
 | 顺序 | 优先级 | 文件 | 条目 id | 问题 | 依赖 | 状态 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 01 | P0 | [01-bun-1.4.md](01-bun-1.4.md) | `BUN-1` | Bun 1.4 运行时基线 | 无 | pending |
+| 01 | P0 | [01-bun-1.4.md](done/01-bun-1.4.md) | `BUN-1` | Bun 1.4 运行时基线 | 无 | ✅ |
 | 02 | P0 | [02-tsgo.md](02-tsgo.md) | `TSGO-1` | `tsc` → `tsgo` | 01 | pending |
 | 03 | P0 | [03-zod-4.md](03-zod-4.md) | `ZOD-1` | Zod 3 → Zod 4 | 02 | pending |
 | 04 | P0 | [04-docs-current-baseline.md](04-docs-current-baseline.md) | `DOC-1` | 文档切换到当前项目基线 | 01–03 | pending |
