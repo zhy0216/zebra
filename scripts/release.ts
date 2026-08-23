@@ -30,7 +30,13 @@ function readJson(path: string): Record<string, any> {
 }
 
 function writeJson(path: string, data: unknown): void {
-  writeFileSync(path, `${JSON.stringify(data, null, 2)}\n`);
+  // Keep the repository's compact one-item `files` arrays stable after a
+  // release write; this also keeps the generated release commit Biome-clean.
+  const content = JSON.stringify(data, null, 2).replace(
+    /"files": \[\n\s+"src"\n\s+\]/g,
+    '"files": ["src"]',
+  );
+  writeFileSync(path, `${content}\n`);
 }
 
 function run(
@@ -60,10 +66,14 @@ function value(name: string): string | undefined {
 }
 
 if (flag("--help") || flag("-h")) {
-  console.log(`Usage: bun scripts/release.ts --version X.Y.Z [--publish] [--no-verify] [--registry URL]
+  console.log(`Usage: bun scripts/release.ts --version X.Y.Z [--prepare | --publish] [options]
 
   --version X.Y.Z  bump all publishable packages to this version (required)
-  --publish        actually run the release (default is dry-run: print only)
+  --prepare        write the version/changelog, commit, and tag; do not publish
+  --publish        publish locally, then commit and tag (default is dry-run: print only)
+  --publish-only   publish the already-prepared version (CI mode; requires --publish)
+  --tolerate-republish
+                   skip an already-published package version (useful for CI retries)
   --no-verify      skip the typecheck + test verification step (default: verify)
   --registry URL   registry passed explicitly to bun publish (required with --publish)
 `);
@@ -76,16 +86,31 @@ if (!version || !SEMVER_RE.test(version)) {
   process.exit(1);
 }
 
-const dryRun = !flag("--publish");
+const prepare = flag("--prepare");
+const publish = flag("--publish");
+const publishOnly = flag("--publish-only");
+const tolerateRepublish = flag("--tolerate-republish");
+const dryRun = !prepare && !publish;
 const verify = !flag("--no-verify");
 const registry = value("--registry");
 
-if (!dryRun && !registry) {
+if (prepare && publish) {
+  console.error("error: --prepare cannot be combined with --publish");
+  process.exit(1);
+}
+
+if (publishOnly && !publish) {
+  console.error("error: --publish-only requires --publish");
+  process.exit(1);
+}
+
+if (publish && !registry) {
   console.error("error: --registry URL is required with --publish");
   process.exit(1);
 }
 
-console.log(`[release] version ${version} (${dryRun ? "dry-run" : "publish"})`);
+const mode = dryRun ? "dry-run" : prepare ? "prepare" : publishOnly ? "publish-only" : "publish";
+console.log(`[release] version ${version} (${mode})`);
 
 // --- collect publishable packages from root workspaces ---------------------
 const rootPkg = readJson(join(ROOT, "package.json"));
@@ -121,12 +146,14 @@ if (packages.length === 0) {
 const byName = new Map(packages.map((p) => [p.name, p]));
 
 // --- version bump + @zebra-web/* dependency sync -------------------------------
-for (const pkg of packages) {
-  pkg.data.version = version;
-  for (const [dep, spec] of Object.entries(
-    (pkg.data.dependencies as Record<string, string>) ?? {},
-  )) {
-    if (byName.has(dep) && spec !== "workspace:*") pkg.data.dependencies![dep] = version;
+if (!publishOnly) {
+  for (const pkg of packages) {
+    pkg.data.version = version;
+    for (const [dep, spec] of Object.entries(
+      (pkg.data.dependencies as Record<string, string>) ?? {},
+    )) {
+      if (byName.has(dep) && spec !== "workspace:*") pkg.data.dependencies![dep] = version;
+    }
   }
 }
 
@@ -140,6 +167,23 @@ const versionPattern = /export const VERSION = "[^"]*";/;
 if (!versionPattern.test(versionSource)) {
   console.error("error: VERSION constant not found in packages/core/src/index.ts");
   process.exit(1);
+}
+const currentCoreVersion = versionSource.match(versionPattern)?.[0].match(/"([^"]+)"/)?.[1];
+if (publishOnly) {
+  for (const pkg of packages) {
+    if (pkg.version !== version) {
+      console.error(
+        `error: ${pkg.name} is ${pkg.version}, but release tag requests ${version}; run --prepare first`,
+      );
+      process.exit(1);
+    }
+  }
+  if (currentCoreVersion !== version) {
+    console.error(
+      `error: packages/core VERSION is ${currentCoreVersion ?? "unknown"}, but release tag requests ${version}; run --prepare first`,
+    );
+    process.exit(1);
+  }
 }
 const versionedSource = versionSource.replace(
   versionPattern,
@@ -291,7 +335,8 @@ if (dryRun) {
   const steps: string[] = [];
   for (const pkg of order) {
     const registryFlag = registry ? ` --registry ${registry}` : "";
-    steps.push(`bun publish --access public${registryFlag}  (cwd: ${pkg.dir})`);
+    const tolerateFlag = tolerateRepublish ? " --tolerate-republish" : "";
+    steps.push(`bun publish --access public${registryFlag}${tolerateFlag}  (cwd: ${pkg.dir})`);
   }
   steps.forEach((s, i) => console.log(`  ${i + 1}. ${s}`));
   console.log("\n[release] done (dry-run, nothing written).");
@@ -300,21 +345,33 @@ if (dryRun) {
 
 if (verify) verifyStep();
 
-for (const pkg of packages) writeJson(pkg.path, pkg.data);
-writeFileSync(CORE_INDEX, versionedSource);
-writeChangelog(changelogSection);
-console.log("[release] wrote version bumps + core VERSION + CHANGELOG.md");
+if (!publishOnly) {
+  for (const pkg of packages) writeJson(pkg.path, pkg.data);
+  writeFileSync(CORE_INDEX, versionedSource);
+  writeChangelog(changelogSection);
+  console.log("[release] wrote version bumps + core VERSION + CHANGELOG.md");
+} else {
+  console.log("[release] publish-only mode: no files will be written");
+}
 
-for (const pkg of order) {
-  console.log(`[release] publish ${pkg.name} (${pkg.dir})`);
-  const publishArgs = ["publish", "--access", "public"];
-  if (registry) publishArgs.push("--registry", registry);
-  const res = run("bun", publishArgs, join(ROOT, pkg.dir));
-  if (!res.ok) {
-    console.error(res.stderr);
-    console.error(`error: publish of ${pkg.name} failed — aborting`);
-    process.exit(1);
+if (!prepare) {
+  for (const pkg of order) {
+    console.log(`[release] publish ${pkg.name} (${pkg.dir})`);
+    const publishArgs = ["publish", "--access", "public"];
+    if (registry) publishArgs.push("--registry", registry);
+    if (tolerateRepublish) publishArgs.push("--tolerate-republish");
+    const res = run("bun", publishArgs, join(ROOT, pkg.dir));
+    if (!res.ok) {
+      console.error(res.stderr);
+      console.error(`error: publish of ${pkg.name} failed — aborting`);
+      process.exit(1);
+    }
   }
+}
+
+if (publishOnly) {
+  console.log("[release] done (publish-only; no commit or tag written)");
+  process.exit(0);
 }
 
 // Tag the release so the next changelog range starts here (lastTag() only

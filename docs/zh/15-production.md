@@ -48,9 +48,15 @@ bun run build   # 产出 dist/（--target bun --packages external），给 bundl
 
 ```sh
 bun run release -- --version 1.0.0 --registry https://registry.npmjs.org
+bun run release -- --version X.Y.Z --prepare
 ```
 
-该脚本：校验 SemVer → 扫描 Conventional Commits（`feat` / `fix` / `docs` ...）→ 统一 bump 所有包版本 → 生成 [CHANGELOG](../../CHANGELOG.md) 分类章节。
+`--prepare` 会校验 SemVer、扫描 Conventional Commits、统一 bump 所有包、
+生成 [CHANGELOG](../../CHANGELOG.md)、提交 release commit 并创建
+`vX.Y.Z` tag，但不会发布 npm。随后 push 这个 commit 和 tag，再在 GitHub
+上创建并发布对应的 Release；`.github/workflows/publish-npm.yml` 会自动执行
+检查并发布所有包。仓库需要配置名为 `NPM_TOKEN` 的 Actions Secret，使用对
+`@zebra-web` scope 具有 read/write 包权限且开启 2FA bypass 的 granular token。
 
 ### 发布前冒烟测试
 
@@ -108,6 +114,7 @@ bun run format           # biome format --write
 bun run build            # dist/ 产出（不进 tarball）
 bun run verify:packages  # tarball 冒烟测试
 bun run release -- --version X.Y.Z --registry https://registry.npmjs.org  # dry-run
+bun run release -- --version X.Y.Z --prepare                       # prepare + tag
 bun run release -- --version X.Y.Z --registry https://registry.npmjs.org --publish
 ```
 

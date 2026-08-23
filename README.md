@@ -182,12 +182,17 @@ official registry explicitly:
 
 ```sh
 bun run release -- --version X.Y.Z --registry https://registry.npmjs.org
+bun run release -- --version X.Y.Z --prepare
 bun run release -- --version X.Y.Z --registry https://registry.npmjs.org --publish
 ```
 
-The script also writes the [CHANGELOG](CHANGELOG.md) section from Conventional
-Commits. See [CONTRIBUTING.md](CONTRIBUTING.md) and
-[SECURITY.md](SECURITY.md).
+For the recommended GitHub flow, run `--prepare`, push the commit and tag with
+`git push origin master --follow-tags`, then create and publish a GitHub Release
+for that tag. The `Publish npm packages` workflow runs the checks and publishes
+all `@zebra-web/*` packages automatically. Configure the repository secret
+`NPM_TOKEN` with a granular npm token that has package read/write access for the
+`@zebra-web` scope and 2FA bypass enabled. See [CONTRIBUTING.md](CONTRIBUTING.md)
+and [SECURITY.md](SECURITY.md).
 
 ## License
 

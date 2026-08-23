@@ -48,9 +48,15 @@ All packages bump versions in lockstep via `scripts/release.ts`:
 
 ```sh
 bun run release -- --version 1.0.0 --registry https://registry.npmjs.org
+bun run release -- --version X.Y.Z --prepare
 ```
 
-It validates SemVer → scans Conventional Commits (`feat` / `fix` / `docs` ...) → bumps every package → generates the [CHANGELOG](../CHANGELOG.md) sections.
+`--prepare` validates SemVer, scans Conventional Commits, bumps every package,
+generates the [CHANGELOG](../CHANGELOG.md) section, commits the release, and
+creates the `vX.Y.Z` tag without publishing. Push the tag, then publish a GitHub
+Release for it; `.github/workflows/publish-npm.yml` runs the checks and publishes
+the packages. Add an `NPM_TOKEN` repository secret containing a granular token
+with read/write access to the `@zebra-web` scope and 2FA bypass enabled.
 
 ### Pre-release smoke test
 
@@ -108,6 +114,7 @@ bun run format           # biome format --write
 bun run build            # dist/ output (not in the tarball)
 bun run verify:packages  # tarball smoke test
 bun run release -- --version X.Y.Z --registry https://registry.npmjs.org  # dry-run
+bun run release -- --version X.Y.Z --prepare                       # prepare + tag
 bun run release -- --version X.Y.Z --registry https://registry.npmjs.org --publish
 ```
 

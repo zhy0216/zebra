@@ -68,11 +68,23 @@ Lockstep release of all publishable packages via
 
 ```sh
 bun run release -- --version X.Y.Z --registry https://registry.npmjs.org  # dry-run
+bun run release -- --version X.Y.Z --prepare
 bun run release -- --version X.Y.Z --registry https://registry.npmjs.org --publish
 ```
 
-The script bumps versions, syncs `@zebra-web/*` dependency specs, writes the
-CHANGELOG section from commits since the last semver tag, publishes in
-dependency order, and tags `vX.Y.Z`. The dry-run and publish modes run
-typecheck + tests first unless `--no-verify` is passed. Pass the official npm
-registry explicitly so a package mirror cannot receive a release by mistake.
+For the normal GitHub release flow:
+
+1. Run `bun run release -- --version X.Y.Z --prepare`. This bumps every package,
+   updates the changelog, commits the release, and creates `vX.Y.Z` without
+   publishing to npm.
+2. Push the commit and tag: `git push origin master --follow-tags`.
+3. Create a GitHub Release for `vX.Y.Z` and click **Publish release**.
+4. The `Publish npm packages` workflow runs the checks and publishes all packages
+   in dependency order.
+
+The repository must have an Actions secret named `NPM_TOKEN`. Use a granular
+npm token with `Read and write` package access for the `@zebra-web` scope and
+**Bypass two-factor authentication** enabled. Keep the token in GitHub Secrets,
+never in the repository. The dry-run, prepare, and publish modes run typecheck
+and tests first unless `--no-verify` is passed. The `--publish` mode remains
+available for a fully local release; `--publish-only` is reserved for CI.

@@ -1,0 +1,83 @@
+name: Publish npm packages
+
+on:
+  # Publish only after a GitHub Release is explicitly marked as published.
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-release-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish ${{ github.event.release.tag_name }}
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      NPM_REGISTRY: https://registry.npmjs.org
+
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.0"
+
+      - name: Validate release tag
+        shell: bash
+        run: |
+          if [[ "${RELEASE_TAG}" != v* ]]; then
+            echo "::error::Release tag must start with v (received ${RELEASE_TAG})"
+            exit 1
+          fi
+          echo "RELEASE_VERSION=${RELEASE_TAG#v}" >> "${GITHUB_ENV}"
+
+      - name: Check npm token
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
+        run: |
+          if [[ -z "${NPM_CONFIG_TOKEN}" ]]; then
+            echo "::error::Create the NPM_TOKEN repository secret before publishing"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Build
+        run: bun run build
+
+      - name: Test
+        run: bun run test
+
+      - name: Verify package tarballs
+        run: bun run verify:packages
+
+      - name: Publish packages in dependency order
+        env:
+          # Bun reads NPM_CONFIG_TOKEN for npm authentication.
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          bun run release -- \
+            --version "${RELEASE_VERSION}" \
+            --registry "${NPM_REGISTRY}" \
+            --publish \
+            --publish-only \
+            --tolerate-republish \
+            --no-verify
