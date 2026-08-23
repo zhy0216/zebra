@@ -1,7 +1,7 @@
 // 组合根: 把 Better Auth 挂进 Zebra 中间件链,并演示两种读取会话的方式
 // (handler 内直接查 / group 守卫中间件)。
 
-import { Zebra } from "zebra";
+import { Zebra } from "@zebra-web/zebra";
 import { type AuthOptions, createAuth } from "./auth.ts";
 import {
   betterAuthMiddleware,

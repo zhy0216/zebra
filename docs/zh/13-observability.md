@@ -1,18 +1,18 @@
-# 可观测性（@zebra/observability）
+# 可观测性（@zebra-web/observability）
 
-零依赖的可观测性中间件套件：request id、访问日志、错误上报、指标与健康检查。全部是纯中间件——不依赖 `@zebra/core` 之外的任何东西，也不自带 logger，**sink 由你提供**。
+零依赖的可观测性中间件套件：request id、访问日志、错误上报、指标与健康检查。全部是纯中间件——不依赖 `@zebra-web/core` 之外的任何东西，也不自带 logger，**sink 由你提供**。
 
 ## 安装
 
 ```sh
-bun add @zebra/observability
+bun add @zebra-web/observability
 ```
 
 ## 快速开始
 
 ```ts
-import { Zebra } from "@zebra/core";
-import { accessLog, errorReporter, health, metrics, requestId } from "@zebra/observability";
+import { Zebra } from "@zebra-web/core";
+import { accessLog, errorReporter, health, metrics, requestId } from "@zebra-web/observability";
 
 const app = new Zebra();
 
@@ -41,7 +41,7 @@ requestId({ headerName?, generator?, propagate? })
 - `propagate: true`（默认）时把 id 回显到响应头。
 
 ```ts
-import { getRequestId, requestId } from "@zebra/observability";
+import { getRequestId, requestId } from "@zebra-web/observability";
 
 app.use(requestId({ headerName: "x-trace-id" }));
 app.get("/", (req) => Response.json({ id: getRequestId(req) }));

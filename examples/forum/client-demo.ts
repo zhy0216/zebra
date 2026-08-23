@@ -1,4 +1,4 @@
-import { ClientError, createClient } from "@zebra/client";
+import { ClientError, createClient } from "@zebra-web/client";
 import { forumContract } from "./src/contract.ts";
 
 // ---------------------------------------------------------------------------

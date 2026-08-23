@@ -1,4 +1,4 @@
-import { HttpError, Zebra, cors, getSession, rateLimit, sessionMiddleware } from "zebra";
+import { HttpError, Zebra, cors, getSession, rateLimit, sessionMiddleware } from "@zebra-web/zebra";
 import { attachUser, getCurrentUser, requireAuth } from "./auth.ts";
 import { forumContract } from "./contract.ts";
 import { LiveFeed } from "./feed.ts";

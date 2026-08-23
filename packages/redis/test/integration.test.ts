@@ -1,14 +1,14 @@
-// End-to-end: the Redis-backed stores driving the real `@zebra/session` and
-// `@zebra/rate-limit` middleware through `createTestApp` (full
+// End-to-end: the Redis-backed stores driving the real `@zebra-web/session` and
+// `@zebra-web/rate-limit` middleware through `createTestApp` (full
 // prepare/boot + dispatch + core's error middleware). No live Redis — the
 // stores run on the `FakeRedis` client from fake-redis.ts, which honors the
 // exact command semantics the stores issue.
 
 import "reflect-metadata";
 import { describe, expect, test } from "bun:test";
-import { rateLimit } from "@zebra/rate-limit";
-import { getSession, sessionMiddleware, verify } from "@zebra/session";
-import { type TestApp, createTestApp } from "@zebra/testing";
+import { rateLimit } from "@zebra-web/rate-limit";
+import { getSession, sessionMiddleware, verify } from "@zebra-web/session";
+import { type TestApp, createTestApp } from "@zebra-web/testing";
 
 import { RedisRateLimitStore, RedisSessionStore } from "../src/index.ts";
 import { FakeRedis } from "./fake-redis.ts";

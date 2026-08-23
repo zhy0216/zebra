@@ -2,13 +2,13 @@
 
 > A Bun-first TypeScript web framework with first-class dependency injection. Built on `Bun.serve` and Web Standard `Request`/`Response` — no Node compat layer. Every app is built around a DI `Container` whose graph is validated at boot.
 
-The framework is at v1.0: the public API surface is frozen (`docs/api-freeze.md` defines the stability promise and SemVer policy) across the facade `zebra` and the packages `@zebra/core` (DI, radix router, middleware, lifecycle, static files, WebSocket), `@zebra/contract`, `@zebra/client`, `@zebra/testing`, `@zebra/session`, `@zebra/cors`, and `@zebra/rate-limit`. All packages are versioned in lockstep at 1.0.0.
+The framework is at v1.0: the public API surface is frozen (`docs/api-freeze.md` defines the stability promise and SemVer policy) across the facade `@zebra-web/zebra` and the packages `@zebra-web/core` (DI, radix router, middleware, lifecycle, static files, WebSocket), `@zebra-web/contract`, `@zebra-web/client`, `@zebra-web/testing`, `@zebra-web/session`, `@zebra-web/cors`, and `@zebra-web/rate-limit`. All packages are versioned in lockstep at 1.0.0.
 
 Core principles:
 - DI is mandatory, not bolted on. Routes and middleware declare their dependencies via a named-object spec (`{ svc: Service }`); the container resolves them and validates the full graph (circular deps, scope violations) at boot. The `Zebra` instance exposes `injectSingleton` / `injectRequest` / `injectTransient` / `injectSession` (class bindings), `injectFactorySingleton`/`injectFactoryRequest`/… (factory bindings, with optional declared-deps form for boot validation), and `injectValue` (value bindings) — so most apps never construct a `Container` directly.
 - Web Standards. Handlers receive a `ZebraRequest` (a `Request` superset with `params`, `query`, and lazy body parsing) and return a `Response` or value.
 - Structured errors. Default error responses follow RFC 9457 (Problem+Json) via `HttpError`.
-- Contract-first (oRPC style). Contracts are frozen pure-data defs built with the chained, immutable `zc` builder (`zc.get(path).params(s).query(s).body(s).output(s).status(n).errors(e).meta(m)`); schemas use Standard Schema V1 (`~standard`, works with Zod/Valibot/ArkType). `app.implement(proc | router, deps?, impls, opts?)` constrains and runtime-validates handlers (params/query/body → 422 with prefixed issues; output re-validated and stripped; raw Response passthrough; 204 → empty body). `@zebra/client` `createClient(router, { baseUrl, fetch?, headers? })` derives a type-safe client (types only; non-2xx throws `ClientError {status, code, problem, response}`; zero runtime deps, browser-safe). Contract, core, and client each vendor the protocol + Standard Schema interfaces (parity guarded by type tests). `app.routeTable` and `RegisteredRoute.contract` are the OpenAPI/introspection seam.
+- Contract-first (oRPC style). Contracts are frozen pure-data defs built with the chained, immutable `zc` builder (`zc.get(path).params(s).query(s).body(s).output(s).status(n).errors(e).meta(m)`); schemas use Standard Schema V1 (`~standard`, works with Zod/Valibot/ArkType). `app.implement(proc | router, deps?, impls, opts?)` constrains and runtime-validates handlers (params/query/body → 422 with prefixed issues; output re-validated and stripped; raw Response passthrough; 204 → empty body). `@zebra-web/client` `createClient(router, { baseUrl, fetch?, headers? })` derives a type-safe client (types only; non-2xx throws `ClientError {status, code, problem, response}`; zero runtime deps, browser-safe). Contract, core, and client each vendor the protocol + Standard Schema interfaces (parity guarded by type tests). `app.routeTable` and `RegisteredRoute.contract` are the OpenAPI/introspection seam.
 - Four DI scopes: singleton, request, session, transient — with scope-rank rules enforced at boot.
 
 ## Docs
@@ -18,14 +18,14 @@ Core principles:
 
 ## Packages
 
-- [`zebra`](packages/zebra): public facade — re-exports `@zebra/core`, `@zebra/cors`, `@zebra/session`, and (aliased) `@zebra/rate-limit`
-- [`@zebra/core`](packages/core): app, DI container, radix router, HTTP layer, middleware, lifecycle, contract implement + routeTable, WebSocket
-- [`@zebra/contract`](packages/contract): contract builder (`zc`), `prefix`, protocol (Standard Schema V1; zero deps)
-- [`@zebra/client`](packages/client): `createClient` derived typed client (zero deps)
-- [`@zebra/testing`](packages/testing): `createTestApp` + `createTestClient` in-process (no sockets)
-- [`@zebra/session`](packages/session): cookie sessions — HMAC-signed `sid`, pluggable `SessionStore`, fixation-safe
-- [`@zebra/cors`](packages/cors): CORS middleware — preflight, origin allowlists, credentials echo
-- [`@zebra/rate-limit`](packages/rate-limit): fixed-window rate limiting — 429 Problem+Json, `X-RateLimit-*` headers, pluggable store
+- [`@zebra-web/zebra`](packages/zebra): public facade — re-exports `@zebra-web/core`, `@zebra-web/cors`, `@zebra-web/session`, and (aliased) `@zebra-web/rate-limit`
+- [`@zebra-web/core`](packages/core): app, DI container, radix router, HTTP layer, middleware, lifecycle, contract implement + routeTable, WebSocket
+- [`@zebra-web/contract`](packages/contract): contract builder (`zc`), `prefix`, protocol (Standard Schema V1; zero deps)
+- [`@zebra-web/client`](packages/client): `createClient` derived typed client (zero deps)
+- [`@zebra-web/testing`](packages/testing): `createTestApp` + `createTestClient` in-process (no sockets)
+- [`@zebra-web/session`](packages/session): cookie sessions — HMAC-signed `sid`, pluggable `SessionStore`, fixation-safe
+- [`@zebra-web/cors`](packages/cors): CORS middleware — preflight, origin allowlists, credentials echo
+- [`@zebra-web/rate-limit`](packages/rate-limit): fixed-window rate limiting — 429 Problem+Json, `X-RateLimit-*` headers, pluggable store
 
 ## Public API surface
 
@@ -34,8 +34,8 @@ The complete frozen export list for every package is in [`docs/api-freeze.md`](d
 - App: `Zebra`, `ZebraOptions`, `ListenOptions`, `RouteHandler`, `DepsSpec`, `ResolvedDeps`, `RegisteredRoute`, `GroupApi`, `LifecycleEvent`, `LifecycleHandler`, `PathParams`, `JoinPath`, `SessionOptions`, `validateGraph`, `VERSION`
 - Events: `EventBus`, `EventEmitter`, `ZebraEventMap`, `EventHandler`, `EventPayload`, `EventArgs`, `Awaitable`, `EventPublisher`, built-in request/middleware event payload types (`BeforeRequestEvent`, `AfterRequestEvent`, `RequestErrorEvent`, `BeforeMiddlewareEvent`, `AfterMiddlewareEvent`, `MiddlewareErrorEvent`); extensible global `ZebraEvents` / `ZebraMiddlewareEvents`
 - Contract (core): `implement` (on `Zebra`), `routeTable` (on `Zebra`), `ContractHandler`, `ContractProcedure`, `RouterImpl`, `ImplementOptions`, `isContractProcedure`
-- Contract (shared): `zc` chain (`@zebra/contract`), `prefix`, `StandardSchemaV1`, `InferParams/Query/Body/Output`
-- Client: `createClient`, `ClientError`, `ContractClient`, `ClientOptions` (`@zebra/client`)
+- Contract (shared): `zc` chain (`@zebra-web/contract`), `prefix`, `StandardSchemaV1`, `InferParams/Query/Body/Output`
+- Client: `createClient`, `ClientError`, `ContractClient`, `ClientOptions` (`@zebra-web/client`)
 - DI: `Container`, `token`, `Token`, `injectable`, `inject`, `ScopeKind`, `Disposable`, `CircularDependencyError`, `UnboundTokenError`, `ScopeMismatchError`
 - HTTP: `ZebraRequest` (`body`/`json`/`text`/`form`/`stream` members), `buildRequest`, response helpers `json`, `text`, `html`, `redirect`, `stream`, `HttpError`, `ValidationError`, `toProblemJson`, `ProblemJson`
 - Middleware: `Middleware`, `middleware`, `getMiddlewareDeps`

@@ -18,7 +18,7 @@
 // without a Lua script). Every `INCR` is followed by `PEXPIRE` so the count
 // key can never leak.
 
-import type { IncrementResult, RateLimitStore } from "@zebra/rate-limit";
+import type { IncrementResult, RateLimitStore } from "@zebra-web/rate-limit";
 
 import type { RedisLike } from "./redis-like.ts";
 

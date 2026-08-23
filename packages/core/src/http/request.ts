@@ -45,7 +45,7 @@ export interface ZebraRequest<P = Record<string, string>, B = unknown, Q = Recor
   /**
    * The socket peer address of the request, from Bun's `server.requestIP(req)`.
    * Never derived from headers — `x-forwarded-for` is only trusted via
-   * explicit configuration (see `@zebra/rate-limit`'s `trustProxy`).
+   * explicit configuration (see `@zebra-web/rate-limit`'s `trustProxy`).
    * `undefined` when dispatched directly without a Bun server (e.g.
    * `app.dispatch()` in tests).
    */

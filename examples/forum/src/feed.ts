@@ -1,5 +1,5 @@
+import type { WsData } from "@zebra-web/zebra";
 import type { ServerWebSocket } from "bun";
-import type { WsData } from "zebra";
 
 // ---------------------------------------------------------------------------
 // LiveFeed bridges HTTP and WebSocket: POST /topics/:id/posts publishes an

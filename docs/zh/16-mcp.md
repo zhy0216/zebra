@@ -1,25 +1,25 @@
 # 从契约导出 MCP 工具
 
-Zebra 的契约优先模式（`@zebra/contract` → `app.implement` → `@zebra/client`）可以扩展到 MCP：用 `.mcp()` 把某个 procedure 声明为 MCP tool，`@zebra/mcp` 通过**同一份契约**将其暴露为 MCP 工具 —— 相同的 schema、相同的 middleware、相同的 DI、相同的运行时校验。
+Zebra 的契约优先模式（`@zebra-web/contract` → `app.implement` → `@zebra-web/client`）可以扩展到 MCP：用 `.mcp()` 把某个 procedure 声明为 MCP tool，`@zebra-web/mcp` 通过**同一份契约**将其暴露为 MCP 工具 —— 相同的 schema、相同的 middleware、相同的 DI、相同的运行时校验。
 
 ```text
-@zebra/contract:   zc.get(...).mcp("get_topic", "获取主题", { readOnly: true })
-@zebra/schema-zod: zod → JSON Schema（inputSchema / codegen）
-@zebra/mcp:        tools/list + tools/call → HTTP Request → app.dispatch()
+@zebra-web/contract:   zc.get(...).mcp("get_topic", "获取主题", { readOnly: true })
+@zebra-web/schema-zod: zod → JSON Schema（inputSchema / codegen）
+@zebra-web/mcp:        tools/list + tools/call → HTTP Request → app.dispatch()
 ```
 
 ## 包
 
-- `@zebra/contract` — 新增 `.mcp()` builder（MCP 元数据落在契约 def 上）
-- `@zebra/schema-zod` — Zod → JSON Schema adapter（zod 依赖隔离在此）
-- `@zebra/mcp` — MCP 协议适配 + HTTP dispatch 桥接（唯一依赖 MCP SDK 的包）
+- `@zebra-web/contract` — 新增 `.mcp()` builder（MCP 元数据落在契约 def 上）
+- `@zebra-web/schema-zod` — Zod → JSON Schema adapter（zod 依赖隔离在此）
+- `@zebra-web/mcp` — MCP 协议适配 + HTTP dispatch 桥接（唯一依赖 MCP SDK 的包）
 
-`@zebra/core` 运行时既不依赖 zod，也不依赖任何 MCP SDK。
+`@zebra-web/core` 运行时既不依赖 zod，也不依赖任何 MCP SDK。
 
 ## 声明一个工具
 
 ```ts
-import { zc } from "@zebra/contract";
+import { zc } from "@zebra-web/contract";
 import { z } from "zod";
 
 const Topic = z.object({ id: z.number(), title: z.string(), content: z.string() });
@@ -58,9 +58,9 @@ const api = {
 ## 创建 MCP server
 
 ```ts
-import { Zebra } from "@zebra/core";
-import { createMcpServer } from "@zebra/mcp";
-import { zodSchemaAdapter } from "@zebra/schema-zod";
+import { Zebra } from "@zebra-web/core";
+import { createMcpServer } from "@zebra-web/mcp";
+import { zodSchemaAdapter } from "@zebra-web/schema-zod";
 
 const app = new Zebra();
 app.implement(api, { /* handlers */ });
@@ -75,7 +75,7 @@ const mcp = createMcpServer({
 await mcp.connect(new StdioServerTransport());
 ```
 
-`@zebra/mcp` 只处理 `tools/list`、`tools/call` 以及 Request ↔ Response 映射；其余全部走 `app.dispatch()`：
+`@zebra-web/mcp` 只处理 `tools/list`、`tools/call` 以及 Request ↔ Response 映射；其余全部走 `app.dispatch()`：
 
 ```text
 MCP tools/call
@@ -136,7 +136,7 @@ const result = await mcp.callTool({ name: "get_topic", arguments: { params: { id
 
 ## 测试
 
-`@zebra/mcp` 的测试进程内跑完整链路（MCP call → `app.dispatch()` → 契约校验 → result）。由于桥接复用了 dispatch，`app.implement` 实现的同一份契约既可以被 `createTestClient`（[测试](12-testing.md)）覆盖，也可以被 MCP 覆盖，业务逻辑零重复。
+`@zebra-web/mcp` 的测试进程内跑完整链路（MCP call → `app.dispatch()` → 契约校验 → result）。由于桥接复用了 dispatch，`app.implement` 实现的同一份契约既可以被 `createTestClient`（[测试](12-testing.md)）覆盖，也可以被 MCP 覆盖，业务逻辑零重复。
 
 ## 下一步
 

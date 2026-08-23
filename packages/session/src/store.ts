@@ -1,7 +1,7 @@
 // C3: `SessionStore` interface + `MemoryStore` default implementation.
 //
 // The interface is deliberately independent of any storage backend so that
-// later adapter packages (e.g. `@zebra/session-redis`) can implement it
+// later adapter packages (e.g. `@zebra-web/session-redis`) can implement it
 // without touching this module.
 
 export interface MemoryStoreOptions {

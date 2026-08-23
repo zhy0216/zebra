@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, test } from "bun:test";
-import type { RateLimitStore } from "@zebra/rate-limit";
+import type { RateLimitStore } from "@zebra-web/rate-limit";
 
 import { RedisRateLimitStore } from "../src/index.ts";
 import type { RedisLike } from "../src/redis-like.ts";

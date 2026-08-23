@@ -1,18 +1,18 @@
-# CORS（@zebra/cors）
+# CORS（@zebra-web/cors）
 
-`@zebra/cors` 是完整的 CORS 中间件：preflight 处理（204 + 完整头集）、origin 白名单（字符串 / 数组 / 正则 / 谓词）、credentials 精确回显、动态匹配时 `Vary: Origin`。
+`@zebra-web/cors` 是完整的 CORS 中间件：preflight 处理（204 + 完整头集）、origin 白名单（字符串 / 数组 / 正则 / 谓词）、credentials 精确回显、动态匹配时 `Vary: Origin`。
 
 ## 安装
 
 ```sh
-bun add @zebra/cors
+bun add @zebra-web/cors
 ```
 
 ## 快速开始
 
 ```ts
-import { cors } from "@zebra/cors";
-import { Zebra } from "@zebra/core";
+import { cors } from "@zebra-web/cors";
+import { Zebra } from "@zebra-web/core";
 
 const app = new Zebra();
 app.use(cors({ origin: ["http://localhost:3002"], credentials: true }));
@@ -71,8 +71,8 @@ CORS preflight 应答由 Zebra 的**终端 handler** 自动生成（对已知路
 ## 完整示例
 
 ```ts
-import { Zebra } from "@zebra/core";
-import { cors } from "@zebra/cors";
+import { Zebra } from "@zebra-web/core";
+import { cors } from "@zebra-web/cors";
 
 const app = new Zebra();
 app.use(cors({ origin: ["https://app.example.com"], credentials: true, maxAge: 86400 }));

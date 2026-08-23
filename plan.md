@@ -2,7 +2,7 @@
 
 ## 目标
 
-在 `@zebra/core` 中引入一个统一、异步、类型安全的事件系统，并保持现有生命周期 API 兼容：
+在 `@zebra-web/core` 中引入一个统一、异步、类型安全的事件系统，并保持现有生命周期 API 兼容：
 
 ```ts
 const app = new Zebra();
@@ -325,7 +325,7 @@ interface EventPublisher<Events> {
 
 ### Facade
 
-- `packages/zebra/src/index.ts` 已 re-export `@zebra/core`，确认新增 core 导出自然可见；
+- `packages/zebra/src/index.ts` 已 re-export `@zebra-web/core`，确认新增 core 导出自然可见；
 - 更新 facade surface 测试，确保 EventBus 和事件类型不被遗漏。
 
 ### 文档

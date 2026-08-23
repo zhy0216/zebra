@@ -1,4 +1,4 @@
-import { createClient } from "@zebra/client";
+import { createClient } from "@zebra-web/client";
 import { blogContract } from "./contract.ts";
 
 // The client depends only on the contract — no server code.

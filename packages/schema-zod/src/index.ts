@@ -1,4 +1,4 @@
-import type { StandardSchemaV1 } from "@zebra/contract";
+import type { StandardSchemaV1 } from "@zebra-web/contract";
 import { type ZodType, toJSONSchema } from "zod";
 
 /** A JSON Schema document (draft 7 shape emitted by the zod adapter). */
@@ -94,7 +94,7 @@ function addClosedObjects(node: unknown): void {
  * Optional `overrides` let you hand-write JSON Schema for schemas that need it
  * (see `SchemaOverride`); they are matched in order, first match wins.
  *
- * `@zebra/contract` / `@zebra/core` never import zod at runtime — the zod
+ * `@zebra-web/contract` / `@zebra-web/core` never import zod at runtime — the zod
  * dependency is isolated here.
  */
 export function zodSchemaAdapter(overrides?: ReadonlyArray<SchemaOverride>): SchemaAdapter {

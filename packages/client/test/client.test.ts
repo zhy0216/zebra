@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { zc } from "@zebra/contract";
+import { zc } from "@zebra-web/contract";
 import { z } from "zod";
 import { ClientError, createClient } from "../src/index.ts";
 

@@ -18,7 +18,7 @@ Zebra is a Bun-first TypeScript web framework with first-class dependency inject
 | --- | --- |
 | [01-getting-started](01-getting-started.md) | Installation, runtime requirements, quick start, first app |
 
-### Core (`@zebra/core` / `zebra`)
+### Core (`@zebra-web/core` / `@zebra-web/zebra`)
 
 | Guide | What it covers |
 | --- | --- |
@@ -29,28 +29,28 @@ Zebra is a Bun-first TypeScript web framework with first-class dependency inject
 | [06-lifecycle](06-lifecycle.md) | Lifecycle: boot / ready / shutdown hooks, graceful shutdown, session scope reclamation |
 | [10-websockets](10-websockets.md) | WebSocket: `app.ws()`, DI-resolved upgrade decision, ws sessions |
 
-### Contract-first (`@zebra/contract` + `@zebra/client`)
+### Contract-first (`@zebra-web/contract` + `@zebra-web/client`)
 
 | Guide | What it covers |
 | --- | --- |
 | [11-contract-first](11-contract-first.md) | Contract building, `app.implement`, type-safe client, error handling |
-| [16-mcp](16-mcp.md) | MCP tools from the same contract (`@zebra/mcp`, `@zebra/schema-zod`) |
+| [16-mcp](16-mcp.md) | MCP tools from the same contract (`@zebra-web/mcp`, `@zebra-web/schema-zod`) |
 
 ### Middleware packages
 
 | Guide | What it covers |
 | --- | --- |
-| [07-sessions](07-sessions.md) | Cookie sessions (`@zebra/session`): HMAC-signed `sid`, pluggable store, session-fixation protection |
-| [08-cors](08-cors.md) | CORS (`@zebra/cors`): preflight, origin allowlists, exact-origin credentials echo |
-| [09-rate-limiting](09-rate-limiting.md) | Rate limiting (`@zebra/rate-limit`): fixed window, `X-RateLimit-*` headers, `trustProxy` |
-| [13-observability](13-observability.md) | Observability (`@zebra/observability`): requestId / accessLog / errorReporter / metrics / health |
-| [14-redis](14-redis.md) | Redis storage adapters (`@zebra/redis`): rate-limit store + session store |
+| [07-sessions](07-sessions.md) | Cookie sessions (`@zebra-web/session`): HMAC-signed `sid`, pluggable store, session-fixation protection |
+| [08-cors](08-cors.md) | CORS (`@zebra-web/cors`): preflight, origin allowlists, exact-origin credentials echo |
+| [09-rate-limiting](09-rate-limiting.md) | Rate limiting (`@zebra-web/rate-limit`): fixed window, `X-RateLimit-*` headers, `trustProxy` |
+| [13-observability](13-observability.md) | Observability (`@zebra-web/observability`): requestId / accessLog / errorReporter / metrics / health |
+| [14-redis](14-redis.md) | Redis storage adapters (`@zebra-web/redis`): rate-limit store + session store |
 
 ### Testing & release
 
 | Guide | What it covers |
 | --- | --- |
-| [12-testing](12-testing.md) | Testing (`@zebra/testing`): in-process `createTestApp` / `createTestClient` |
+| [12-testing](12-testing.md) | Testing (`@zebra-web/testing`): in-process `createTestApp` / `createTestClient` |
 | [15-production](15-production.md) | Deployment & release: src-direct publishing, lockstep versions, benchmarks |
 | [api-freeze](api-freeze.md) | v1 frozen API surface and SemVer version policy |
 
@@ -58,16 +58,16 @@ Zebra is a Bun-first TypeScript web framework with first-class dependency inject
 
 | Package | What it is |
 | --- | --- |
-| `zebra` | Public facade — re-exports `@zebra/core`, `@zebra/cors`, `@zebra/session`, and (aliased) `@zebra/rate-limit` |
-| `@zebra/core` | App, DI container, router, HTTP, middleware, `implement` |
-| `@zebra/contract` | Contract builder + protocol (Standard Schema V1, zero deps) |
-| `@zebra/client` | Derived type-safe client (zero deps) |
-| `@zebra/session` | Cookie sessions: HMAC `sid`, pluggable store, fixation-safe |
-| `@zebra/cors` | CORS middleware: preflight, origin allowlists, credentials echo |
-| `@zebra/rate-limit` | Fixed-window rate limiting: 429 Problem+Json, `X-RateLimit-*` headers, pluggable store |
-| `@zebra/observability` | Observability middleware: requestId / accessLog / errorReporter / metrics / health |
-| `@zebra/redis` | Redis backends: `RedisRateLimitStore` + `RedisSessionStore` (zero runtime deps) |
-| `@zebra/testing` | In-process `createTestApp` / `createTestClient` |
+| `@zebra-web/zebra` | Public facade — re-exports `@zebra-web/core`, `@zebra-web/cors`, `@zebra-web/session`, and (aliased) `@zebra-web/rate-limit` |
+| `@zebra-web/core` | App, DI container, router, HTTP, middleware, `implement` |
+| `@zebra-web/contract` | Contract builder + protocol (Standard Schema V1, zero deps) |
+| `@zebra-web/client` | Derived type-safe client (zero deps) |
+| `@zebra-web/session` | Cookie sessions: HMAC `sid`, pluggable store, fixation-safe |
+| `@zebra-web/cors` | CORS middleware: preflight, origin allowlists, credentials echo |
+| `@zebra-web/rate-limit` | Fixed-window rate limiting: 429 Problem+Json, `X-RateLimit-*` headers, pluggable store |
+| `@zebra-web/observability` | Observability middleware: requestId / accessLog / errorReporter / metrics / health |
+| `@zebra-web/redis` | Redis backends: `RedisRateLimitStore` + `RedisSessionStore` (zero runtime deps) |
+| `@zebra-web/testing` | In-process `createTestApp` / `createTestClient` |
 
 ## Examples
 

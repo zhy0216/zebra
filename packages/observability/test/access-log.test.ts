@@ -1,6 +1,6 @@
 import { describe, expect, mock, test } from "bun:test";
-import { type ZebraRequest, buildRequest } from "@zebra/core";
-import { createTestApp } from "@zebra/testing";
+import { type ZebraRequest, buildRequest } from "@zebra-web/core";
+import { createTestApp } from "@zebra-web/testing";
 
 import { type AccessLogEntry, REQUEST_ID_KEY, accessLog, requestId } from "../src/index.ts";
 

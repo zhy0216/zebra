@@ -26,7 +26,7 @@ interface ZebraRequest<P, B, Q> {
 
 - `query` comes from `url.searchParams`; repeated keys take the last value.
 - `req.ctx` is the request-scoped shared state (middleware writes, handlers read), see [Middleware](04-middleware.md#passing-data-via-reqctx).
-- `req.ip` comes from `Bun.serve`'s `server.requestIP(req)` — **never derived from headers**; `undefined` when there is no Bun server (e.g. `app.dispatch()` in tests). `x-forwarded-for` is only read when explicitly configured (`trustProxy`), by middleware such as `@zebra/rate-limit`.
+- `req.ip` comes from `Bun.serve`'s `server.requestIP(req)` — **never derived from headers**; `undefined` when there is no Bun server (e.g. `app.dispatch()` in tests). `x-forwarded-for` is only read when explicitly configured (`trustProxy`), by middleware such as `@zebra-web/rate-limit`.
 
 ## Request body
 
@@ -69,7 +69,7 @@ const z = new Zebra({
 
 ## Response helpers
 
-From `@zebra/core` (also re-exported by the `zebra` facade). Default content-type / status:
+From `@zebra-web/core` (also re-exported by the `@zebra-web/zebra` facade). Default content-type / status:
 
 | Helper | Default content-type | Default status |
 | --- | --- | --- |
@@ -80,7 +80,7 @@ From `@zebra/core` (also re-exported by the `zebra` facade). Default content-typ
 | `redirect(url)` | — (no body) | 302 |
 
 ```ts
-import { html, json, redirect, stream, text } from "zebra";
+import { html, json, redirect, stream, text } from "@zebra-web/zebra";
 
 z.get("/api", () => json({ ok: true }));
 // json(undefined) has no JSON representation → empty 204, mirroring the
@@ -102,7 +102,7 @@ Rules:
 ### Throwing structured errors
 
 ```ts
-import { HttpError } from "zebra";
+import { HttpError } from "@zebra-web/zebra";
 
 throw new HttpError(404, "board_not_found", "No such board");
 throw new HttpError(429, "rate_limit_exceeded", "Too Many Requests", { limit: 10 }, {
@@ -138,7 +138,7 @@ The built-in error middleware converts it to:
 
 ### ValidationError
 
-`@zebra/core`'s `ValidationError` carries `ValidationIssue[]` (`path` + `message`) and renders as a 422 Problem+Json with an `errors` array listing each field. Contract `app.implement` input-validation failures use this shape.
+`@zebra-web/core`'s `ValidationError` carries `ValidationIssue[]` (`path` + `message`) and renders as a 422 Problem+Json with an `errors` array listing each field. Contract `app.implement` input-validation failures use this shape.
 
 ### Built-in error codes
 
@@ -156,7 +156,7 @@ The built-in error middleware converts it to:
 With `exposeStack: true`, unknown errors (not HttpError/ValidationError) include a `stack` field.
 
 > **Middleware error-response coordination**: middleware that must attach
-> headers to error responses (e.g. `@zebra/session` issuing a sid cookie to a
+> headers to error responses (e.g. `@zebra-web/session` issuing a sid cookie to a
 > first-time visitor whose handler threw) stashes them on `req.ctx` under
 > `PENDING_SET_COOKIES` (`Symbol.for("zebra.set-cookie")`); the core error
 > middleware appends each value as its own `Set-Cookie` header on the problem

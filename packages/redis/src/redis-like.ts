@@ -1,6 +1,6 @@
 // Minimal duck-typed Redis client interface.
 //
-// `@zebra/redis` has zero runtime dependencies: the consumer passes their own
+// `@zebra-web/redis` has zero runtime dependencies: the consumer passes their own
 // Redis client (ioredis, node-redis, Bun.redis, ...) and the stores only need
 // the subset of commands below, so any client implementing them works. The
 // signatures mirror ioredis's variadic forms:

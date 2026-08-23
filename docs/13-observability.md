@@ -1,18 +1,18 @@
-# Observability (@zebra/observability)
+# Observability (@zebra-web/observability)
 
-A zero-dependency observability middleware suite: request id, access logs, error reporting, metrics, and health endpoints. All pure middleware — nothing depends on `@zebra/core` beyond its types, nothing ships its own logger; **you bring the sinks**.
+A zero-dependency observability middleware suite: request id, access logs, error reporting, metrics, and health endpoints. All pure middleware — nothing depends on `@zebra-web/core` beyond its types, nothing ships its own logger; **you bring the sinks**.
 
 ## Install
 
 ```sh
-bun add @zebra/observability
+bun add @zebra-web/observability
 ```
 
 ## Quick start
 
 ```ts
-import { Zebra } from "@zebra/core";
-import { accessLog, errorReporter, health, metrics, requestId } from "@zebra/observability";
+import { Zebra } from "@zebra-web/core";
+import { accessLog, errorReporter, health, metrics, requestId } from "@zebra-web/observability";
 
 const app = new Zebra();
 
@@ -41,7 +41,7 @@ requestId({ headerName?, generator?, propagate? })
 - `propagate: true` (default) echoes the id on the response header.
 
 ```ts
-import { getRequestId, requestId } from "@zebra/observability";
+import { getRequestId, requestId } from "@zebra-web/observability";
 
 app.use(requestId({ headerName: "x-trace-id" }));
 app.get("/", (req) => Response.json({ id: getRequestId(req) }));

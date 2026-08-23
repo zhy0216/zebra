@@ -1,6 +1,6 @@
 // C6: end-to-end integration tests through `createTestApp`.
 //
-// Covers the §8.3 `@zebra/session` use cases end-to-end:
+// Covers the §8.3 `@zebra-web/session` use cases end-to-end:
 // - HMAC-SHA256 signed cookies (tampering is rejected)
 // - pluggable session store (a custom store backs the full flow)
 // - session scope wiring (`session.resolver` provided by the middleware)
@@ -10,8 +10,8 @@
 
 import "reflect-metadata";
 import { expect, test } from "bun:test";
-import type { ZebraRequest } from "@zebra/core";
-import { type TestApp, createTestApp } from "@zebra/testing";
+import type { ZebraRequest } from "@zebra-web/core";
+import { type TestApp, createTestApp } from "@zebra-web/testing";
 
 import { MemoryStore, getSession, sessionMiddleware, verify } from "../src/index.ts";
 import type { SessionStore } from "../src/store.ts";

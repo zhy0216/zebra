@@ -7,6 +7,6 @@
     "start": "bun run src/main.ts"
   },
   "dependencies": {
-    "zebra": "workspace:*"
+    "@zebra-web/zebra": "workspace:*"
   }
 }

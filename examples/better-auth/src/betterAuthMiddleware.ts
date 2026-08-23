@@ -13,11 +13,11 @@
 // 注意:
 // - 该中间件要注册在其它全局中间件之前,避免 CORS / body 解析等先消费请求。
 // - Better Auth 自管会话 cookie 和 CORS(见其 `cors` 配置),不要与
-//   `@zebra/session` 的 sid cookie 混用做认证(两者是两套独立的会话体系)。
+//   `@zebra-web/session` 的 sid cookie 混用做认证(两者是两套独立的会话体系)。
 
+import type { Middleware } from "@zebra-web/zebra";
+import { HttpError } from "@zebra-web/zebra";
 import type { Auth } from "better-auth";
-import type { Middleware } from "zebra";
-import { HttpError } from "zebra";
 
 /** Zebra middleware 拿到的请求,结构上只需 raw + url 两个字段。 */
 interface AuthRequestLike {

@@ -1,5 +1,5 @@
 {
-  "name": "@zebra/mcp",
+  "name": "@zebra-web/mcp",
   "version": "1.0.0",
   "type": "module",
   "main": "./src/index.ts",
@@ -7,7 +7,12 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "bun test",
     "typecheck": "tsgo --noEmit",
@@ -17,10 +22,10 @@
     "@modelcontextprotocol/sdk": "^1.30.0"
   },
   "devDependencies": {
-    "@zebra/contract": "workspace:*",
-    "@zebra/core": "workspace:*",
-    "@zebra/schema-zod": "workspace:*",
-    "@zebra/testing": "workspace:*",
+    "@zebra-web/contract": "workspace:*",
+    "@zebra-web/core": "workspace:*",
+    "@zebra-web/schema-zod": "workspace:*",
+    "@zebra-web/testing": "workspace:*",
     "zod": "^4"
   }
 }

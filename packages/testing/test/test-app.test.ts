@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { expect, test } from "bun:test";
-import { Container, injectable } from "@zebra/core";
+import { Container, injectable } from "@zebra-web/core";
 import { createTestApp } from "../src/index.ts";
 
 @injectable()

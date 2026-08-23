@@ -1,18 +1,18 @@
-# Cookie 会话（@zebra/session）
+# Cookie 会话（@zebra-web/session）
 
-`@zebra/session` 提供基于签名 cookie 的服务端会话：HMAC-SHA256 签名的 `sid` cookie、可插拔的 `SessionStore`（内存默认）、滚动 TTL 续期与防会话固定攻击。它还通过 `resolver` 与 core 的会话作用域 DI 协同。
+`@zebra-web/session` 提供基于签名 cookie 的服务端会话：HMAC-SHA256 签名的 `sid` cookie、可插拔的 `SessionStore`（内存默认）、滚动 TTL 续期与防会话固定攻击。它还通过 `resolver` 与 core 的会话作用域 DI 协同。
 
 ## 安装
 
 ```sh
-bun add @zebra/session
+bun add @zebra-web/session
 ```
 
 ## 快速开始
 
 ```ts
-import { Zebra } from "@zebra/core";
-import { sessionMiddleware } from "@zebra/session";
+import { Zebra } from "@zebra-web/core";
+import { sessionMiddleware } from "@zebra-web/session";
 
 const session = sessionMiddleware({
   secret: "a-long-random-secret",
@@ -109,7 +109,7 @@ interface SessionStore {
 ```
 
 - `MemoryStore({ ttl })` —— 默认，`Map` 后端，惰性清扫（每次访问最多扫 `SWEEP_BUDGET` 条），无计时器、无泄漏；TTL 毫秒。
-- 自建后端（Redis / Postgres）：实现该接口即可。`@zebra/redis` 已提供 `RedisSessionStore`（见 [Redis](14-redis.md)）。
+- 自建后端（Redis / Postgres）：实现该接口即可。`@zebra-web/redis` 已提供 `RedisSessionStore`（见 [Redis](14-redis.md)）。
 
 ## TTL 归属
 
@@ -123,8 +123,8 @@ interface SessionStore {
 ## 登出模式
 
 ```ts
-import { HttpError } from "@zebra/core";
-import { getSession } from "@zebra/session";
+import { HttpError } from "@zebra-web/core";
+import { getSession } from "@zebra-web/session";
 
 z.post("/logout", async (req) => {
   const s = getSession(req);

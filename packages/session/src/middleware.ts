@@ -37,7 +37,7 @@
 //   tombstones destroyed ids to block in-flight `set` calls from
 //   resurrecting them.
 
-import type { Middleware } from "@zebra/core";
+import type { Middleware } from "@zebra-web/core";
 
 import { type CookieSerializeOptions, parseSignedCookie, serializeCookie } from "./cookie.ts";
 import {

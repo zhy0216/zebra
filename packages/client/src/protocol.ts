@@ -7,7 +7,7 @@ export interface ErrorSpec {
   status: number;
 }
 
-/** MCP annotations for a procedure exposed as a tool (parity with @zebra/contract). */
+/** MCP annotations for a procedure exposed as a tool (parity with @zebra-web/contract). */
 export interface McpOptions {
   title?: string;
   readOnly?: boolean;
@@ -16,7 +16,7 @@ export interface McpOptions {
   openWorld?: boolean;
 }
 
-/** Resolved `.mcp()` declaration (parity with @zebra/contract). */
+/** Resolved `.mcp()` declaration (parity with @zebra-web/contract). */
 export interface McpDeclaration extends McpOptions {
   readonly name: string;
   readonly description: string;
@@ -24,7 +24,7 @@ export interface McpDeclaration extends McpOptions {
 
 /**
  * Frozen pure-data description of a contract procedure. Structurally identical
- * to @zebra/contract's ContractProcedureDef. All fields required-but-undefined
+ * to @zebra-web/contract's ContractProcedureDef. All fields required-but-undefined
  * (never optional) to sidestep exactOptionalPropertyTypes variance issues.
  */
 export interface ContractProcedureDef {

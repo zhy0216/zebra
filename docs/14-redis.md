@@ -1,11 +1,11 @@
-# Redis Storage Adapters (@zebra/redis)
+# Redis Storage Adapters (@zebra-web/redis)
 
-`@zebra/redis` provides Redis-backed stores for `@zebra/session` and `@zebra/rate-limit`. **Zero runtime dependencies**: it doesn't bind to any Redis client — your client only needs to implement a tiny duck-typed interface (`RedisLike`). ioredis, node-redis, and Bun.redis all work.
+`@zebra-web/redis` provides Redis-backed stores for `@zebra-web/session` and `@zebra-web/rate-limit`. **Zero runtime dependencies**: it doesn't bind to any Redis client — your client only needs to implement a tiny duck-typed interface (`RedisLike`). ioredis, node-redis, and Bun.redis all work.
 
 ## Install
 
 ```sh
-bun add @zebra/redis
+bun add @zebra-web/redis
 ```
 
 ## The RedisLike interface
@@ -43,8 +43,8 @@ const adapted = {
 A Redis implementation of `RateLimitStore` with the exact same semantics as `MemoryStore` (fixed window, lazy window opening, the count includes the current request):
 
 ```ts
-import { rateLimit } from "@zebra/rate-limit";
-import { RedisRateLimitStore } from "@zebra/redis";
+import { rateLimit } from "@zebra-web/rate-limit";
+import { RedisRateLimitStore } from "@zebra-web/redis";
 
 const store = new RedisRateLimitStore(redisClient, { prefix: "myapp:rl:" });
 
@@ -72,8 +72,8 @@ Atomicity design:
 A Redis implementation of `SessionStore`:
 
 ```ts
-import { sessionMiddleware } from "@zebra/session";
-import { RedisSessionStore } from "@zebra/redis";
+import { sessionMiddleware } from "@zebra-web/session";
+import { RedisSessionStore } from "@zebra-web/redis";
 
 const store = new RedisSessionStore(redisClient, { ttl: 30 * 60 * 1000 });
 const session = sessionMiddleware({ secret, store });
@@ -92,7 +92,7 @@ Anti-revival (mirrors the `MemoryStore` contract):
 
 - `destroy` deletes the data key and writes a short-TTL tombstone; `get` / `set` / `touch` treat a tombstoned id as missing — an in-flight request can never resurrect a destroyed session.
 - `get` re-checks the tombstone on every read, which also masks records a racing `set` may have left behind (they expire with their TTL).
-- Data is JSON-encoded, so session data must be JSON-serializable (everything `@zebra/session` persists is); a corrupt payload reads as missing rather than failing every request.
+- Data is JSON-encoded, so session data must be JSON-serializable (everything `@zebra-web/session` persists is); a corrupt payload reads as missing rather than failing every request.
 
 > vs. `MemoryStore`: `MemoryStore`'s check-and-write runs in one synchronous section of the event loop, so it's atomic within a single process. Across Redis, the tombstone check in `set`/`touch` is a separate round trip — a concurrent `destroy` can slip between check and write. Readers are still safe (`get` re-checks the tombstone); fully closing the write window would need a Lua script, intentionally out of scope (the interface speaks plain commands).
 

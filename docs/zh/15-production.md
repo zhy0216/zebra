@@ -22,11 +22,11 @@ CMD ["bun", "run", "src/main.ts"]
 ### 生产建议
 
 - **`NODE_ENV=production`**：benchmark 场景也在 production 模式下跑。
-- **健康检查**：挂 `@zebra/observability` 的 `health()`（`/healthz` 存活 + `/readyz` 就绪），让负载均衡器拿到决策（见 [可观测性](13-observability.md)）。
+- **健康检查**：挂 `@zebra-web/observability` 的 `health()`（`/healthz` 存活 + `/readyz` 就绪），让负载均衡器拿到决策（见 [可观测性](13-observability.md)）。
 - **优雅停机**：`SIGTERM` / `SIGINT` 自动触发 `z.stop()` —— 排空在途请求（`gracePeriod` 内，默认 10s），再释放容器、跑 `shutdown` 钩子（见 [生命周期](06-lifecycle.md)）。
 - **请求超时**：`requestTimeout` 为单请求设置截止时间，超时返回 504 `request_timeout`（见 [HTTP](05-http.md#请求超时)）。
 - **代理部署**：若你的反向代理会**覆盖** `x-forwarded-for`，开 `trustProxy: true` 让限流按真实客户端 IP 计（否则客户端可伪造自己的额度）。`req.ip` 永远来自 socket 对端，与 `trustProxy` 无关。
-- **多实例**：会话与限流的进程内 `MemoryStore` 不跨实例共享——多副本部署用 `@zebra/redis` 的 `RedisSessionStore` / `RedisRateLimitStore`（见 [Redis](14-redis.md)）。
+- **多实例**：会话与限流的进程内 `MemoryStore` 不跨实例共享——多副本部署用 `@zebra-web/redis` 的 `RedisSessionStore` / `RedisRateLimitStore`（见 [Redis](14-redis.md)）。
 - **会话 cookie**：生产环境用 `cookie: { preset: "secure" }`（`HttpOnly` + `SameSite=Lax`）。
 
 ## 发布策略：src 直发
@@ -47,7 +47,7 @@ bun run build   # 产出 dist/（--target bun --packages external），给 bundl
 所有包版本锁步递增，由 `scripts/release.ts` 处理：
 
 ```sh
-bun run release -- --version 1.0.0
+bun run release -- --version 1.0.0 --registry https://registry.npmjs.org
 ```
 
 该脚本：校验 SemVer → 扫描 Conventional Commits（`feat` / `fix` / `docs` ...）→ 统一 bump 所有包版本 → 生成 [CHANGELOG](../../CHANGELOG.md) 分类章节。
@@ -107,7 +107,8 @@ bun run lint             # biome check
 bun run format           # biome format --write
 bun run build            # dist/ 产出（不进 tarball）
 bun run verify:packages  # tarball 冒烟测试
-bun run release -- --version X.Y.Z  # 锁步版本 + CHANGELOG
+bun run release -- --version X.Y.Z --registry https://registry.npmjs.org  # dry-run
+bun run release -- --version X.Y.Z --registry https://registry.npmjs.org --publish
 ```
 
 ## 下一步

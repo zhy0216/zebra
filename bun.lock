@@ -17,7 +17,7 @@
       "name": "zebra-bench",
       "version": "0.0.0",
       "dependencies": {
-        "zebra": "workspace:*",
+        "@zebra-web/zebra": "workspace:*",
       },
       "devDependencies": {
         "elysia": "1.4.29",
@@ -29,24 +29,24 @@
       "version": "0.0.0",
       "dependencies": {
         "@better-auth/kysely-adapter": "1.6.26",
+        "@zebra-web/zebra": "workspace:*",
         "better-auth": "1.6.26",
-        "zebra": "workspace:*",
       },
     },
     "examples/blog": {
       "name": "example-blog",
       "version": "0.0.0",
       "dependencies": {
-        "zebra": "workspace:*",
+        "@zebra-web/zebra": "workspace:*",
       },
     },
     "examples/contract-blog": {
       "name": "example-contract-blog",
       "version": "0.0.0",
       "dependencies": {
-        "@zebra/client": "workspace:*",
-        "@zebra/contract": "workspace:*",
-        "zebra": "workspace:*",
+        "@zebra-web/client": "workspace:*",
+        "@zebra-web/contract": "workspace:*",
+        "@zebra-web/zebra": "workspace:*",
         "zod": "^4",
       },
     },
@@ -54,10 +54,10 @@
       "name": "example-forum",
       "version": "0.0.0",
       "dependencies": {
-        "@zebra/client": "workspace:*",
-        "@zebra/contract": "workspace:*",
-        "@zebra/session": "workspace:*",
-        "zebra": "workspace:*",
+        "@zebra-web/client": "workspace:*",
+        "@zebra-web/contract": "workspace:*",
+        "@zebra-web/session": "workspace:*",
+        "@zebra-web/zebra": "workspace:*",
         "zod": "^4",
       },
     },
@@ -65,122 +65,122 @@
       "name": "example-hello",
       "version": "0.0.0",
       "dependencies": {
-        "zebra": "workspace:*",
+        "@zebra-web/zebra": "workspace:*",
       },
     },
     "packages/client": {
-      "name": "@zebra/client",
+      "name": "@zebra-web/client",
       "version": "1.0.0",
       "devDependencies": {
-        "@zebra/contract": "workspace:*",
+        "@zebra-web/contract": "workspace:*",
         "zod": "^4",
       },
     },
     "packages/contract": {
-      "name": "@zebra/contract",
+      "name": "@zebra-web/contract",
       "version": "1.0.0",
       "devDependencies": {
-        "@zebra/core": "workspace:*",
+        "@zebra-web/core": "workspace:*",
         "zod": "^4",
       },
     },
     "packages/core": {
-      "name": "@zebra/core",
+      "name": "@zebra-web/core",
       "version": "1.0.0",
       "dependencies": {
         "reflect-metadata": "^0.2.2",
       },
       "devDependencies": {
-        "@zebra/contract": "workspace:*",
+        "@zebra-web/contract": "workspace:*",
         "zod": "^4",
       },
     },
     "packages/cors": {
-      "name": "@zebra/cors",
+      "name": "@zebra-web/cors",
       "version": "1.0.0",
       "devDependencies": {
-        "@zebra/core": "workspace:*",
-        "@zebra/testing": "workspace:*",
+        "@zebra-web/core": "workspace:*",
+        "@zebra-web/testing": "workspace:*",
       },
     },
     "packages/mcp": {
-      "name": "@zebra/mcp",
+      "name": "@zebra-web/mcp",
       "version": "1.0.0",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.30.0",
       },
       "devDependencies": {
-        "@zebra/contract": "workspace:*",
-        "@zebra/core": "workspace:*",
-        "@zebra/schema-zod": "workspace:*",
-        "@zebra/testing": "workspace:*",
+        "@zebra-web/contract": "workspace:*",
+        "@zebra-web/core": "workspace:*",
+        "@zebra-web/schema-zod": "workspace:*",
+        "@zebra-web/testing": "workspace:*",
         "zod": "^4",
       },
     },
     "packages/observability": {
-      "name": "@zebra/observability",
+      "name": "@zebra-web/observability",
       "version": "1.0.0",
       "devDependencies": {
-        "@zebra/core": "workspace:*",
-        "@zebra/testing": "workspace:*",
+        "@zebra-web/core": "workspace:*",
+        "@zebra-web/testing": "workspace:*",
       },
     },
     "packages/rate-limit": {
-      "name": "@zebra/rate-limit",
+      "name": "@zebra-web/rate-limit",
       "version": "1.0.0",
       "devDependencies": {
-        "@zebra/core": "workspace:*",
-        "@zebra/testing": "workspace:*",
+        "@zebra-web/core": "workspace:*",
+        "@zebra-web/testing": "workspace:*",
       },
     },
     "packages/redis": {
-      "name": "@zebra/redis",
+      "name": "@zebra-web/redis",
       "version": "1.0.0",
       "devDependencies": {
-        "@zebra/core": "workspace:*",
-        "@zebra/rate-limit": "workspace:*",
-        "@zebra/session": "workspace:*",
-        "@zebra/testing": "workspace:*",
+        "@zebra-web/core": "workspace:*",
+        "@zebra-web/rate-limit": "workspace:*",
+        "@zebra-web/session": "workspace:*",
+        "@zebra-web/testing": "workspace:*",
       },
     },
     "packages/schema-zod": {
-      "name": "@zebra/schema-zod",
+      "name": "@zebra-web/schema-zod",
       "version": "1.0.0",
       "dependencies": {
         "zod": "^4",
       },
       "devDependencies": {
-        "@zebra/contract": "workspace:*",
+        "@zebra-web/contract": "workspace:*",
       },
     },
     "packages/session": {
-      "name": "@zebra/session",
+      "name": "@zebra-web/session",
       "version": "1.0.0",
       "devDependencies": {
-        "@zebra/core": "workspace:*",
-        "@zebra/testing": "workspace:*",
+        "@zebra-web/core": "workspace:*",
+        "@zebra-web/testing": "workspace:*",
       },
     },
     "packages/testing": {
-      "name": "@zebra/testing",
+      "name": "@zebra-web/testing",
       "version": "1.0.0",
       "dependencies": {
-        "@zebra/client": "workspace:*",
-        "@zebra/core": "workspace:*",
+        "@zebra-web/client": "workspace:*",
+        "@zebra-web/core": "workspace:*",
       },
       "devDependencies": {
-        "@zebra/contract": "workspace:*",
+        "@zebra-web/contract": "workspace:*",
         "zod": "^4",
       },
     },
     "packages/zebra": {
-      "name": "zebra",
+      "name": "@zebra-web/zebra",
       "version": "1.0.0",
       "dependencies": {
-        "@zebra/core": "workspace:*",
-        "@zebra/cors": "workspace:*",
-        "@zebra/rate-limit": "workspace:*",
-        "@zebra/session": "workspace:*",
+        "@zebra-web/core": "workspace:*",
+        "@zebra-web/cors": "workspace:*",
+        "@zebra-web/rate-limit": "workspace:*",
+        "@zebra-web/session": "workspace:*",
       },
     },
   },
@@ -483,27 +483,29 @@
 
     "@vueuse/shared": ["@vueuse/shared@12.8.2", "https://registry.npmmirror.com/@vueuse/shared/-/shared-12.8.2.tgz", { "dependencies": { "vue": "^3.5.13" } }, "sha512-dznP38YzxZoNloI0qpEfpkms8knDtaoQ6Y/sfS0L7Yki4zh40LFHEhur0odJC6xTHG5dxWVPiUWBXn+wCG2s5w=="],
 
-    "@zebra/client": ["@zebra/client@workspace:packages/client"],
+    "@zebra-web/client": ["@zebra-web/client@workspace:packages/client"],
 
-    "@zebra/contract": ["@zebra/contract@workspace:packages/contract"],
+    "@zebra-web/contract": ["@zebra-web/contract@workspace:packages/contract"],
 
-    "@zebra/core": ["@zebra/core@workspace:packages/core"],
+    "@zebra-web/core": ["@zebra-web/core@workspace:packages/core"],
 
-    "@zebra/cors": ["@zebra/cors@workspace:packages/cors"],
+    "@zebra-web/cors": ["@zebra-web/cors@workspace:packages/cors"],
 
-    "@zebra/mcp": ["@zebra/mcp@workspace:packages/mcp"],
+    "@zebra-web/mcp": ["@zebra-web/mcp@workspace:packages/mcp"],
 
-    "@zebra/observability": ["@zebra/observability@workspace:packages/observability"],
+    "@zebra-web/observability": ["@zebra-web/observability@workspace:packages/observability"],
 
-    "@zebra/rate-limit": ["@zebra/rate-limit@workspace:packages/rate-limit"],
+    "@zebra-web/rate-limit": ["@zebra-web/rate-limit@workspace:packages/rate-limit"],
 
-    "@zebra/redis": ["@zebra/redis@workspace:packages/redis"],
+    "@zebra-web/redis": ["@zebra-web/redis@workspace:packages/redis"],
 
-    "@zebra/schema-zod": ["@zebra/schema-zod@workspace:packages/schema-zod"],
+    "@zebra-web/schema-zod": ["@zebra-web/schema-zod@workspace:packages/schema-zod"],
 
-    "@zebra/session": ["@zebra/session@workspace:packages/session"],
+    "@zebra-web/session": ["@zebra-web/session@workspace:packages/session"],
 
-    "@zebra/testing": ["@zebra/testing@workspace:packages/testing"],
+    "@zebra-web/testing": ["@zebra-web/testing@workspace:packages/testing"],
+
+    "@zebra-web/zebra": ["@zebra-web/zebra@workspace:packages/zebra"],
 
     "accepts": ["accepts@2.0.0", "https://registry.npmmirror.com/accepts/-/accepts-2.0.0.tgz", { "dependencies": { "mime-types": "^3.0.0", "negotiator": "^1.0.0" } }, "sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng=="],
 
@@ -850,8 +852,6 @@
     "which": ["which@2.0.2", "https://registry.npmmirror.com/which/-/which-2.0.2.tgz", { "dependencies": { "isexe": "^2.0.0" }, "bin": { "node-which": "./bin/node-which" } }, "sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA=="],
 
     "wrappy": ["wrappy@1.0.2", "https://registry.npmmirror.com/wrappy/-/wrappy-1.0.2.tgz", {}, "sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ=="],
-
-    "zebra": ["zebra@workspace:packages/zebra"],
 
     "zebra-bench": ["zebra-bench@workspace:bench"],
 

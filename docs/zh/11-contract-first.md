@@ -2,14 +2,14 @@
 
 Zebra 的契约优先模式（oRPC 风格）：**契约定义一次**，服务端实现（`app.implement`）与客户端调用（`createClient` / `createTestClient`）全部从同一契约派生类型与运行时校验。
 
-- `@zebra/contract` —— 契约构建器 `zc`（Standard Schema V1，零依赖）
-- `@zebra/core` —— `app.implement`（输入/输出校验）
-- `@zebra/client` —— 派生类型安全客户端（零依赖）
+- `@zebra-web/contract` —— 契约构建器 `zc`（Standard Schema V1，零依赖）
+- `@zebra-web/core` —— `app.implement`（输入/输出校验）
+- `@zebra-web/client` —— 派生类型安全客户端（零依赖）
 
 ## 构建契约
 
 ```ts
-import { zc } from "@zebra/contract";
+import { zc } from "@zebra-web/contract";
 import { z } from "zod";
 
 export const Blog = z.object({ id: z.number(), title: z.string(), content: z.string() });
@@ -55,7 +55,7 @@ schema 是 **Standard Schema V1** 兼容的任何校验器（zod 4、valibot 等
 ### 组合：嵌套路由与 `prefix()`
 
 ```ts
-import { prefix } from "@zebra/contract";
+import { prefix } from "@zebra-web/contract";
 
 const postContract = {
   list: zc.get("/"),
@@ -71,7 +71,7 @@ const api = {
 ### 类型推断
 
 ```ts
-import type { InferBody, InferOutput, InferParams, InferQuery } from "@zebra/contract";
+import type { InferBody, InferOutput, InferParams, InferQuery } from "@zebra-web/contract";
 
 type CreateBody = InferBody<typeof blogContract.create>;   // { title: string; content: string }
 type BlogOut = InferOutput<typeof blogContract.get>;        // Blog
@@ -80,7 +80,7 @@ type BlogOut = InferOutput<typeof blogContract.get>;        // Blog
 ## 服务端实现：`app.implement`
 
 ```ts
-import { Zebra } from "@zebra/core";
+import { Zebra } from "@zebra-web/core";
 import { blogContract } from "./contract";
 
 const app = new Zebra();
@@ -144,7 +144,7 @@ app.implement(
 ## 客户端：`createClient`
 
 ```ts
-import { createClient } from "@zebra/client";
+import { createClient } from "@zebra-web/client";
 import { blogContract } from "./contract";
 
 const client = createClient(blogContract, {
@@ -182,7 +182,7 @@ interface ClientArgs<Def> = {
 非 2xx 响应抛 `ClientError`：
 
 ```ts
-import { ClientError } from "@zebra/client";
+import { ClientError } from "@zebra-web/client";
 
 try {
   await client.get({ params: { id: 999 } });
@@ -200,10 +200,10 @@ try {
 
 ## 测试：`createTestClient`
 
-[`@zebra/testing`](12-testing.md) 的 `createTestClient` 把同一契约接到进程内 `TestApp`，零 socket：
+[`@zebra-web/testing`](12-testing.md) 的 `createTestClient` 把同一契约接到进程内 `TestApp`，零 socket：
 
 ```ts
-import { createTestApp, createTestClient } from "@zebra/testing";
+import { createTestApp, createTestClient } from "@zebra-web/testing";
 
 const app = createTestApp();  // 或 buildForumApp() 之类的组合根
 // ... 注册路由/契约 ...

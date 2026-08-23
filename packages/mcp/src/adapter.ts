@@ -9,8 +9,8 @@ import {
   McpError,
   type Tool,
 } from "@modelcontextprotocol/sdk/types.js";
-import type { ContractRouter } from "@zebra/contract";
-import type { Zebra } from "@zebra/core";
+import type { ContractRouter } from "@zebra-web/contract";
+import type { Zebra } from "@zebra-web/core";
 import { argumentsToRequest, responseToResult } from "./bridge.ts";
 import { type SchemaAdapter, collectTools, toTool } from "./manifest.ts";
 
@@ -39,7 +39,7 @@ export interface McpServerOptions {
   app: Zebra;
   /** The same contract passed to `app.implement`. */
   contract: ContractRouter;
-  /** Schema adapter (e.g. `zodSchemaAdapter()` from `@zebra/schema-zod`). */
+  /** Schema adapter (e.g. `zodSchemaAdapter()` from `@zebra-web/schema-zod`). */
   schema: SchemaAdapter;
   /** Server name advertised during MCP initialization. Default `"zebra-mcp"`. */
   name?: string;

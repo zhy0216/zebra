@@ -1,7 +1,7 @@
 // C4: `RateLimitStore` interface + `MemoryStore` default implementation.
 //
 // The interface is deliberately independent of any storage backend so that a
-// later adapter package (e.g. `@zebra/rate-limit-redis`) can implement it
+// later adapter package (e.g. `@zebra-web/rate-limit-redis`) can implement it
 // without touching this module. It only speaks string keys and number
 // windows — no Map, no entries — and the count semantics are pinned: the
 // return value is the number of requests counted *inside* the current

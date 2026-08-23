@@ -5,9 +5,9 @@ import {
   McpError,
   ToolSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { zc } from "@zebra/contract";
-import { HttpError, Zebra } from "@zebra/core";
-import { zodSchemaAdapter } from "@zebra/schema-zod";
+import { zc } from "@zebra-web/contract";
+import { HttpError, Zebra } from "@zebra-web/core";
+import { zodSchemaAdapter } from "@zebra-web/schema-zod";
 import { z } from "zod";
 import { type McpServerOptions, createMcpServer } from "../src/index.ts";
 

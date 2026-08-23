@@ -1,4 +1,4 @@
-import { Zebra } from "zebra";
+import { Zebra } from "@zebra-web/zebra";
 
 /** Composition root: everything main.ts runs, without the listen(). */
 export function buildHelloApp(): Zebra {

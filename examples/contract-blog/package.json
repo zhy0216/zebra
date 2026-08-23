@@ -8,9 +8,9 @@
     "client": "bun run src/client-demo.ts"
   },
   "dependencies": {
-    "@zebra/client": "workspace:*",
-    "@zebra/contract": "workspace:*",
-    "zebra": "workspace:*",
+    "@zebra-web/client": "workspace:*",
+    "@zebra-web/contract": "workspace:*",
+    "@zebra-web/zebra": "workspace:*",
     "zod": "^4"
   }
 }

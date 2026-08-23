@@ -3,7 +3,7 @@
 // The unit suites (origin/preflight/inject.test.ts) exercise the middleware
 // with a bare `Zebra` + `dispatch`. These tests go through the full
 // `createTestApp` pipeline (`prepare`/`boot` + dispatch) and cover the §8.4
-// `@zebra/cors` use case end-to-end:
+// `@zebra-web/cors` use case end-to-end:
 // - preflight (OPTIONS + Access-Control-Request-Method) → 204 with the full
 //   header set: Allow-Origin / Allow-Credentials / Allow-Methods /
 //   Allow-Headers / Max-Age
@@ -13,8 +13,8 @@
 // - preflight leaves the normal GET/POST flow untouched
 
 import { expect, test } from "bun:test";
-import type { ZebraRequest } from "@zebra/core";
-import { type TestApp, createTestApp } from "@zebra/testing";
+import type { ZebraRequest } from "@zebra-web/core";
+import { type TestApp, createTestApp } from "@zebra-web/testing";
 
 import { type CorsOptions, cors } from "../src/index.ts";
 

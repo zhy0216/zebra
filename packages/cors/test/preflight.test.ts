@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Zebra } from "@zebra/core";
+import { Zebra } from "@zebra-web/core";
 
 import { cors } from "../src/index.ts";
 

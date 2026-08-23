@@ -1,4 +1,4 @@
-import type { Middleware } from "@zebra/core";
+import type { Middleware } from "@zebra-web/core";
 
 import { getRequestId } from "./request-id.ts";
 

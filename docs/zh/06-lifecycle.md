@@ -147,7 +147,7 @@ process.on("SIGUSR2", () => void z.stop());
 - 计时器到期 → `disposeSession(id)`：清理计时器、dispose 容器（释放该会话的 session 作用域实例）。
 - `app.disposeSession(id)` 可手动提前回收（比如登出时）。
 
-> 数据层面的会话过期由 `@zebra/session` 的 store 负责（TTL 属主不同），core 的 `sessionTtl` 只回收 DI 容器。两者独立设计，见 [会话章节](07-sessions.md#ttl-归属)。
+> 数据层面的会话过期由 `@zebra-web/session` 的 store 负责（TTL 属主不同），core 的 `sessionTtl` 只回收 DI 容器。两者独立设计，见 [会话章节](07-sessions.md#ttl-归属)。
 
 ## 释放（Disposable）
 

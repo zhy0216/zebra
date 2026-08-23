@@ -1,6 +1,6 @@
-# @zebra/redis
+# @zebra-web/redis
 
-Redis-backed stores for `@zebra/session` and `@zebra/rate-limit`, in one
+Redis-backed stores for `@zebra-web/session` and `@zebra-web/rate-limit`, in one
 dependency-free package: **you bring your own Redis client**.
 
 - `RedisSessionStore` implements `SessionStore` (packages/session)
@@ -16,8 +16,8 @@ are global rather than per-process.
 ## Install
 
 ```sh
-bun add @zebra/redis          # alongside @zebra/session / @zebra/rate-limit
-bun add ioredis               # your client of choice, not a dep of @zebra/redis
+bun add @zebra-web/redis          # alongside @zebra-web/session / @zebra-web/rate-limit
+bun add ioredis               # your client of choice, not a dep of @zebra-web/redis
 ```
 
 ## Usage
@@ -26,9 +26,9 @@ bun add ioredis               # your client of choice, not a dep of @zebra/redis
 
 ```ts
 import { Redis } from "ioredis";
-import { Zebra } from "zebra";
-import { sessionMiddleware } from "@zebra/session";
-import { RedisSessionStore } from "@zebra/redis";
+import { Zebra } from "@zebra-web/zebra";
+import { sessionMiddleware } from "@zebra-web/session";
+import { RedisSessionStore } from "@zebra-web/redis";
 
 const client = new Redis(process.env.REDIS_URL);
 
@@ -45,8 +45,8 @@ app.use(mw);
 ### Rate limiting
 
 ```ts
-import { rateLimit } from "@zebra/rate-limit";
-import { RedisRateLimitStore } from "@zebra/redis";
+import { rateLimit } from "@zebra-web/rate-limit";
+import { RedisRateLimitStore } from "@zebra-web/redis";
 
 const store = new RedisRateLimitStore(client, {
   prefix: "app:rl:",          // optional, defaults to "zebra:rate-limit:"
@@ -96,7 +96,7 @@ const client: RedisLike = {
   needs a Lua script (intentionally out of scope: the interface speaks
   plain commands).
 - **Serialization**: session data is JSON-encoded, so it must be
-  JSON-serializable (always true for what `@zebra/session` persists). A
+  JSON-serializable (always true for what `@zebra-web/session` persists). A
   corrupt payload reads as missing rather than failing every request.
 
 ### `RedisRateLimitStore`
@@ -124,13 +124,13 @@ const client: RedisLike = {
 
 Neither store swallows client errors. A Redis outage rejects the store
 call, which propagates through the middleware into core's error handling —
-`@zebra/session` and `@zebra/rate-limit` will respond `500` rather than
+`@zebra-web/session` and `@zebra-web/rate-limit` will respond `500` rather than
 silently continuing without session state or rate-limit enforcement.
 
 ## When not to use this package
 
-> ⚠️ `MemoryStore` — the default store of both `@zebra/session` and
-> `@zebra/rate-limit` — keeps all state in the process's memory. It is
+> ⚠️ `MemoryStore` — the default store of both `@zebra-web/session` and
+> `@zebra-web/rate-limit` — keeps all state in the process's memory. It is
 > **single-process / development / testing only** and is **not suitable for
 > multi-instance shared state**:
 >

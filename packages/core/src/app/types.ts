@@ -73,7 +73,7 @@ export interface SessionOptions {
   /**
    * C4: 可选 ws 会话钩子 —— ws 升级时把会话句柄挂到 `ws.data.session`。
    *
-   * core 不依赖 @zebra/session：此钩子在构造期传入（通常是 session 包的 helper，
+   * core 不依赖 @zebra-web/session：此钩子在构造期传入（通常是 session 包的 helper，
    * 如 `sessionMiddleware()` 返回对象的 `wsSession` 方法），签名
    * `(req, sessionId) => unknown`。`sessionId` 是 `resolver` 在本次升级请求上的
    * 解析结果（未配置 resolver / 无存活会话时为 `undefined`）。返回值非 `undefined`
@@ -107,7 +107,7 @@ export interface ZebraOptions {
    * (the deployment's edge proxy / CDN / load balancer overwrites it).
    * Core itself never reads `x-forwarded-for` — it only exposes the socket
    * peer address as `ZebraRequest.ip` — so this flag is the documented knob
-   * that middleware such as `@zebra/rate-limit`'s `trustProxy` mirrors.
+   * that middleware such as `@zebra-web/rate-limit`'s `trustProxy` mirrors.
    * Default: false.
    */
   trustProxy?: boolean;

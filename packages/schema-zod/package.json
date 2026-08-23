@@ -1,5 +1,5 @@
 {
-  "name": "@zebra/schema-zod",
+  "name": "@zebra-web/schema-zod",
   "version": "1.0.0",
   "type": "module",
   "main": "./src/index.ts",
@@ -7,7 +7,12 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "bun test",
     "typecheck": "tsgo --noEmit",
@@ -17,6 +22,6 @@
     "zod": "^4"
   },
   "devDependencies": {
-    "@zebra/contract": "workspace:*"
+    "@zebra-web/contract": "workspace:*"
   }
 }

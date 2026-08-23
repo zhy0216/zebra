@@ -1,6 +1,6 @@
 import { expect, expectTypeOf, test } from "bun:test";
-import { createClient } from "@zebra/client";
-import { zc } from "@zebra/contract";
+import { createClient } from "@zebra-web/client";
+import { zc } from "@zebra-web/contract";
 import { z } from "zod";
 import { createTestApp } from "../src/index.ts";
 import { createTestClient } from "../src/index.ts";

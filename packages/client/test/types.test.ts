@@ -1,5 +1,5 @@
 import { expectTypeOf, test } from "bun:test";
-import { type ContractRouter, zc } from "@zebra/contract";
+import { type ContractRouter, zc } from "@zebra-web/contract";
 import { z } from "zod";
 import { type ClientArgs, type ClientOutput, createClient } from "../src/index.ts";
 

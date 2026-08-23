@@ -1,4 +1,4 @@
-import { HttpError, Zebra } from "zebra";
+import { HttpError, Zebra } from "@zebra-web/zebra";
 import { blogContract } from "./contract.ts";
 import { BlogRepo, BlogService } from "./services.ts";
 

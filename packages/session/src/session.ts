@@ -15,7 +15,7 @@ export const SESSION_KEY: symbol = Symbol.for("zebra.session");
  * sid cookie; a destroyed session still gets the expiring one). The core
  * error middleware reads this key by its `Symbol.for` registration and
  * appends the values after building the problem response — the two packages
- * stay decoupled (core has no dependency on `@zebra/session`).
+ * stay decoupled (core has no dependency on `@zebra-web/session`).
  */
 export const PENDING_SET_COOKIES: symbol = Symbol.for("zebra.set-cookie");
 

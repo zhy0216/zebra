@@ -1,4 +1,4 @@
-import type { Middleware } from "@zebra/core";
+import type { Middleware } from "@zebra-web/core";
 
 /** `req.ctx` key under which the request id is stored. */
 export const REQUEST_ID_KEY: symbol = Symbol("zebra.requestId");

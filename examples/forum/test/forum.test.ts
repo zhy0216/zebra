@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { ClientError, createClient } from "@zebra/client";
+import { ClientError, createClient } from "@zebra-web/client";
 import { buildForumApp } from "../src/app.ts";
 import type { ForumAppOptions } from "../src/app.ts";
 import { forumContract } from "../src/contract.ts";

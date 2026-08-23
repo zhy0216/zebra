@@ -18,7 +18,7 @@
 // (default), spoofed `x-forwarded-for` values do NOT create per-IP buckets —
 // every request from the same socket shares one budget.
 
-import { HttpError, type Middleware, type ZebraRequest } from "@zebra/core";
+import { HttpError, type Middleware, type ZebraRequest } from "@zebra-web/core";
 
 import { checkLimit } from "./limiter.ts";
 import { MemoryStore, type RateLimitStore } from "./store.ts";

@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { expectTypeOf, test } from "bun:test";
-import { type StandardSchemaV1, zc } from "@zebra/contract";
+import { type StandardSchemaV1, zc } from "@zebra-web/contract";
 import { z } from "zod";
 import { Zebra } from "../../src/app/app.ts";
 

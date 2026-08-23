@@ -1,5 +1,5 @@
 {
-  "name": "@zebra/redis",
+  "name": "@zebra-web/redis",
   "version": "1.0.0",
   "type": "module",
   "main": "./src/index.ts",
@@ -7,16 +7,21 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "bun test",
     "typecheck": "tsgo --noEmit",
     "build": "bun build src/index.ts --outdir dist --target bun --packages external"
   },
   "devDependencies": {
-    "@zebra/core": "workspace:*",
-    "@zebra/rate-limit": "workspace:*",
-    "@zebra/session": "workspace:*",
-    "@zebra/testing": "workspace:*"
+    "@zebra-web/core": "workspace:*",
+    "@zebra-web/rate-limit": "workspace:*",
+    "@zebra-web/session": "workspace:*",
+    "@zebra-web/testing": "workspace:*"
   }
 }

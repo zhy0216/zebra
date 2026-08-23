@@ -1,25 +1,25 @@
 # MCP Tools from your contract
 
-Zebra's contract-first pattern (`@zebra/contract` → `app.implement` → `@zebra/client`) extends to MCP: declare a procedure as an MCP tool with `.mcp()`, and `@zebra/mcp` exposes it over the **same contract** — same schemas, same middleware, same DI, same runtime validation.
+Zebra's contract-first pattern (`@zebra-web/contract` → `app.implement` → `@zebra-web/client`) extends to MCP: declare a procedure as an MCP tool with `.mcp()`, and `@zebra-web/mcp` exposes it over the **same contract** — same schemas, same middleware, same DI, same runtime validation.
 
 ```text
-@zebra/contract:   zc.get(...).mcp("get_topic", "获取主题", { readOnly: true })
-@zebra/schema-zod: zod → JSON Schema (inputSchema / codegen)
-@zebra/mcp:        tools/list + tools/call → HTTP Request → app.dispatch()
+@zebra-web/contract:   zc.get(...).mcp("get_topic", "获取主题", { readOnly: true })
+@zebra-web/schema-zod: zod → JSON Schema (inputSchema / codegen)
+@zebra-web/mcp:        tools/list + tools/call → HTTP Request → app.dispatch()
 ```
 
 ## Packages
 
-- `@zebra/contract` — adds the `.mcp()` builder (MCP metadata lives on the contract def)
-- `@zebra/schema-zod` — the Zod → JSON Schema adapter (zod dependency isolated here)
-- `@zebra/mcp` — the MCP protocol adapter + HTTP dispatch bridge (the only place with an MCP SDK dependency)
+- `@zebra-web/contract` — adds the `.mcp()` builder (MCP metadata lives on the contract def)
+- `@zebra-web/schema-zod` — the Zod → JSON Schema adapter (zod dependency isolated here)
+- `@zebra-web/mcp` — the MCP protocol adapter + HTTP dispatch bridge (the only place with an MCP SDK dependency)
 
-`@zebra/core` never imports zod or any MCP SDK at runtime.
+`@zebra-web/core` never imports zod or any MCP SDK at runtime.
 
 ## Declaring a tool
 
 ```ts
-import { zc } from "@zebra/contract";
+import { zc } from "@zebra-web/contract";
 import { z } from "zod";
 
 const Topic = z.object({ id: z.number(), title: z.string(), content: z.string() });
@@ -58,9 +58,9 @@ Real authorization stays in Zebra middleware / session / DI.
 ## Creating the MCP server
 
 ```ts
-import { Zebra } from "@zebra/core";
-import { createMcpServer } from "@zebra/mcp";
-import { zodSchemaAdapter } from "@zebra/schema-zod";
+import { Zebra } from "@zebra-web/core";
+import { createMcpServer } from "@zebra-web/mcp";
+import { zodSchemaAdapter } from "@zebra-web/schema-zod";
 
 const app = new Zebra();
 app.implement(api, { /* handlers */ });
@@ -75,7 +75,7 @@ const mcp = createMcpServer({
 await mcp.connect(new StdioServerTransport());
 ```
 
-`@zebra/mcp` only handles `tools/list`, `tools/call`, and the Request ↔ Response mapping. Everything else runs through `app.dispatch()`:
+`@zebra-web/mcp` only handles `tools/list`, `tools/call`, and the Request ↔ Response mapping. Everything else runs through `app.dispatch()`:
 
 ```text
 MCP tools/call
@@ -136,7 +136,7 @@ const result = await mcp.callTool({ name: "get_topic", arguments: { params: { id
 
 ## Testing
 
-`@zebra/mcp` tests exercise the full loop in-process (MCP call → `app.dispatch()` → contract validation → result). Because the bridge reuses dispatch, the same contract implemented by `app.implement` is covered by `createTestClient` ([Testing](12-testing.md)) and by MCP without duplicating business logic.
+`@zebra-web/mcp` tests exercise the full loop in-process (MCP call → `app.dispatch()` → contract validation → result). Because the bridge reuses dispatch, the same contract implemented by `app.implement` is covered by `createTestClient` ([Testing](12-testing.md)) and by MCP without duplicating business logic.
 
 ## Next steps
 

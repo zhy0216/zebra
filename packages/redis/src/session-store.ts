@@ -22,10 +22,10 @@
 // is intentionally out of scope (the interface speaks plain commands).
 //
 // Data is JSON-encoded, so session data must be JSON-serializable (true for
-// everything `@zebra/session` persists). A corrupt payload reads as missing
+// everything `@zebra-web/session` persists). A corrupt payload reads as missing
 // rather than failing every request that touches it.
 
-import type { SessionStore } from "@zebra/session";
+import type { SessionStore } from "@zebra-web/session";
 
 import type { RedisLike } from "./redis-like.ts";
 

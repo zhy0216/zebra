@@ -25,7 +25,7 @@ bun --filter example-better-auth test      # 进程内集成测试 (app.dispatch
 ## 怎么用
 
 ```ts
-import { Zebra } from "zebra";
+import { Zebra } from "@zebra-web/zebra";
 import { createAuth } from "./auth.ts";
 import { betterAuthMiddleware, getBetterSession } from "./betterAuthMiddleware.ts";
 
@@ -55,7 +55,7 @@ app.get("/me", async (req) => {
 - **数据库**: 直接传 `bun:sqlite` 实例,Better Auth 的 kysely 适配器内置
   `BunSqliteDialect`,自动识别,零原生模块 (better-sqlite3 在 Bun 上有 NAPI
   兼容问题,勿用)。示例默认 `:memory:`,传 `dbPath` 可持久化到文件。
-- **会话**: Better Auth 自管会话 cookie 和 CORS,不要与 `@zebra/session` 的
+- **会话**: Better Auth 自管会话 cookie 和 CORS,不要与 `@zebra-web/session` 的
   `sid` cookie 混用做认证 —— 两者是两套独立的会话体系。
 - **密钥**: `secret` 至少 32 字符,生产环境用环境变量 (如 `BETTER_AUTH_SECRET`)。
 - **WebSocket**: upgrade 请求绕过全局中间件 (`app.ts` 的 `handleFetch` 先做

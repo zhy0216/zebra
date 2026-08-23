@@ -1,4 +1,4 @@
-import { zc } from "@zebra/contract";
+import { zc } from "@zebra-web/contract";
 import { z } from "zod";
 
 export const Blog = z.object({ id: z.number(), title: z.string(), content: z.string() });

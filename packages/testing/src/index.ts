@@ -1,6 +1,6 @@
-import { type ContractClient, createClient } from "@zebra/client";
-import type { ContractRouter } from "@zebra/contract";
-import { Zebra, type ZebraOptions } from "@zebra/core";
+import { type ContractClient, createClient } from "@zebra-web/client";
+import type { ContractRouter } from "@zebra-web/contract";
+import { Zebra, type ZebraOptions } from "@zebra-web/core";
 
 export interface TestApp extends Zebra {
   request(path: string, init?: RequestInit): Promise<Response>;

@@ -1,6 +1,6 @@
 // C4: session scope 集成 —— core 侧。
 //
-// 依赖方向约束：core 不依赖 @zebra/session，`ws.data.session` 由构造期传入的
+// 依赖方向约束：core 不依赖 @zebra-web/session，`ws.data.session` 由构造期传入的
 // `ZebraOptions.session.wsSession` 钩子填充。本文件用内联钩子验证：
 // - resolver 解析出的 sessionId 传给钩子，结果挂到 ws.data.session（open/message 可达）；
 // - 匿名升级 → 钩子收到 undefined，data.session 保持 undefined；

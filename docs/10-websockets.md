@@ -5,7 +5,7 @@
 ## Quick start
 
 ```ts
-import { Zebra } from "zebra";
+import { Zebra } from "@zebra-web/zebra";
 
 const app = new Zebra();
 
@@ -82,15 +82,15 @@ interface WsData {
 ```
 
 - `params` are the route params (`room` for `/chat/:room`).
-- `session` is filled by the `ZebraOptions.session.wsSession` hook (usually a `RequestSession` from `@zebra/session`). `undefined` when the hook is not configured or the connection is anonymous — never an error.
+- `session` is filled by the `ZebraOptions.session.wsSession` hook (usually a `RequestSession` from `@zebra-web/session`). `undefined` when the hook is not configured or the connection is anonymous — never an error.
 - The `upgrade()` return object spreads into the remaining fields; `session` is reserved (a same-named key in the return value is overwritten).
 
 ## Sessions and WebSocket
 
-With `@zebra/session`, wire the `wsSession` hook returned by `sessionMiddleware()` into the `Zebra` options:
+With `@zebra-web/session`, wire the `wsSession` hook returned by `sessionMiddleware()` into the `Zebra` options:
 
 ```ts
-import { sessionMiddleware } from "@zebra/session";
+import { sessionMiddleware } from "@zebra-web/session";
 
 const session = sessionMiddleware({ secret, cookie: { preset: "secure" } });
 

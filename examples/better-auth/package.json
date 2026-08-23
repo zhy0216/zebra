@@ -4,7 +4,7 @@
   "dependencies": {
     "@better-auth/kysely-adapter": "1.6.26",
     "better-auth": "1.6.26",
-    "zebra": "workspace:*"
+    "@zebra-web/zebra": "workspace:*"
   },
   "private": true,
   "scripts": {

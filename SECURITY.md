@@ -10,7 +10,7 @@ until it has been triaged.
 
 Please include:
 
-- the affected package (`zebra`, `@zebra/*`) and version,
+- the affected package (`@zebra-web/zebra`, `@zebra-web/*`) and version,
 - a minimal reproduction (code + request),
 - the impact you believe the issue has (DoS, path traversal, spoofing, ...).
 
@@ -22,7 +22,7 @@ deliberate.
 - **Client IPs** — `ZebraRequest.ip` is always the socket peer address from
   Bun (`server.requestIP`); it is never header-derived. Framework code does
   not read `x-forwarded-for`.
-- **Rate limiting** — `@zebra/rate-limit` keys on the socket IP by default.
+- **Rate limiting** — `@zebra-web/rate-limit` keys on the socket IP by default.
   Set `trustProxy: true` **only** behind a proxy that overwrites
   `x-forwarded-for` (reverse proxy / CDN / load balancer); otherwise clients
   can spoof the header to carve out their own unlimited budget.
@@ -31,7 +31,7 @@ deliberate.
   realpath of the root, closing symlink-escape (a symlink inside root pointing
   outside it is not served). Keep static roots to content you actually want to
   serve, and never mount a directory that contains secrets or source.
-- **Sessions** — `@zebra/session` ids are HMAC-SHA256 signed; destroyed or
+- **Sessions** — `@zebra-web/session` ids are HMAC-SHA256 signed; destroyed or
   expired ids are never revived (fixation-safe). The default cookie carries
   `HttpOnly` + `SameSite=Lax` (`SECURE_COOKIE`); opt out with
   `cookie: { preset: "plain" }` for a flag-free cookie.

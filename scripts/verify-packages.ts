@@ -13,7 +13,7 @@
  * only (no `dist/`), and the exports map must work from a clean install.
  *
  * Cross-package install: `bun pm pack` rewrites `workspace:*` deps to the
- * concrete version, and since @zebra/* is not on the registry yet, every
+ * concrete version, and since @zebra-web/* is not on the registry yet, every
  * tarball is installed as a `file:` dependency and `overrides` force the
  * transitive deps to the same tarballs (bun does not otherwise match a
  * semver dep to a `file:` tarball).
@@ -164,7 +164,7 @@ try {
         type: "module",
         dependencies: deps,
         // bun does not satisfy a semver dep (as rewritten from workspace:* by
-        // `bun pm pack`) with a `file:` tarball, so force every @zebra/* name
+        // `bun pm pack`) with a `file:` tarball, so force every @zebra-web/* name
         // to the packed tarball.
         overrides: deps,
       },
@@ -176,18 +176,18 @@ try {
   const install = run("bun", ["install"], projectDir);
   if (!install.ok) fail(`bun install of tarballs failed:\n${install.stderr}`);
 
-  const verifySource = `import { Zebra } from "@zebra/core";
-import { sessionMiddleware } from "@zebra/session";
-import { rateLimit } from "@zebra/rate-limit";
-import { cors } from "@zebra/cors";
-import { zc } from "@zebra/contract";
-import { createClient } from "@zebra/client";
-import { createTestApp } from "@zebra/testing";
-import { accessLog, errorReporter, health, metrics, requestId } from "@zebra/observability";
-import { RedisRateLimitStore, RedisSessionStore } from "@zebra/redis";
-import { Zebra as FacadeZebra } from "zebra";
-import { createMcpServer } from "@zebra/mcp";
-import { zodSchemaAdapter } from "@zebra/schema-zod";
+  const verifySource = `import { Zebra } from "@zebra-web/core";
+import { sessionMiddleware } from "@zebra-web/session";
+import { rateLimit } from "@zebra-web/rate-limit";
+import { cors } from "@zebra-web/cors";
+import { zc } from "@zebra-web/contract";
+import { createClient } from "@zebra-web/client";
+import { createTestApp } from "@zebra-web/testing";
+import { accessLog, errorReporter, health, metrics, requestId } from "@zebra-web/observability";
+import { RedisRateLimitStore, RedisSessionStore } from "@zebra-web/redis";
+import { Zebra as FacadeZebra } from "@zebra-web/zebra";
+import { createMcpServer } from "@zebra-web/mcp";
+import { zodSchemaAdapter } from "@zebra-web/schema-zod";
 
 function expectType(value: unknown, what: string): void {
   if (typeof value !== "function") throw new Error("export " + what + " is not a function");

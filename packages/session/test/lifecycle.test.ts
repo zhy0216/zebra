@@ -4,7 +4,7 @@
 // - mw.destroySession(id) / app.disposeSession(id) store-vs-container split
 
 import { expect, test } from "bun:test";
-import { Zebra, type ZebraRequest } from "@zebra/core";
+import { Zebra, type ZebraRequest } from "@zebra-web/core";
 
 import { MemoryStore, createSession, getSession, sessionMiddleware } from "../src/index.ts";
 import { verify } from "../src/sign.ts";

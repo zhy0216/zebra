@@ -1,4 +1,4 @@
-import { injectable } from "zebra";
+import { injectable } from "@zebra-web/zebra";
 
 export interface Blog {
   id: number;

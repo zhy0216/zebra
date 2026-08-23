@@ -5,15 +5,15 @@ Zebra 是一个 Bun-first 的 TypeScript Web 框架。本文带你完成安装�
 ## 安装
 
 ```sh
-bun add zebra reflect-metadata
+bun add @zebra-web/zebra reflect-metadata
 ```
 
-`zebra` 是公共门面包，再导出 `@zebra/core`、`@zebra/session`、`@zebra/cors` 以及别名后的 `@zebra/rate-limit`。如果你只需要某个子包，也可以单独安装：
+`@zebra-web/zebra` 是公共门面包，再导出 `@zebra-web/core`、`@zebra-web/session`、`@zebra-web/cors` 以及别名后的 `@zebra-web/rate-limit`。如果你只需要某个子包，也可以单独安装：
 
 ```sh
-bun add @zebra/contract @zebra/client @zebra/testing
-bun add @zebra/session @zebra/cors @zebra/rate-limit
-bun add @zebra/observability @zebra/redis
+bun add @zebra-web/contract @zebra-web/client @zebra-web/testing
+bun add @zebra-web/session @zebra-web/cors @zebra-web/rate-limit
+bun add @zebra-web/observability @zebra-web/redis
 ```
 
 ## 运行环境
@@ -35,14 +35,14 @@ bun add @zebra/observability @zebra/redis
 
 ```ts
 import "reflect-metadata";
-import { Zebra } from "zebra";
+import { Zebra } from "@zebra-web/zebra";
 ```
 
 ## 第一个应用
 
 ```ts
 import "reflect-metadata";
-import { Zebra } from "zebra";
+import { Zebra } from "@zebra-web/zebra";
 
 const z = new Zebra();
 
@@ -71,7 +71,7 @@ curl http://localhost:3000/hello/world
 
 ```ts
 import "reflect-metadata";
-import { Zebra, injectable } from "zebra";
+import { Zebra, injectable } from "@zebra-web/zebra";
 
 @injectable()
 class Greeter {
@@ -107,7 +107,7 @@ Handler 的返回值会被 `Zebra.toResponse` 统一编码：
 对需要 mock 绑定（测试）或共享容器（多个应用）的场景，可以显式构造容器：
 
 ```ts
-import { Container, Zebra } from "zebra";
+import { Container, Zebra } from "@zebra-web/zebra";
 
 const container = new Container();
 container.bind(IRepo).to(MockRepo);

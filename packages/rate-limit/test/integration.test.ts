@@ -20,7 +20,7 @@
 // numbers, not from any independent bookkeeping.
 
 import { describe, expect, test } from "bun:test";
-import { type TestApp, createTestApp } from "@zebra/testing";
+import { type TestApp, createTestApp } from "@zebra-web/testing";
 
 import { type RateLimitOptions, rateLimit } from "../src/index.ts";
 import type { IncrementResult, RateLimitStore } from "../src/store.ts";

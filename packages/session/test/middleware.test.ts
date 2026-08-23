@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Zebra, type ZebraRequest } from "@zebra/core";
+import { Zebra, type ZebraRequest } from "@zebra-web/core";
 
 import { MemoryStore, SECURE_COOKIE, getSession, sessionMiddleware, sign } from "../src/index.ts";
 import { verify } from "../src/sign.ts";

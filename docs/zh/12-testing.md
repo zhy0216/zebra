@@ -1,17 +1,17 @@
-# 测试（@zebra/testing）
+# 测试（@zebra-web/testing）
 
-`@zebra/testing` 提供进程内测试：`createTestApp` 在**不打开 socket** 的情况下把请求直接打穿整个管道（包括图校验、中间件链、DI 作用域、错误中间件），`createTestClient` 则把契约客户端接到同一个进程内 app 上。测试跑的是与线上完全相同的组合。
+`@zebra-web/testing` 提供进程内测试：`createTestApp` 在**不打开 socket** 的情况下把请求直接打穿整个管道（包括图校验、中间件链、DI 作用域、错误中间件），`createTestClient` 则把契约客户端接到同一个进程内 app 上。测试跑的是与线上完全相同的组合。
 
 ## 安装
 
 ```sh
-bun add @zebra/testing
+bun add @zebra-web/testing
 ```
 
 ## createTestApp
 
 ```ts
-import { createTestApp } from "@zebra/testing";
+import { createTestApp } from "@zebra-web/testing";
 
 const app = createTestApp();
 
@@ -45,7 +45,7 @@ export function buildForumApp(opts: ForumAppOptions = {}): Zebra {
 }
 
 // app.test.ts
-import { createTestApp } from "@zebra/testing";
+import { createTestApp } from "@zebra-web/testing";
 import { buildForumApp } from "./app";
 
 function makeApp() {
@@ -62,7 +62,7 @@ function makeApp() {
 把契约客户端接到进程内 app 上，**零 socket 的端到端类型安全测试**：
 
 ```ts
-import { createTestApp, createTestClient } from "@zebra/testing";
+import { createTestApp, createTestClient } from "@zebra-web/testing";
 import { blogContract } from "./contract";
 
 const app = createTestApp();
@@ -112,7 +112,7 @@ test("validation error surfaces as typed ClientError", async () => {
 中间件测试与线上一致，直接 `app.use` 后用 `app.request` 驱动：
 
 ```ts
-import { sessionMiddleware } from "@zebra/session";
+import { sessionMiddleware } from "@zebra-web/session";
 
 const session = sessionMiddleware({ secret: "test-secret" });
 const app = createTestApp({ session: { resolver: session.resolver } });

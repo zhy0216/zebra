@@ -147,7 +147,7 @@ Session containers (the cache containers behind session-scoped DI):
 - Timer expiry → `disposeSession(id)`: clears the timer, disposes the container (releasing that session's session-scoped instances).
 - `app.disposeSession(id)` reclaims one immediately (e.g. at logout).
 
-> Data-level session expiry is owned by `@zebra/session`'s store (a separate TTL owner); core's `sessionTtl` only reclaims the DI container. The two are independent by design — see [Sessions](07-sessions.md#ttl-ownership).
+> Data-level session expiry is owned by `@zebra-web/session`'s store (a separate TTL owner); core's `sessionTtl` only reclaims the DI container. The two are independent by design — see [Sessions](07-sessions.md#ttl-ownership).
 
 ## Disposal
 

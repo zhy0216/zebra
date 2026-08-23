@@ -1,4 +1,4 @@
-import { HttpError, getSession, middleware } from "zebra";
+import { HttpError, getSession, middleware } from "@zebra-web/zebra";
 import { ForumStore, type User } from "./services.ts";
 
 // ---------------------------------------------------------------------------

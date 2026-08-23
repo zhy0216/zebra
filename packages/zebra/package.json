@@ -1,5 +1,5 @@
 {
-  "name": "zebra",
+  "name": "@zebra-web/zebra",
   "version": "1.0.0",
   "type": "module",
   "main": "./src/index.ts",
@@ -7,15 +7,20 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "typecheck": "tsgo --noEmit",
     "build": "bun build src/index.ts --outdir dist --target bun --packages external"
   },
   "dependencies": {
-    "@zebra/core": "workspace:*",
-    "@zebra/cors": "workspace:*",
-    "@zebra/session": "workspace:*",
-    "@zebra/rate-limit": "workspace:*"
+    "@zebra-web/core": "workspace:*",
+    "@zebra-web/cors": "workspace:*",
+    "@zebra-web/session": "workspace:*",
+    "@zebra-web/rate-limit": "workspace:*"
   }
 }

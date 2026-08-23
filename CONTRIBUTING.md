@@ -67,11 +67,12 @@ Lockstep release of all publishable packages via
 [`scripts/release.ts`](scripts/release.ts):
 
 ```sh
-bun run release -- --version X.Y.Z   # dry-run (verifies typecheck + test)
-bun run release -- --version X.Y.Z --publish
+bun run release -- --version X.Y.Z --registry https://registry.npmjs.org  # dry-run
+bun run release -- --version X.Y.Z --registry https://registry.npmjs.org --publish
 ```
 
-The script bumps versions, syncs `@zebra/*` dependency specs, writes the
+The script bumps versions, syncs `@zebra-web/*` dependency specs, writes the
 CHANGELOG section from commits since the last semver tag, publishes in
-dependency order, and tags `vX.Y.Z`. It runs typecheck + tests first unless
-`--no-verify` is passed.
+dependency order, and tags `vX.Y.Z`. The dry-run and publish modes run
+typecheck + tests first unless `--no-verify` is passed. Pass the official npm
+registry explicitly so a package mirror cannot receive a release by mistake.

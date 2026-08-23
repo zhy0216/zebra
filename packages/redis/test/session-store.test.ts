@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, test } from "bun:test";
-import type { SessionStore } from "@zebra/session";
+import type { SessionStore } from "@zebra-web/session";
 
 import { RedisSessionStore } from "../src/index.ts";
 import type { RedisLike } from "../src/redis-like.ts";

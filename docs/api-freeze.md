@@ -1,7 +1,7 @@
 # API Freeze · v1.0
 
 > Status: **frozen as of v1.0.0** (2026-08-09, extended 2026-08-11 to cover
-> `@zebra/observability` and `@zebra/redis`). This document is the authoritative
+> `@zebra-web/observability` and `@zebra-web/redis`). This document is the authoritative
 > record of the v1 stable API surface. Everything listed here ships with a
 > stability promise; anything not listed here is internal and may change at any
 > time without a major version bump.
@@ -32,9 +32,9 @@ downstream consumers:
 
 - Anything exported from `src/` paths other than the package `index.ts`
   (`packages/*/src/**` internals are reachable in the repo but not published
-  API — imports like `@zebra/core/src/...` are not supported).
+  API — imports like `@zebra-web/core/src/...` are not supported).
 - Types and helpers marked `Internal` in their doc comments (e.g. the session
-  package's `RequestSessionInternal`, which is used by `@zebra/session`'s
+  package's `RequestSessionInternal`, which is used by `@zebra-web/session`'s
   middleware but is not part of the public index).
 - `VERSION`'s value: the string constant tracks the package version; its mere
   presence is stable, its value is not (it changes every release).
@@ -43,7 +43,7 @@ downstream consumers:
 
 ## 2. Version policy (SemVer)
 
-All packages (and the `zebra` facade) are released in lockstep at the same
+All packages (and the `@zebra-web/zebra` facade) are released in lockstep at the same
 version number. The policy below applies to each package and to the facade.
 
 ### Requires a **major** (2.0)
@@ -70,7 +70,7 @@ Any change that can break a consumer who uses the API as documented:
   input types (e.g. accepting `string | undefined` where `string` was accepted
   before).
 - Adding new members to interfaces and classes (additive only).
-- New packages published under the `@zebra/*` scope.
+- New packages published under the `@zebra-web/*` scope.
 - Backwards-compatible additions to error classes (new fields, new subclasses).
 
 ### Patch (1.x.y) is allowed for
@@ -88,31 +88,31 @@ Any change that can break a consumer who uses the API as documented:
   time (a change to `packages/*/src/**` that does not touch the index exports
   or documented behavior is never itself a breaking change — unless it leaks
   into observable behavior of the frozen surface).
-- The facade `zebra` inherits the breakage rules of everything it re-exports:
+- The facade `@zebra-web/zebra` inherits the breakage rules of everything it re-exports:
   a breaking change in any dependency package is a breaking change of the
   facade, hence a major for all.
 
 ## 3. Frozen surface (per package)
 
-### `zebra` (facade)
+### `@zebra-web/zebra` (facade)
 
-Re-exports the full surfaces of `@zebra/core`, `@zebra/cors`, and
-`@zebra/session`, plus `rateLimit`, `checkLimit`, `createLimiter`,
+Re-exports the full surfaces of `@zebra-web/core`, `@zebra-web/cors`, and
+`@zebra-web/session`, plus `rateLimit`, `checkLimit`, `createLimiter`,
 `RateLimitMemoryStore` (aliased `MemoryStore`), and the rate-limit types
 `IncrementResult`, `Limiter`, `RateLimitMemoryStoreOptions` (aliased
 `MemoryStoreOptions`), `RateLimitOptions`, `RateLimitResult`, `RateLimitStore`.
 
 Known asymmetry (documented, frozen): rate-limit's `MemoryStore` /
-`MemoryStoreOptions` collide with `@zebra/session`'s re-exports and are
-aliased in the facade. Import them unprefixed from `@zebra/rate-limit` directly
+`MemoryStoreOptions` collide with `@zebra-web/session`'s re-exports and are
+aliased in the facade. Import them unprefixed from `@zebra-web/rate-limit` directly
 when needed.
 
-`@zebra/contract`, `@zebra/client`, `@zebra/testing`, `@zebra/observability`,
-and `@zebra/redis` are intentionally NOT re-exported by the facade (keeps the
+`@zebra-web/contract`, `@zebra-web/client`, `@zebra-web/testing`, `@zebra-web/observability`,
+and `@zebra-web/redis` are intentionally NOT re-exported by the facade (keeps the
 facade tree-shakeable and dependency-light); import them from their own
 packages.
 
-### `@zebra/core`
+### `@zebra-web/core`
 
 - App: `Zebra`, type `ZebraOptions`, `RouteHandler`, `DepsSpec`, `ResolvedDeps`,
   `RegisteredRoute`, `GroupApi`, `LifecycleEvent`, `LifecycleHandler`,
@@ -157,25 +157,25 @@ packages.
 > Note: `head` / `options` / `route` are listed as stable `Zebra` members —
 > they have been part of the routing surface since the freeze audit (C1).
 
-### `@zebra/contract`
+### `@zebra-web/contract`
 
 `zc`, `prefix`, `METHODS`, types `StandardSchemaV1`, `ContractProcedure`,
 `ContractProcedureDef`, `ContractRouter`, `ErrorSpec`, `Method`,
 `ProcedureMeta`, `InferParams`, `InferQuery`, `InferBody`, `InferOutput`,
 `PathParams`, `JoinPath`.
 
-### `@zebra/client`
+### `@zebra-web/client`
 
 `createClient`, `ClientError`, types `StandardSchemaV1`, `ContractProcedureDef`,
 `Method`, `ErrorSpec`, `ProblemJson`, `isProcedure`, `ClientArgs`,
 `ClientOutput`, `ClientProcedure`, `ContractClient`, `ClientOptions`,
 `ContractProcedure`, `ContractRouter`.
 
-### `@zebra/testing`
+### `@zebra-web/testing`
 
 `createTestApp`, `createTestClient`, type `TestApp`.
 
-### `@zebra/session`
+### `@zebra-web/session`
 
 `sessionMiddleware`, `createSession`, `getSession`, `SESSION_KEY`,
 `PENDING_SET_COOKIES`, `MemoryStore`, `sign`, `verify`, `parseCookies`,
@@ -192,18 +192,18 @@ packages.
 > `RequestSessionInternal` was removed from the public index during the C1
 > freeze audit (v1.0.0): it is middleware-internal and was exported by accident.
 
-### `@zebra/cors`
+### `@zebra-web/cors`
 
 `cors`, `DEFAULT_ORIGIN`, `matchOrigin`, `resolveAllowOrigin`, types
 `CorsOptions`, `CorsOrigin`.
 
-### `@zebra/rate-limit`
+### `@zebra-web/rate-limit`
 
 `rateLimit`, `checkLimit`, `createLimiter`, `MemoryStore`, types
 `RateLimitOptions`, `Limiter`, `RateLimitResult`, `IncrementResult`,
 `MemoryStoreOptions`, `RateLimitStore`.
 
-### `@zebra/observability` *(frozen 2026-08-11)*
+### `@zebra-web/observability` *(frozen 2026-08-11)*
 
 `requestId`, `getRequestId`, `REQUEST_ID_KEY`, `accessLog`, `errorReporter`,
 `metrics`, `health`, types `RequestIdOptions`, `AccessLogEntry`,
@@ -211,7 +211,7 @@ packages.
 `MetricsHandle`, `MetricsMiddleware`, `MetricsSnapshot`, `HealthOptions`,
 `Probe`.
 
-### `@zebra/redis` *(frozen 2026-08-11)*
+### `@zebra-web/redis` *(frozen 2026-08-11)*
 
 `RedisRateLimitStore`, `RedisSessionStore`, types `RedisRateLimitStoreOptions`,
 `RedisSessionStoreOptions`, `RedisLike`.
@@ -220,37 +220,37 @@ packages.
 
 | Package               | Version | Status |
 | --------------------- | ------- | ------ |
-| zebra                 | 1.0.0   | frozen |
-| @zebra/core           | 1.0.0   | frozen |
-| @zebra/contract       | 1.0.0   | frozen |
-| @zebra/client         | 1.0.0   | frozen |
-| @zebra/testing        | 1.0.0   | frozen |
-| @zebra/session        | 1.0.0   | frozen |
-| @zebra/cors           | 1.0.0   | frozen |
-| @zebra/rate-limit     | 1.0.0   | frozen |
-| @zebra/observability  | 1.0.0   | frozen (2026-08-11) |
-| @zebra/redis          | 1.0.0   | frozen (2026-08-11) |
+| @zebra-web/zebra       | 1.0.0   | frozen |
+| @zebra-web/core           | 1.0.0   | frozen |
+| @zebra-web/contract       | 1.0.0   | frozen |
+| @zebra-web/client         | 1.0.0   | frozen |
+| @zebra-web/testing        | 1.0.0   | frozen |
+| @zebra-web/session        | 1.0.0   | frozen |
+| @zebra-web/cors           | 1.0.0   | frozen |
+| @zebra-web/rate-limit     | 1.0.0   | frozen |
+| @zebra-web/observability  | 1.0.0   | frozen (2026-08-11) |
+| @zebra-web/redis          | 1.0.0   | frozen (2026-08-11) |
 
 All packages are frozen at v1.0.0 (see §2 for the version policy). The
-`zebra` facade is the only place where aliasing intentionally deviates from
-dependency-package names (rate-limit `MemoryStore` collision, §3 `zebra`).
+`@zebra-web/zebra` facade is the only place where aliasing intentionally deviates from
+dependency-package names (rate-limit `MemoryStore` collision, §3 `@zebra-web/zebra`).
 
 ## 5. Audit record
 
 ### C1 (2026-08-09)
 
 - README / llms.txt export lists reconciled against the actual `index.ts`
-  exports of all eight packages (at the time: zebra, core, contract, client,
+  exports of all eight packages (at the time: @zebra-web/zebra, core, contract, client,
   testing, session, cors, rate-limit).
-- Removed `RequestSessionInternal` from `@zebra/session`'s public index
+- Removed `RequestSessionInternal` from `@zebra-web/session`'s public index
   (internal type leak).
 
 ### C5 (2026-08-11)
 
 - Freeze extended to the two packages added by the 07-lightweight-http work:
-  `@zebra/observability` (middleware suite: requestId / accessLog /
-  errorReporter / metrics / health) and `@zebra/redis` (Redis session &
+  `@zebra-web/observability` (middleware suite: requestId / accessLog /
+  errorReporter / metrics / health) and `@zebra-web/redis` (Redis session &
   rate-limit stores). Export lists reconciled against their `index.ts`.
 - `head` / `options` / `route` and the response helpers (`json` / `text` /
-  `html` / `redirect` / `stream`) recorded explicitly in the `@zebra/core`
+  `html` / `redirect` / `stream`) recorded explicitly in the `@zebra-web/core`
   frozen surface.

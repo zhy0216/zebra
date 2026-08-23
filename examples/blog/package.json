@@ -4,5 +4,5 @@
   "private": true,
   "type": "module",
   "scripts": { "start": "bun run src/main.ts", "test": "bun test" },
-  "dependencies": { "zebra": "workspace:*" }
+  "dependencies": { "@zebra-web/zebra": "workspace:*" }
 }

@@ -1,8 +1,8 @@
 import { expect, expectTypeOf, test } from "bun:test";
-import * as core from "@zebra/core";
-import * as cors from "@zebra/cors";
-import * as rateLimit from "@zebra/rate-limit";
-import * as session from "@zebra/session";
+import * as core from "@zebra-web/core";
+import * as cors from "@zebra-web/cors";
+import * as rateLimit from "@zebra-web/rate-limit";
+import * as session from "@zebra-web/session";
 
 import * as facade from "../src/index.ts";
 

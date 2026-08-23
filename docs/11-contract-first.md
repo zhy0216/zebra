@@ -2,14 +2,14 @@
 
 Zebra's contract-first pattern (oRPC style): **define the contract once**, then implement it server-side (`app.implement`) and call it client-side (`createClient` / `createTestClient`) — both derive types and runtime validation from the same contract.
 
-- `@zebra/contract` — the `zc` contract builder (Standard Schema V1, zero deps)
-- `@zebra/core` — `app.implement` (input/output validation)
-- `@zebra/client` — the derived type-safe client (zero deps)
+- `@zebra-web/contract` — the `zc` contract builder (Standard Schema V1, zero deps)
+- `@zebra-web/core` — `app.implement` (input/output validation)
+- `@zebra-web/client` — the derived type-safe client (zero deps)
 
 ## Building a contract
 
 ```ts
-import { zc } from "@zebra/contract";
+import { zc } from "@zebra-web/contract";
 import { z } from "zod";
 
 export const Blog = z.object({ id: z.number(), title: z.string(), content: z.string() });
@@ -56,7 +56,7 @@ Schemas are **Standard Schema V1**-compatible validators (zod 4, valibot, ...). 
 ### Composition: nested routers and `prefix()`
 
 ```ts
-import { prefix } from "@zebra/contract";
+import { prefix } from "@zebra-web/contract";
 
 const postContract = {
   list: zc.get("/"),
@@ -72,7 +72,7 @@ const api = {
 ### Type inference
 
 ```ts
-import type { InferBody, InferOutput, InferParams, InferQuery } from "@zebra/contract";
+import type { InferBody, InferOutput, InferParams, InferQuery } from "@zebra-web/contract";
 
 type CreateBody = InferBody<typeof blogContract.create>;   // { title: string; content: string }
 type BlogOut = InferOutput<typeof blogContract.get>;        // Blog
@@ -81,7 +81,7 @@ type BlogOut = InferOutput<typeof blogContract.get>;        // Blog
 ## Server-side: `app.implement`
 
 ```ts
-import { Zebra } from "@zebra/core";
+import { Zebra } from "@zebra-web/core";
 import { blogContract } from "./contract";
 
 const app = new Zebra();
@@ -145,7 +145,7 @@ app.implement(
 ## Client-side: `createClient`
 
 ```ts
-import { createClient } from "@zebra/client";
+import { createClient } from "@zebra-web/client";
 import { blogContract } from "./contract";
 
 const client = createClient(blogContract, {
@@ -183,7 +183,7 @@ interface ClientArgs<Def> = {
 Non-2xx responses throw `ClientError`:
 
 ```ts
-import { ClientError } from "@zebra/client";
+import { ClientError } from "@zebra-web/client";
 
 try {
   await client.get({ params: { id: 999 } });
@@ -201,10 +201,10 @@ Code derivation: prefer `type: "https://errors.zebra.dev/<code>"`, else map from
 
 ## Testing: `createTestClient`
 
-[`@zebra/testing`](12-testing.md)'s `createTestClient` connects the same contract to an in-process `TestApp`, zero sockets:
+[`@zebra-web/testing`](12-testing.md)'s `createTestClient` connects the same contract to an in-process `TestApp`, zero sockets:
 
 ```ts
-import { createTestApp, createTestClient } from "@zebra/testing";
+import { createTestApp, createTestClient } from "@zebra-web/testing";
 
 const app = createTestApp();  // or a composition root like buildForumApp()
 // ... register routes/contracts ...

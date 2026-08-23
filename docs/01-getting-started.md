@@ -5,15 +5,15 @@ Zebra is a Bun-first TypeScript web framework. This guide covers installation, c
 ## Install
 
 ```sh
-bun add zebra reflect-metadata
+bun add @zebra-web/zebra reflect-metadata
 ```
 
-`zebra` is the public facade — it re-exports `@zebra/core`, `@zebra/session`, `@zebra/cors`, and (aliased) `@zebra/rate-limit`. You can also install individual sub-packages directly:
+`@zebra-web/zebra` is the public facade — it re-exports `@zebra-web/core`, `@zebra-web/session`, `@zebra-web/cors`, and (aliased) `@zebra-web/rate-limit`. You can also install individual sub-packages directly:
 
 ```sh
-bun add @zebra/contract @zebra/client @zebra/testing
-bun add @zebra/session @zebra/cors @zebra/rate-limit
-bun add @zebra/observability @zebra/redis
+bun add @zebra-web/contract @zebra-web/client @zebra-web/testing
+bun add @zebra-web/session @zebra-web/cors @zebra-web/rate-limit
+bun add @zebra-web/observability @zebra-web/redis
 ```
 
 ## Runtime requirements
@@ -37,14 +37,14 @@ Import `reflect-metadata` once, before anything else:
 
 ```ts
 import "reflect-metadata";
-import { Zebra } from "zebra";
+import { Zebra } from "@zebra-web/zebra";
 ```
 
 ## First app
 
 ```ts
 import "reflect-metadata";
-import { Zebra } from "zebra";
+import { Zebra } from "@zebra-web/zebra";
 
 const z = new Zebra();
 
@@ -73,7 +73,7 @@ Declare dependencies with the `@injectable()` decorator, register them on the `Z
 
 ```ts
 import "reflect-metadata";
-import { Zebra, injectable } from "zebra";
+import { Zebra, injectable } from "@zebra-web/zebra";
 
 @injectable()
 class Greeter {
@@ -109,7 +109,7 @@ A handler's return value is encoded by `Zebra.toResponse`:
 For tests that mock specific bindings, or apps that share a container, construct one explicitly:
 
 ```ts
-import { Container, Zebra } from "zebra";
+import { Container, Zebra } from "@zebra-web/zebra";
 
 const container = new Container();
 container.bind(IRepo).to(MockRepo);

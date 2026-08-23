@@ -66,7 +66,7 @@ WebSocket.
 
 `test/forum.test.ts` builds the *same* `buildForumApp()` the server uses and
 drives it through `app.dispatch()`, so the tests hit real middleware, session
-signing and rate limiting. `@zebra/testing`'s `createTestApp` /
+signing and rate limiting. `@zebra-web/testing`'s `createTestApp` /
 `createTestClient` are the socket-free helpers for plain `Zebra` apps (see
 `examples/contract-blog`); this example uses the real app + `createClient`
 with a cookie jar because auth flows need the `sid` cookie to persist.

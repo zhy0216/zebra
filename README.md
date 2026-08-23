@@ -18,7 +18,7 @@ A Bun-first TypeScript web framework with first-class DI.
 ## Install
 
 ```sh
-bun add zebra reflect-metadata
+bun add @zebra-web/zebra reflect-metadata
 ```
 
 Decorator support is required in your `tsconfig.json`:
@@ -47,7 +47,7 @@ Import `reflect-metadata` once at your entry point, before anything else.
 
 ```ts
 import "reflect-metadata";
-import { Zebra } from "zebra";
+import { Zebra } from "@zebra-web/zebra";
 
 const z = new Zebra();
 
@@ -66,7 +66,7 @@ With dependencies, register them on the `Zebra` instance and pull them into rout
 
 ```ts
 import "reflect-metadata";
-import { Zebra, injectable } from "zebra";
+import { Zebra, injectable } from "@zebra-web/zebra";
 
 @injectable() class Greeter { greet(n: string) { return `hi, ${n}`; } }
 
@@ -83,7 +83,7 @@ await z.listen({ port: 3000 });
 For tests that mock specific bindings or apps that share a container, construct one explicitly:
 
 ```ts
-import { Container, Zebra } from "zebra";
+import { Container, Zebra } from "@zebra-web/zebra";
 
 const container = new Container();
 container.bind(IRepo).to(MockRepo);
@@ -103,12 +103,12 @@ const z = new Zebra({ container });
 - **Lifecycle** — boot/ready/shutdown hooks, graceful draining, and disposable cleanup wired to `Bun.serve`.
 - **Events** — unified async `EventBus` (`on` / `once` / `off` / `emit`, single payload per event, type-safe via a global `ZebraEvents` interface you extend), plus built-in request (`before.request` / `after.request` / `request.error`) and middleware (`before.middleware` / `after.middleware` / `middleware.error`) events.
 - **Session-scoped DI** — session-id resolution, idle TTL, explicit `disposeSession()`, and request-local anonymous sessions.
-- **Cookie sessions** — `@zebra/session` middleware: HMAC-SHA256 signed `sid` cookies, `req.ctx.session` read/write with `getSession(req)`, pluggable `SessionStore` (in-memory default), rolling TTL renewal, and session-fixation protection (destroyed/expired ids are never revived). Cookies are `HttpOnly` + `SameSite=Lax` by default; `cookie: { preset: "plain" }` restores a flag-free cookie.
-- **CORS** — `@zebra/cors` middleware: origin allowlists (string/array/RegExp/predicate), preflight handling (204 + full header set), credentials with exact-origin echo, `Vary: Origin` on dynamic matches.
-- **Rate limiting** — `@zebra/rate-limit` middleware: fixed-window per-key counters (lazy window rotation, atomic increments), pluggable `RateLimitStore` (in-memory default), 429 Problem+Json with `X-RateLimit-*` / `Retry-After` headers. Keys default to the socket peer IP (`req.ip`); `x-forwarded-for` is only trusted with `trustProxy: true` (required behind a proxy that overwrites it — otherwise clients can spoof their own budget).
+- **Cookie sessions** — `@zebra-web/session` middleware: HMAC-SHA256 signed `sid` cookies, `req.ctx.session` read/write with `getSession(req)`, pluggable `SessionStore` (in-memory default), rolling TTL renewal, and session-fixation protection (destroyed/expired ids are never revived). Cookies are `HttpOnly` + `SameSite=Lax` by default; `cookie: { preset: "plain" }` restores a flag-free cookie.
+- **CORS** — `@zebra-web/cors` middleware: origin allowlists (string/array/RegExp/predicate), preflight handling (204 + full header set), credentials with exact-origin echo, `Vary: Origin` on dynamic matches.
+- **Rate limiting** — `@zebra-web/rate-limit` middleware: fixed-window per-key counters (lazy window rotation, atomic increments), pluggable `RateLimitStore` (in-memory default), 429 Problem+Json with `X-RateLimit-*` / `Retry-After` headers. Keys default to the socket peer IP (`req.ip`); `x-forwarded-for` is only trusted with `trustProxy: true` (required behind a proxy that overwrites it — otherwise clients can spoof their own budget).
 - **WebSocket** — `app.ws(path, handler)`: upgrade path wired into `Bun.serve` with radix-router params, DI-resolved upgrade decision (`onUpgrade` + `upgrade()` → 401/500 on rejection), `open`/`message`/`close` aligned to Bun semantics, `ws.data.session` reachable via the session middleware's `wsSession` hook. Note: upgrade requests bypass `app.use` global middleware (upgrade runs before the composed middleware chain).
-- **Testing** — `@zebra/testing` `createTestApp` runs requests in-process without opening sockets; `createTestClient` gives a typed contract client over that app.
-- **Contract-first** — `@zebra/contract` (Standard Schema V1 builder + protocol), `app.implement` with input/output validation, `@zebra/client` (derived typed client, zero deps).
+- **Testing** — `@zebra-web/testing` `createTestApp` runs requests in-process without opening sockets; `createTestClient` gives a typed contract client over that app.
+- **Contract-first** — `@zebra-web/contract` (Standard Schema V1 builder + protocol), `app.implement` with input/output validation, `@zebra-web/client` (derived typed client, zero deps).
 
 ## Examples
 
@@ -136,26 +136,26 @@ bun --filter example-better-auth test         # in-process integration tests
 
 | Package           | What it is                                          |
 | ----------------- | --------------------------------------------------- |
-| `zebra`           | Public facade — re-exports `@zebra/core`, `@zebra/session` |
-| `@zebra/core`     | App, DI container, router, HTTP, middleware, `implement`, event bus |
-| `@zebra/contract` | Contract builder + protocol (Standard Schema V1, zero deps) |
-| `@zebra/client`   | Derived type-safe client (zero deps)                |
-| `@zebra/session`  | Cookie sessions: HMAC-signed `sid`, pluggable store, fixation-safe |
-| `@zebra/cors`     | CORS middleware: preflight, origin allowlists, credentials echo |
-| `@zebra/rate-limit` | Fixed-window rate limiting: 429 Problem+Json, `X-RateLimit-*` headers, pluggable store |
-| `@zebra/testing`  | `createTestApp` / `createTestClient` in-process     |
+| `@zebra-web/zebra`           | Public facade — re-exports `@zebra-web/core`, `@zebra-web/session` |
+| `@zebra-web/core`     | App, DI container, router, HTTP, middleware, `implement`, event bus |
+| `@zebra-web/contract` | Contract builder + protocol (Standard Schema V1, zero deps) |
+| `@zebra-web/client`   | Derived type-safe client (zero deps)                |
+| `@zebra-web/session`  | Cookie sessions: HMAC-signed `sid`, pluggable store, fixation-safe |
+| `@zebra-web/cors`     | CORS middleware: preflight, origin allowlists, credentials echo |
+| `@zebra-web/rate-limit` | Fixed-window rate limiting: 429 Problem+Json, `X-RateLimit-*` headers, pluggable store |
+| `@zebra-web/testing`  | `createTestApp` / `createTestClient` in-process     |
 
 ## Status
 
 **v1.0.0 is in preparation: API freeze is complete.** The public API surface of
-all packages (`zebra` facade, `@zebra/core`, `@zebra/contract`, `@zebra/client`,
-`@zebra/testing`, `@zebra/session`, `@zebra/cors`, `@zebra/rate-limit`) is frozen
+all packages (`@zebra-web/zebra` facade, `@zebra-web/core`, `@zebra-web/contract`, `@zebra-web/client`,
+`@zebra-web/testing`, `@zebra-web/session`, `@zebra-web/cors`, `@zebra-web/rate-limit`) is frozen
 as of [docs/api-freeze.md](docs/api-freeze.md) — that document defines the v1
 stability promise and the SemVer version policy (what requires a major). The
 framework includes DI (singleton / request / session / transient scopes), radix
 router, middleware, lifecycle, static files, WebSocket (`app.ws()` with DI
-upgrade decision), contract-first (`@zebra/contract`, `app.implement`,
-`@zebra/client`, `createTestClient`), cookie sessions, CORS, rate limiting, and
+upgrade decision), contract-first (`@zebra-web/contract`, `app.implement`,
+`@zebra-web/client`, `createTestClient`), cookie sessions, CORS, rate limiting, and
 testing helpers. Final v1.0.0 release tracks the remaining C2–C4 items (docs
 site, benchmarks, release pipeline).
 
@@ -177,8 +177,15 @@ no `dist/` leakage), exports/types resolution, runtime imports, and a tsgo
 typecheck of the installed packages. It guards the src-direct strategy above.
 
 Versions are bumped in lockstep across all packages by
-[`scripts/release.ts`](scripts/release.ts) (`bun run release -- --version X.Y.Z`),
-which also writes the [CHANGELOG](CHANGELOG.md) section from Conventional
+[`scripts/release.ts`](scripts/release.ts). For a public npm release, pass the
+official registry explicitly:
+
+```sh
+bun run release -- --version X.Y.Z --registry https://registry.npmjs.org
+bun run release -- --version X.Y.Z --registry https://registry.npmjs.org --publish
+```
+
+The script also writes the [CHANGELOG](CHANGELOG.md) section from Conventional
 Commits. See [CONTRIBUTING.md](CONTRIBUTING.md) and
 [SECURITY.md](SECURITY.md).
 

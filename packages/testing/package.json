@@ -1,5 +1,5 @@
 {
-  "name": "@zebra/testing",
+  "name": "@zebra-web/testing",
   "version": "1.0.0",
   "type": "module",
   "main": "./src/index.ts",
@@ -7,18 +7,23 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "bun test",
     "typecheck": "tsgo --noEmit",
     "build": "bun build src/index.ts --outdir dist --target bun --packages external"
   },
   "dependencies": {
-    "@zebra/core": "workspace:*",
-    "@zebra/client": "workspace:*"
+    "@zebra-web/core": "workspace:*",
+    "@zebra-web/client": "workspace:*"
   },
   "devDependencies": {
-    "@zebra/contract": "workspace:*",
+    "@zebra-web/contract": "workspace:*",
     "zod": "^4"
   }
 }

@@ -15,7 +15,7 @@ type Middleware = (
 `req` 就是路由 handler 拿到的那个 `ZebraRequest`（同一次请求共享同一个对象，所以中间件可以通过 `req.ctx` 传递数据）。`next()` 返回下游最终产出的 `Response`，中间件可以包装它（改头、包 body）后返回，也可以直接短路返回自己的响应。
 
 ```ts
-import type { Middleware } from "zebra";
+import type { Middleware } from "@zebra-web/zebra";
 
 const timing: Middleware = async (req, next) => {
   const start = performance.now();
@@ -44,7 +44,7 @@ z.use(timing);
 想让中间件声明 DI 依赖，用 `middleware(deps, fn)` 包装，第三个参数拿到解析好的依赖：
 
 ```ts
-import { middleware } from "zebra";
+import { middleware } from "@zebra-web/zebra";
 
 const requireAuth = middleware({ session: AuthService }, async (req, next, { session }) => {
   const user = await session.userFrom(req);
@@ -89,14 +89,14 @@ Zebra 自带错误中间件，是**管道最外层**的包装：
 }
 ```
 
-自定义错误处理：在 `app.use` 里注册你自己的错误中间件（必须在 `next()` 外层 catch），或者用 `@zebra/observability` 的 `errorReporter` 只做上报不改响应（见 [可观测性](13-observability.md)）。
+自定义错误处理：在 `app.use` 里注册你自己的错误中间件（必须在 `next()` 外层 catch），或者用 `@zebra-web/observability` 的 `errorReporter` 只做上报不改响应（见 [可观测性](13-observability.md)）。
 
 ## 约束与语义
 
 - `next()` 只能调用一次；重复调用抛错。
 - 中间件短路（不调用 `next()`）时返回的响应会直接成为最终响应——下游 handler 不会执行。
 - 中间件在 `listen()` 前注册；之后注册抛错。
-- 内置中间件包（`@zebra/session`、`@zebra/cors`、`@zebra/rate-limit`、`@zebra/observability`）都是普通 `Middleware`，直接 `app.use` 即可。
+- 内置中间件包（`@zebra-web/session`、`@zebra-web/cors`、`@zebra-web/rate-limit`、`@zebra-web/observability`）都是普通 `Middleware`，直接 `app.use` 即可。
 
 ## 下一步
 

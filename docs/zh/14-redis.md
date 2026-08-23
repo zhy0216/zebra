@@ -1,11 +1,11 @@
-# Redis 存储适配（@zebra/redis）
+# Redis 存储适配（@zebra-web/redis）
 
-`@zebra/redis` 为 `@zebra/session` 与 `@zebra/rate-limit` 提供 Redis 后端 store。**零运行时依赖**：不绑定任何 Redis 客户端，只要求你传入的客户端实现一个极小的鸭子类型接口（`RedisLike`）——ioredis、node-redis、Bun.redis 都行。
+`@zebra-web/redis` 为 `@zebra-web/session` 与 `@zebra-web/rate-limit` 提供 Redis 后端 store。**零运行时依赖**：不绑定任何 Redis 客户端，只要求你传入的客户端实现一个极小的鸭子类型接口（`RedisLike`）——ioredis、node-redis、Bun.redis 都行。
 
 ## 安装
 
 ```sh
-bun add @zebra/redis
+bun add @zebra-web/redis
 ```
 
 ## RedisLike 接口
@@ -43,8 +43,8 @@ const adapted = {
 `RateLimitStore` 的 Redis 实现，语义与 `MemoryStore` 完全一致（固定窗口、惰性开窗、计数含当前请求）：
 
 ```ts
-import { rateLimit } from "@zebra/rate-limit";
-import { RedisRateLimitStore } from "@zebra/redis";
+import { rateLimit } from "@zebra-web/rate-limit";
+import { RedisRateLimitStore } from "@zebra-web/redis";
 
 const store = new RedisRateLimitStore(redisClient, { prefix: "myapp:rl:" });
 
@@ -72,8 +72,8 @@ Key 布局：
 `SessionStore` 的 Redis 实现：
 
 ```ts
-import { sessionMiddleware } from "@zebra/session";
-import { RedisSessionStore } from "@zebra/redis";
+import { sessionMiddleware } from "@zebra-web/session";
+import { RedisSessionStore } from "@zebra-web/redis";
 
 const store = new RedisSessionStore(redisClient, { ttl: 30 * 60 * 1000 });
 const session = sessionMiddleware({ secret, store });
@@ -92,7 +92,7 @@ Key 布局（全部键带 Redis TTL，数据过期委托给 Redis `PX`，客户�
 
 - `destroy` 删除数据键并写短 TTL tombstone；`get` / `set` / `touch` 把已 tombstone 的 id 视为缺失——在途请求永远无法复活已销毁会话。
 - `get` 每次读都复查 tombstone，同时掩盖了竞态 `set` 留下的记录（它们随 TTL 过期）。
-- 数据 JSON 编码，所以会话数据必须可 JSON 序列化（`@zebra/session` 持久化的东西都满足）；损坏的 payload 读作缺失，而不是每个请求都失败。
+- 数据 JSON 编码，所以会话数据必须可 JSON 序列化（`@zebra-web/session` 持久化的东西都满足）；损坏的 payload 读作缺失，而不是每个请求都失败。
 
 > 与 `MemoryStore` 的差异：`MemoryStore` 的检查-写入在同一段同步代码里，单进程内原子；跨 Redis 时 tombstone 检查与写入是两次往返，检查与写入之间可能插入并发 `destroy`。读者始终安全（`get` 复查 tombstone）；彻底关闭写窗口需要 Lua 脚本，刻意不在范围内（接口只讲普通命令）。
 

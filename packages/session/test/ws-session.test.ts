@@ -8,8 +8,8 @@
 
 import "reflect-metadata";
 import { expect, test } from "bun:test";
-import type { ZebraRequest } from "@zebra/core";
-import { Zebra } from "@zebra/core";
+import type { ZebraRequest } from "@zebra-web/core";
+import { Zebra } from "@zebra-web/core";
 
 import { MemoryStore, getSession, sessionMiddleware, verify } from "../src/index.ts";
 import type { RequestSession } from "../src/session.ts";

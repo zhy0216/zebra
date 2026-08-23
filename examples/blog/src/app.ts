@@ -1,4 +1,4 @@
-import { HttpError, Zebra } from "zebra";
+import { HttpError, Zebra } from "@zebra-web/zebra";
 import { BlogRepo, BlogService } from "./services.ts";
 
 /** Composition root: everything main.ts runs, without the listen(). */

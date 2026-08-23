@@ -5,7 +5,7 @@
 ## 快速开始
 
 ```ts
-import { Zebra } from "zebra";
+import { Zebra } from "@zebra-web/zebra";
 
 const app = new Zebra();
 
@@ -82,15 +82,15 @@ interface WsData {
 ```
 
 - `params` 是路由参数（`/chat/:room` 的 `room`）。
-- `session` 由 `ZebraOptions.session.wsSession` 钩子填充（通常来自 `@zebra/session` 的 `RequestSession`）。未配置钩子或匿名连接时为 `undefined`，不报错。
+- `session` 由 `ZebraOptions.session.wsSession` 钩子填充（通常来自 `@zebra-web/session` 的 `RequestSession`）。未配置钩子或匿名连接时为 `undefined`，不报错。
 - `upgrade()` 的返回对象展开为其余字段；`session` 是保留字段（upgrade 返回的同名键会被覆盖）。
 
 ## 会话与 WebSocket
 
-用 `@zebra/session` 时，把 `sessionMiddleware()` 返回的 `wsSession` 接进 Zebra 构造选项：
+用 `@zebra-web/session` 时，把 `sessionMiddleware()` 返回的 `wsSession` 接进 Zebra 构造选项：
 
 ```ts
-import { sessionMiddleware } from "@zebra/session";
+import { sessionMiddleware } from "@zebra-web/session";
 
 const session = sessionMiddleware({ secret, cookie: { preset: "secure" } });
 

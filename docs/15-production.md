@@ -22,11 +22,11 @@ CMD ["bun", "run", "src/main.ts"]
 ### Production recommendations
 
 - **`NODE_ENV=production`**: the benchmark scenarios also run in production mode.
-- **Health checks**: mount `@zebra/observability`'s `health()` (`/healthz` liveness + `/readyz` readiness) so load balancers get a decision (see [Observability](13-observability.md)).
+- **Health checks**: mount `@zebra-web/observability`'s `health()` (`/healthz` liveness + `/readyz` readiness) so load balancers get a decision (see [Observability](13-observability.md)).
 - **Graceful shutdown**: `SIGTERM` / `SIGINT` trigger `z.stop()` automatically — in-flight requests drain (within `gracePeriod`, default 10s), then the container is disposed and `shutdown` hooks run (see [Lifecycle](06-lifecycle.md)).
 - **Request timeout**: `requestTimeout` sets a per-request deadline; a timeout answers 504 `request_timeout` (see [HTTP](05-http.md#request-timeout)).
 - **Behind a proxy**: if your reverse proxy **overwrites** `x-forwarded-for`, enable `trustProxy: true` so rate limiting keys on the real client IP (otherwise clients can spoof their own budget). `req.ip` always comes from the socket peer, independent of `trustProxy`.
-- **Multi-instance**: in-process `MemoryStore` sessions and rate-limit counters don't share across instances — use `@zebra/redis`'s `RedisSessionStore` / `RedisRateLimitStore` for multi-replica deployments (see [Redis](14-redis.md)).
+- **Multi-instance**: in-process `MemoryStore` sessions and rate-limit counters don't share across instances — use `@zebra-web/redis`'s `RedisSessionStore` / `RedisRateLimitStore` for multi-replica deployments (see [Redis](14-redis.md)).
 - **Session cookies**: in production use `cookie: { preset: "secure" }` (`HttpOnly` + `SameSite=Lax`).
 
 ## Release strategy: src-direct publishing
@@ -47,7 +47,7 @@ bun run build   # produces dist/ (--target bun --packages external) for bundler/
 All packages bump versions in lockstep via `scripts/release.ts`:
 
 ```sh
-bun run release -- --version 1.0.0
+bun run release -- --version 1.0.0 --registry https://registry.npmjs.org
 ```
 
 It validates SemVer → scans Conventional Commits (`feat` / `fix` / `docs` ...) → bumps every package → generates the [CHANGELOG](../CHANGELOG.md) sections.
@@ -107,7 +107,8 @@ bun run lint             # biome check
 bun run format           # biome format --write
 bun run build            # dist/ output (not in the tarball)
 bun run verify:packages  # tarball smoke test
-bun run release -- --version X.Y.Z  # lockstep versions + CHANGELOG
+bun run release -- --version X.Y.Z --registry https://registry.npmjs.org  # dry-run
+bun run release -- --version X.Y.Z --registry https://registry.npmjs.org --publish
 ```
 
 ## Next steps

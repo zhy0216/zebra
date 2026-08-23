@@ -8,7 +8,7 @@ export const WS_HANDLER = Symbol.for("zebra.ws.handler");
  * 连接数据（每个 ws 连接一份，生命周期 == 连接）：
  * - `params`：C1 路由路径参数；
  * - `session`：C4 会话句柄（可选；由 `ZebraOptions.session.wsSession` 钩子在升级时填充，
- *   类型由钩子定义，通常来自 @zebra/session 的 RequestSession）。未配置钩子或匿名连接
+ *   类型由钩子定义，通常来自 @zebra-web/session 的 RequestSession）。未配置钩子或匿名连接
  *   时为 `undefined`，不报错。保留字段——upgrade() 返回对象不应包含同名键（后者会被覆盖）。
  * - `[WS_HANDLER]`：归属路由，open/message/close 分发用；
  * - 其余字段：C2 展开 upgrade() 返回对象。
@@ -19,7 +19,7 @@ export const WS_HANDLER = Symbol.for("zebra.ws.handler");
  */
 export interface WsData {
   params: Record<string, string>;
-  /** C4: 会话句柄，见上。类型由 wsSession 钩子决定（core 不依赖 @zebra/session）。 */
+  /** C4: 会话句柄，见上。类型由 wsSession 钩子决定（core 不依赖 @zebra-web/session）。 */
   session?: unknown;
   [key: string]: unknown;
   [WS_HANDLER]?: WsHandler<any, any>;

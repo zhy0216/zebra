@@ -1,4 +1,4 @@
-import { HttpError, injectable } from "zebra";
+import { HttpError, injectable } from "@zebra-web/zebra";
 
 // ---------------------------------------------------------------------------
 // Domain types + in-memory persistence. Services are plain @injectable classes;

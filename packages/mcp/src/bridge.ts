@@ -1,5 +1,5 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import type { ContractProcedureDef } from "@zebra/contract";
+import type { ContractProcedureDef } from "@zebra-web/contract";
 
 /** Namespaced MCP tool arguments (`{ params, query, body }`), mirroring the client. */
 export interface McpArguments {

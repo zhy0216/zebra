@@ -1,18 +1,18 @@
-# 限流（@zebra/rate-limit）
+# 限流（@zebra-web/rate-limit）
 
-`@zebra/rate-limit` 提供固定窗口限流中间件：按 key 计数（惰性窗口轮转、原子自增）、可插拔 `RateLimitStore`（内存默认）、429 Problem+Json 响应带 `X-RateLimit-*` / `Retry-After` 头。
+`@zebra-web/rate-limit` 提供固定窗口限流中间件：按 key 计数（惰性窗口轮转、原子自增）、可插拔 `RateLimitStore`（内存默认）、429 Problem+Json 响应带 `X-RateLimit-*` / `Retry-After` 头。
 
 ## 安装
 
 ```sh
-bun add @zebra/rate-limit
+bun add @zebra-web/rate-limit
 ```
 
 ## 快速开始
 
 ```ts
-import { Zebra } from "@zebra/core";
-import { rateLimit } from "@zebra/rate-limit";
+import { Zebra } from "@zebra-web/core";
+import { rateLimit } from "@zebra-web/rate-limit";
 
 const app = new Zebra();
 
@@ -38,7 +38,7 @@ interface RateLimitOptions {
 限流 key 不一定要是 IP。登录场景通常按用户（或会话）限流：
 
 ```ts
-import { getSession } from "@zebra/session";
+import { getSession } from "@zebra-web/session";
 
 const writeLimit = rateLimit({
   windowMs: 60_000,
@@ -105,7 +105,7 @@ handler 正常执行，响应在返回路径包装上 `X-RateLimit-*` 头。hand
 ## 底层原语
 
 ```ts
-import { checkLimit, createLimiter } from "@zebra/rate-limit";
+import { checkLimit, createLimiter } from "@zebra-web/rate-limit";
 
 // 直接检查一个 key
 const { allowed, count, remaining, resetAt } = await checkLimit(store, key, windowMs, max);
@@ -127,14 +127,14 @@ interface RateLimitStore {
 ```
 
 - `MemoryStore({ windowMs })` —— 默认，进程内 Map。
-- 自建后端（Redis）实现该接口即可；`@zebra/redis` 已提供 `RedisRateLimitStore`（见 [Redis](14-redis.md)）。
+- 自建后端（Redis）实现该接口即可；`@zebra-web/redis` 已提供 `RedisRateLimitStore`（见 [Redis](14-redis.md)）。
 
 ## 门面导出
 
-从 `zebra` 门面导入时，`MemoryStore` 与 `RateLimitMemoryStore`（别名，避免与 session 包的 `MemoryStore` 冲突）：
+从 `@zebra-web/zebra` 门面导入时，`MemoryStore` 与 `RateLimitMemoryStore`（别名，避免与 session 包的 `MemoryStore` 冲突）：
 
 ```ts
-import { checkLimit, createLimiter, RateLimitMemoryStore, rateLimit } from "zebra";
+import { checkLimit, createLimiter, RateLimitMemoryStore, rateLimit } from "@zebra-web/zebra";
 ```
 
 ## 下一步

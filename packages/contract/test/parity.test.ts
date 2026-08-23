@@ -1,5 +1,5 @@
 import { expectTypeOf, test } from "bun:test";
-import type { JoinPath as CoreJoinPath, PathParams as CorePathParams } from "@zebra/core";
+import type { JoinPath as CoreJoinPath, PathParams as CorePathParams } from "@zebra-web/core";
 import type { JoinPath, PathParams } from "../src/path.ts";
 
 test("vendored PathParams is structurally identical to core's", () => {

@@ -1,18 +1,18 @@
-# Rate Limiting (@zebra/rate-limit)
+# Rate Limiting (@zebra-web/rate-limit)
 
-`@zebra/rate-limit` provides fixed-window rate limiting middleware: per-key counters (lazy window rotation, atomic increments), a pluggable `RateLimitStore` (in-memory default), and 429 Problem+Json responses with `X-RateLimit-*` / `Retry-After` headers.
+`@zebra-web/rate-limit` provides fixed-window rate limiting middleware: per-key counters (lazy window rotation, atomic increments), a pluggable `RateLimitStore` (in-memory default), and 429 Problem+Json responses with `X-RateLimit-*` / `Retry-After` headers.
 
 ## Install
 
 ```sh
-bun add @zebra/rate-limit
+bun add @zebra-web/rate-limit
 ```
 
 ## Quick start
 
 ```ts
-import { Zebra } from "@zebra/core";
-import { rateLimit } from "@zebra/rate-limit";
+import { Zebra } from "@zebra-web/core";
+import { rateLimit } from "@zebra-web/rate-limit";
 
 const app = new Zebra();
 
@@ -38,7 +38,7 @@ interface RateLimitOptions {
 The key doesn't have to be an IP. For logged-in apps, limit by user (or session):
 
 ```ts
-import { getSession } from "@zebra/session";
+import { getSession } from "@zebra-web/session";
 
 const writeLimit = rateLimit({
   windowMs: 60_000,
@@ -105,7 +105,7 @@ The handler runs normally; the response is wrapped with `X-RateLimit-*` headers 
 ## Low-level primitives
 
 ```ts
-import { checkLimit, createLimiter } from "@zebra/rate-limit";
+import { checkLimit, createLimiter } from "@zebra-web/rate-limit";
 
 // check a single key directly
 const { allowed, count, remaining, resetAt } = await checkLimit(store, key, windowMs, max);
@@ -127,14 +127,14 @@ interface RateLimitStore {
 ```
 
 - `MemoryStore({ windowMs })` — default, in-process Map.
-- Roll your own backend (Redis) by implementing the interface; `@zebra/redis` ships `RedisRateLimitStore` (see [Redis](14-redis.md)).
+- Roll your own backend (Redis) by implementing the interface; `@zebra-web/redis` ships `RedisRateLimitStore` (see [Redis](14-redis.md)).
 
 ## Facade exports
 
-Imported from the `zebra` facade, `MemoryStore` is aliased to `RateLimitMemoryStore` (avoiding the collision with session's `MemoryStore`):
+Imported from the `@zebra-web/zebra` facade, `MemoryStore` is aliased to `RateLimitMemoryStore` (avoiding the collision with session's `MemoryStore`):
 
 ```ts
-import { checkLimit, createLimiter, RateLimitMemoryStore, rateLimit } from "zebra";
+import { checkLimit, createLimiter, RateLimitMemoryStore, rateLimit } from "@zebra-web/zebra";
 ```
 
 ## Next steps

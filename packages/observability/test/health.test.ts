@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createTestApp } from "@zebra/testing";
+import { createTestApp } from "@zebra-web/testing";
 
 import { health } from "../src/index.ts";
 

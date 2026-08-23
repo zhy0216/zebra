@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { Zebra, token } from "zebra";
+import { Zebra, token } from "@zebra-web/zebra";
 import { type BenchServer, JSON_PAYLOAD, MIDDLEWARE_LAYERS } from "./scenarios.ts";
 
 const STATIC_ROOT = join(import.meta.dir, "fixtures/static");

@@ -1,18 +1,18 @@
-# Cookie Sessions (@zebra/session)
+# Cookie Sessions (@zebra-web/session)
 
-`@zebra/session` provides signed-cookie server-side sessions: HMAC-SHA256-signed `sid` cookies, a pluggable `SessionStore` (in-memory by default), rolling TTL renewal, and session-fixation protection. It also bridges into core's session-scoped DI via its `resolver`.
+`@zebra-web/session` provides signed-cookie server-side sessions: HMAC-SHA256-signed `sid` cookies, a pluggable `SessionStore` (in-memory by default), rolling TTL renewal, and session-fixation protection. It also bridges into core's session-scoped DI via its `resolver`.
 
 ## Install
 
 ```sh
-bun add @zebra/session
+bun add @zebra-web/session
 ```
 
 ## Quick start
 
 ```ts
-import { Zebra } from "@zebra/core";
-import { sessionMiddleware } from "@zebra/session";
+import { Zebra } from "@zebra-web/core";
+import { sessionMiddleware } from "@zebra-web/session";
 
 const session = sessionMiddleware({
   secret: "a-long-random-secret",
@@ -117,7 +117,7 @@ interface SessionStore {
 ```
 
 - `MemoryStore({ ttl })` — default, `Map`-backed, lazy sweep (at most `SWEEP_BUDGET` entries per access), no timers, no leaks; TTL in ms.
-- Roll your own backend (Redis / Postgres): implement this interface. `@zebra/redis` ships `RedisSessionStore` (see [Redis](14-redis.md)).
+- Roll your own backend (Redis / Postgres): implement this interface. `@zebra-web/redis` ships `RedisSessionStore` (see [Redis](14-redis.md)).
 
 ## TTL ownership
 
@@ -131,8 +131,8 @@ To reclaim both immediately (logout), combine `session.destroy()` (store layer) 
 ## Logout pattern
 
 ```ts
-import { HttpError } from "@zebra/core";
-import { getSession } from "@zebra/session";
+import { HttpError } from "@zebra-web/core";
+import { getSession } from "@zebra-web/session";
 
 z.post("/logout", async (req) => {
   const s = getSession(req);

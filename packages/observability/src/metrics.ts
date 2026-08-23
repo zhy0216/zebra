@@ -1,4 +1,4 @@
-import type { Middleware } from "@zebra/core";
+import type { Middleware } from "@zebra-web/core";
 
 export interface MetricsOptions {
   /** Called once per completed request with the current snapshot. */

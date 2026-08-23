@@ -1,17 +1,17 @@
-# Testing (@zebra/testing)
+# Testing (@zebra-web/testing)
 
-`@zebra/testing` provides in-process testing: `createTestApp` drives requests through the **entire pipeline without opening a socket** (graph validation, middleware chain, DI scopes, error middleware), and `createTestClient` connects a contract client to the same in-process app. Tests run the exact composition your server runs.
+`@zebra-web/testing` provides in-process testing: `createTestApp` drives requests through the **entire pipeline without opening a socket** (graph validation, middleware chain, DI scopes, error middleware), and `createTestClient` connects a contract client to the same in-process app. Tests run the exact composition your server runs.
 
 ## Install
 
 ```sh
-bun add @zebra/testing
+bun add @zebra-web/testing
 ```
 
 ## createTestApp
 
 ```ts
-import { createTestApp } from "@zebra/testing";
+import { createTestApp } from "@zebra-web/testing";
 
 const app = createTestApp();
 
@@ -45,7 +45,7 @@ export function buildForumApp(opts: ForumAppOptions = {}): Zebra {
 }
 
 // app.test.ts
-import { createTestApp } from "@zebra/testing";
+import { createTestApp } from "@zebra-web/testing";
 import { buildForumApp } from "./app";
 
 function makeApp() {
@@ -63,7 +63,7 @@ function makeApp() {
 Connect a contract client to the in-process app — **socket-free end-to-end type-safe tests**:
 
 ```ts
-import { createTestApp, createTestClient } from "@zebra/testing";
+import { createTestApp, createTestClient } from "@zebra-web/testing";
 import { blogContract } from "./contract";
 
 const app = createTestApp();
@@ -113,7 +113,7 @@ test("validation error surfaces as typed ClientError", async () => {
 Middleware tests work exactly like production — `app.use` then drive with `app.request`:
 
 ```ts
-import { sessionMiddleware } from "@zebra/session";
+import { sessionMiddleware } from "@zebra-web/session";
 
 const session = sessionMiddleware({ secret: "test-secret" });
 const app = createTestApp({ session: { resolver: session.resolver } });

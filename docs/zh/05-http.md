@@ -26,7 +26,7 @@ interface ZebraRequest<P, B, Q> {
 
 - `query` 来自 `url.searchParams`，重复键取最后一个。
 - `req.ctx` 是请求级共享状态（中间件写、handler 读），见 [中间件](04-middleware.md#通过-reqctx-传递数据)。
-- `req.ip` 来自 `Bun.serve` 的 `server.requestIP(req)`，**永远不从 header 推导**；没有 Bun server（如 `app.dispatch()` 测试）时为 `undefined`。`x-forwarded-for` 只有在显式配置 `trustProxy` 时才被读取（由中间件如 `@zebra/rate-limit` 处理）。
+- `req.ip` 来自 `Bun.serve` 的 `server.requestIP(req)`，**永远不从 header 推导**；没有 Bun server（如 `app.dispatch()` 测试）时为 `undefined`。`x-forwarded-for` 只有在显式配置 `trustProxy` 时才被读取（由中间件如 `@zebra-web/rate-limit` 处理）。
 
 ## 请求体
 
@@ -69,7 +69,7 @@ const z = new Zebra({
 
 ## 响应 helpers
 
-来自 `@zebra/core`（`zebra` 门面同样导出）。默认 content-type / 状态：
+来自 `@zebra-web/core`（`@zebra-web/zebra` 门面同样导出）。默认 content-type / 状态：
 
 | Helper | 默认 content-type | 默认状态 |
 | --- | --- | --- |
@@ -80,7 +80,7 @@ const z = new Zebra({
 | `redirect(url)` | —（无 body） | 302 |
 
 ```ts
-import { html, json, redirect, stream, text } from "zebra";
+import { html, json, redirect, stream, text } from "@zebra-web/zebra";
 
 z.get("/api", () => json({ ok: true }));
 z.get("/plain", () => text("hello"));          // 无引号的原文
@@ -100,7 +100,7 @@ z.get("/old", () => redirect("/new"));         // 或 { status: 301 }
 ### 抛出结构化错误
 
 ```ts
-import { HttpError } from "zebra";
+import { HttpError } from "@zebra-web/zebra";
 
 throw new HttpError(404, "board_not_found", "No such board");
 throw new HttpError(429, "rate_limit_exceeded", "Too Many Requests", { limit: 10 }, {
@@ -136,7 +136,7 @@ class HttpError extends Error {
 
 ### ValidationError
 
-`@zebra/core` 的 `ValidationError` 携带 `ValidationIssue[]`（`path` + `message`），渲染为 422 Problem+Json，`errors` 数组列出每个字段。契约实现（`app.implement`）的入参校验失败就是这个形状。
+`@zebra-web/core` 的 `ValidationError` 携带 `ValidationIssue[]`（`path` + `message`），渲染为 422 Problem+Json，`errors` 数组列出每个字段。契约实现（`app.implement`）的入参校验失败就是这个形状。
 
 ### 错误一览（内置 `code`）
 

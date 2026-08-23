@@ -15,7 +15,7 @@ type Middleware = (
 `req` is the same `ZebraRequest` the route handler receives (all middleware for one request share the same object, so `req.ctx` can carry data down the chain). `next()` resolves to the final downstream `Response`; a middleware can wrap it (change headers, wrap the body), short-circuit with its own response, or let it through unchanged.
 
 ```ts
-import type { Middleware } from "zebra";
+import type { Middleware } from "@zebra-web/zebra";
 
 const timing: Middleware = async (req, next) => {
   const start = performance.now();
@@ -44,7 +44,7 @@ Execution order: global → ancestor groups → group → route-level.
 To declare DI deps in a middleware, wrap it with `middleware(deps, fn)` — the third argument receives the resolved deps:
 
 ```ts
-import { middleware } from "zebra";
+import { middleware } from "@zebra-web/zebra";
 
 const requireAuth = middleware({ session: AuthService }, async (req, next, { session }) => {
   const user = await session.userFrom(req);
@@ -89,14 +89,14 @@ Zebra ships an error middleware that wraps the outermost layer of the pipeline:
 }
 ```
 
-Custom error handling: register your own error middleware in `app.use` (catching around `next()`), or use `@zebra/observability`'s `errorReporter` to only report without changing the response (see [Observability](13-observability.md)).
+Custom error handling: register your own error middleware in `app.use` (catching around `next()`), or use `@zebra-web/observability`'s `errorReporter` to only report without changing the response (see [Observability](13-observability.md)).
 
 ## Constraints and semantics
 
 - `next()` can only be called once; a second call throws.
 - A short-circuiting middleware (no `next()`) makes its response final — the downstream handler never runs.
 - Middleware must be registered before `listen()`; registering afterwards throws.
-- The packaged middleware (`@zebra/session`, `@zebra/cors`, `@zebra/rate-limit`, `@zebra/observability`) are plain `Middleware` — just `app.use` them.
+- The packaged middleware (`@zebra-web/session`, `@zebra-web/cors`, `@zebra-web/rate-limit`, `@zebra-web/observability`) are plain `Middleware` — just `app.use` them.
 
 ## Next steps
 

@@ -1,5 +1,5 @@
 {
-  "name": "@zebra/core",
+  "name": "@zebra-web/core",
   "version": "1.0.0",
   "type": "module",
   "main": "./src/index.ts",
@@ -7,7 +7,12 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "bun test",
     "typecheck": "tsgo --noEmit",
@@ -17,7 +22,7 @@
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
-    "@zebra/contract": "workspace:*",
+    "@zebra-web/contract": "workspace:*",
     "zod": "^4"
   }
 }

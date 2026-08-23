@@ -18,7 +18,7 @@ Zebra 是一个 Bun-first 的 TypeScript Web 框架，把依赖注入（DI）当
 | --- | --- |
 | [01-getting-started](01-getting-started.md) | 安装、运行环境、快速开始、第一个应用 |
 
-### 核心（`@zebra/core` / `zebra`）
+### 核心（`@zebra-web/core` / `@zebra-web/zebra`）
 
 | 篇章 | 内容 |
 | --- | --- |
@@ -29,28 +29,28 @@ Zebra 是一个 Bun-first 的 TypeScript Web 框架，把依赖注入（DI）当
 | [06-lifecycle](06-lifecycle.md) | 生命周期：boot / ready / shutdown 钩子、优雅停机、session scope 回收 |
 | [10-websockets](10-websockets.md) | WebSocket：`app.ws()`、DI 升级决策、ws 会话 |
 
-### 契约优先（`@zebra/contract` + `@zebra/client`）
+### 契约优先（`@zebra-web/contract` + `@zebra-web/client`）
 
 | 篇章 | 内容 |
 | --- | --- |
 | [11-contract-first](11-contract-first.md) | 契约构建、`app.implement`、类型安全客户端、错误处理 |
-| [16-mcp](16-mcp.md) | 从同一契约导出 MCP 工具（`@zebra/mcp`、`@zebra/schema-zod`） |
+| [16-mcp](16-mcp.md) | 从同一契约导出 MCP 工具（`@zebra-web/mcp`、`@zebra-web/schema-zod`） |
 
 ### 中间件包
 
 | 篇章 | 内容 |
 | --- | --- |
-| [07-sessions](07-sessions.md) | Cookie 会话（`@zebra/session`）：HMAC 签名 `sid`、可插拔 store、防会话固定攻击 |
-| [08-cors](08-cors.md) | CORS（`@zebra/cors`）：preflight、origin 白名单、credentials 精确回显 |
-| [09-rate-limiting](09-rate-limiting.md) | 限流（`@zebra/rate-limit`）：固定窗口、`X-RateLimit-*` 头、`trustProxy` |
-| [13-observability](13-observability.md) | 可观测性（`@zebra/observability`）：requestId / accessLog / errorReporter / metrics / health |
-| [14-redis](14-redis.md) | Redis 存储适配（`@zebra/redis`）：限流 store + 会话 store |
+| [07-sessions](07-sessions.md) | Cookie 会话（`@zebra-web/session`）：HMAC 签名 `sid`、可插拔 store、防会话固定攻击 |
+| [08-cors](08-cors.md) | CORS（`@zebra-web/cors`）：preflight、origin 白名单、credentials 精确回显 |
+| [09-rate-limiting](09-rate-limiting.md) | 限流（`@zebra-web/rate-limit`）：固定窗口、`X-RateLimit-*` 头、`trustProxy` |
+| [13-observability](13-observability.md) | 可观测性（`@zebra-web/observability`）：requestId / accessLog / errorReporter / metrics / health |
+| [14-redis](14-redis.md) | Redis 存储适配（`@zebra-web/redis`）：限流 store + 会话 store |
 
 ### 测试与发布
 
 | 篇章 | 内容 |
 | --- | --- |
-| [12-testing](12-testing.md) | 测试（`@zebra/testing`）：`createTestApp` / `createTestClient` 进程内测试 |
+| [12-testing](12-testing.md) | 测试（`@zebra-web/testing`）：`createTestApp` / `createTestClient` 进程内测试 |
 | [15-production](15-production.md) | 部署与发布：src 直发策略、锁步版本、性能基准 |
 | [api-freeze](api-freeze.md) | v1 API 冻结面与 SemVer 版本策略 |
 
@@ -58,16 +58,16 @@ Zebra 是一个 Bun-first 的 TypeScript Web 框架，把依赖注入（DI）当
 
 | 包 | 是什么 |
 | --- | --- |
-| `zebra` | 公共门面 —— 再导出 `@zebra/core`、`@zebra/cors`、`@zebra/session` 与（别名后的）`@zebra/rate-limit` |
-| `@zebra/core` | App、DI 容器、路由、HTTP、中间件、`implement` |
-| `@zebra/contract` | 契约构建器 + 协议（Standard Schema V1，零依赖） |
-| `@zebra/client` | 派生类型安全客户端（零依赖） |
-| `@zebra/session` | Cookie 会话：HMAC `sid`、可插拔 store、防固定攻击 |
-| `@zebra/cors` | CORS 中间件：preflight、origin 白名单、credentials 回显 |
-| `@zebra/rate-limit` | 固定窗口限流：429 Problem+Json、`X-RateLimit-*` 头、可插拔 store |
-| `@zebra/observability` | 可观测性中间件：requestId / accessLog / errorReporter / metrics / health |
-| `@zebra/redis` | Redis 后端：`RedisRateLimitStore` + `RedisSessionStore`（零运行时依赖） |
-| `@zebra/testing` | 进程内 `createTestApp` / `createTestClient` |
+| `@zebra-web/zebra` | 公共门面 —— 再导出 `@zebra-web/core`、`@zebra-web/cors`、`@zebra-web/session` 与（别名后的）`@zebra-web/rate-limit` |
+| `@zebra-web/core` | App、DI 容器、路由、HTTP、中间件、`implement` |
+| `@zebra-web/contract` | 契约构建器 + 协议（Standard Schema V1，零依赖） |
+| `@zebra-web/client` | 派生类型安全客户端（零依赖） |
+| `@zebra-web/session` | Cookie 会话：HMAC `sid`、可插拔 store、防固定攻击 |
+| `@zebra-web/cors` | CORS 中间件：preflight、origin 白名单、credentials 回显 |
+| `@zebra-web/rate-limit` | 固定窗口限流：429 Problem+Json、`X-RateLimit-*` 头、可插拔 store |
+| `@zebra-web/observability` | 可观测性中间件：requestId / accessLog / errorReporter / metrics / health |
+| `@zebra-web/redis` | Redis 后端：`RedisRateLimitStore` + `RedisSessionStore`（零运行时依赖） |
+| `@zebra-web/testing` | 进程内 `createTestApp` / `createTestClient` |
 
 ## 示例
 

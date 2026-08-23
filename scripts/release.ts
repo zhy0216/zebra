@@ -60,11 +60,12 @@ function value(name: string): string | undefined {
 }
 
 if (flag("--help") || flag("-h")) {
-  console.log(`Usage: bun scripts/release.ts --version X.Y.Z [--publish] [--no-verify]
+  console.log(`Usage: bun scripts/release.ts --version X.Y.Z [--publish] [--no-verify] [--registry URL]
 
   --version X.Y.Z  bump all publishable packages to this version (required)
   --publish        actually run the release (default is dry-run: print only)
   --no-verify      skip the typecheck + test verification step (default: verify)
+  --registry URL   registry passed explicitly to bun publish (required with --publish)
 `);
   process.exit(0);
 }
@@ -77,6 +78,12 @@ if (!version || !SEMVER_RE.test(version)) {
 
 const dryRun = !flag("--publish");
 const verify = !flag("--no-verify");
+const registry = value("--registry");
+
+if (!dryRun && !registry) {
+  console.error("error: --registry URL is required with --publish");
+  process.exit(1);
+}
 
 console.log(`[release] version ${version} (${dryRun ? "dry-run" : "publish"})`);
 
@@ -113,7 +120,7 @@ if (packages.length === 0) {
 
 const byName = new Map(packages.map((p) => [p.name, p]));
 
-// --- version bump + @zebra/* dependency sync -------------------------------
+// --- version bump + @zebra-web/* dependency sync -------------------------------
 for (const pkg of packages) {
   pkg.data.version = version;
   for (const [dep, spec] of Object.entries(
@@ -129,14 +136,15 @@ for (const pkg of packages) {
 // drifts from the published version.
 const CORE_INDEX = join(ROOT, "packages/core/src/index.ts");
 const versionSource = readFileSync(CORE_INDEX, "utf8");
-const versionedSource = versionSource.replace(
-  /export const VERSION = "[^"]*";/,
-  `export const VERSION = "${version}";`,
-);
-if (versionSource === versionedSource) {
+const versionPattern = /export const VERSION = "[^"]*";/;
+if (!versionPattern.test(versionSource)) {
   console.error("error: VERSION constant not found in packages/core/src/index.ts");
   process.exit(1);
 }
+const versionedSource = versionSource.replace(
+  versionPattern,
+  `export const VERSION = "${version}";`,
+);
 
 // --- publish order: topological sort by dependencies (deps first) ----------
 const state = new Map<string, "visiting" | "done">();
@@ -194,7 +202,8 @@ function buildChangelogSection(): string {
     }
     const [, type, scope, rest] = m;
     const header = CATEGORY_MAP[type] ?? "Other";
-    grouped.get(header)!.push(scope ? `${scope}: ${rest}` : rest);
+    const item = (scope ? `${scope}: ${rest}` : rest).replaceAll("@zebra/", "@zebra-web/");
+    grouped.get(header)!.push(item);
   }
   const lines = [`## v${version} (${today()})`, ""];
   for (const header of CATEGORY_HEADERS) {
@@ -208,8 +217,19 @@ function buildChangelogSection(): string {
 }
 
 const changelogPath = join(ROOT, "CHANGELOG.md");
+function hasChangelogVersion(): boolean {
+  if (!existsSync(changelogPath)) return false;
+  const existing = readFileSync(changelogPath, "utf8");
+  const escapedVersion = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`^##\\s+v${escapedVersion}(?:\\s|$)`, "m").test(existing);
+}
+
 function writeChangelog(section: string): void {
   const existing = existsSync(changelogPath) ? readFileSync(changelogPath, "utf8") : "";
+  if (hasChangelogVersion()) {
+    console.log(`[release] CHANGELOG.md already contains v${version}; leaving it unchanged`);
+    return;
+  }
   let content: string;
   if (existing.trim() === "") {
     content = `# Changelog\n\n${section}`;
@@ -250,20 +270,29 @@ console.log(`[release] publish order (${order.map((p) => p.name).join(" -> ")})`
 console.log("");
 
 if (dryRun) {
-  console.log("[release] would write CHANGELOG.md (new section):");
-  console.log(
-    changelogSection
-      .split("\n")
-      .map((l) => `  | ${l}`)
-      .join("\n"),
-  );
+  if (verify) verifyStep();
+  if (hasChangelogVersion()) {
+    console.log(
+      `[release] CHANGELOG.md already contains v${version}; no new section would be written`,
+    );
+  } else {
+    console.log("[release] would write CHANGELOG.md (new section):");
+    console.log(
+      changelogSection
+        .split("\n")
+        .map((l) => `  | ${l}`)
+        .join("\n"),
+    );
+  }
   console.log(
     `[release] would rewrite ${versionSource.match(/export const VERSION = "[^"]*";/)?.[0] ?? "VERSION"} -> "${version}" in packages/core/src/index.ts`,
   );
   console.log("[release] planned commands (dry-run — not executed):");
   const steps: string[] = [];
-  if (verify) steps.push("bun run typecheck", "bun run test");
-  for (const pkg of order) steps.push(`bun publish --access public  (cwd: ${pkg.dir})`);
+  for (const pkg of order) {
+    const registryFlag = registry ? ` --registry ${registry}` : "";
+    steps.push(`bun publish --access public${registryFlag}  (cwd: ${pkg.dir})`);
+  }
   steps.forEach((s, i) => console.log(`  ${i + 1}. ${s}`));
   console.log("\n[release] done (dry-run, nothing written).");
   process.exit(0);
@@ -278,7 +307,9 @@ console.log("[release] wrote version bumps + core VERSION + CHANGELOG.md");
 
 for (const pkg of order) {
   console.log(`[release] publish ${pkg.name} (${pkg.dir})`);
-  const res = run("bun", ["publish", "--access", "public"], join(ROOT, pkg.dir));
+  const publishArgs = ["publish", "--access", "public"];
+  if (registry) publishArgs.push("--registry", registry);
+  const res = run("bun", publishArgs, join(ROOT, pkg.dir));
   if (!res.ok) {
     console.error(res.stderr);
     console.error(`error: publish of ${pkg.name} failed — aborting`);

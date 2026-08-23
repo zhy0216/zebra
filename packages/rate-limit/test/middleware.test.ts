@@ -10,8 +10,8 @@
 // `application/problem+json` and copies its headers onto the response).
 
 import { describe, expect, test } from "bun:test";
-import { HttpError, type ZebraRequest, buildRequest } from "@zebra/core";
-import { type TestApp, createTestApp } from "@zebra/testing";
+import { HttpError, type ZebraRequest, buildRequest } from "@zebra-web/core";
+import { type TestApp, createTestApp } from "@zebra-web/testing";
 
 import { rateLimit } from "../src/index.ts";
 
