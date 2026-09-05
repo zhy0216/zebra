@@ -34,16 +34,20 @@ async function probeHealthy(probe: Probe | undefined): Promise<boolean> {
   }
 }
 
-function healthResponse(ok: boolean): Response {
-  return Response.json({ status: ok ? "ok" : "unavailable" }, { status: ok ? 200 : 503 });
+function healthResponse(ok: boolean, head: boolean): Response {
+  const response = Response.json({ status: ok ? "ok" : "unavailable" }, { status: ok ? 200 : 503 });
+  return head
+    ? new Response(null, { status: response.status, headers: response.headers })
+    : response;
 }
 
 /**
  * Health middleware: short-circuits `GET /healthz` (liveness) and
  * `GET /readyz` (readiness) with `{"status":"ok"}` / 200 or
  * `{"status":"unavailable"}` / 503 based on the probe callbacks (default:
- * always healthy). All other paths pass through untouched. Register it inside
- * the other observability middleware so probes are still logged and counted.
+ * always healthy). HEAD runs the same probe and returns its status and headers
+ * without a body. Other methods and paths pass through untouched. Register it
+ * inside the other observability middleware so probes are logged and counted.
  */
 export function health(options: HealthOptions = {}): Middleware {
   const path = options.path ?? DEFAULT_PATH;
@@ -52,9 +56,12 @@ export function health(options: HealthOptions = {}): Middleware {
   const readiness = options.readiness;
 
   return async (req, next) => {
-    if (req.url.pathname === path) return healthResponse(await probeHealthy(liveness));
+    const method = req.raw.method;
+    if (method !== "GET" && method !== "HEAD") return next();
+    const head = method === "HEAD";
+    if (req.url.pathname === path) return healthResponse(await probeHealthy(liveness), head);
     if (req.url.pathname === readinessPath) {
-      return healthResponse(await probeHealthy(readiness));
+      return healthResponse(await probeHealthy(readiness), head);
     }
     return next();
   };

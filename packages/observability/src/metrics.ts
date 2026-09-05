@@ -3,7 +3,10 @@ import type { Middleware } from "@zebra-web/core";
 export interface MetricsOptions {
   /** Called once per completed request with the current snapshot. */
   onSample?: (snapshot: MetricsSnapshot) => void;
-  /** Bounded latency-sampling window used for percentile estimates. Default 1000. */
+  /**
+   * Non-negative finite integer capacity for percentile samples. Default 1000.
+   * Zero disables sample retention; counters and histogram buckets still update.
+   */
   maxLatencySamples?: number;
 }
 
@@ -37,7 +40,7 @@ const BUCKET_BOUNDS_MS = [5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, Number
 
 function percentile(sorted: number[], p: number): number | undefined {
   if (sorted.length === 0) return undefined;
-  const idx = Math.min(sorted.length - 1, Math.max(0, Math.round((p / 100) * sorted.length) - 1));
+  const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil((p / 100) * sorted.length) - 1));
   return sorted[idx]!;
 }
 
@@ -48,7 +51,10 @@ function percentile(sorted: number[], p: number): number | undefined {
  * whose `.snapshot()` returns the current counters.
  */
 export function metrics(options: MetricsOptions = {}): MetricsMiddleware {
-  const maxSamples = options.maxLatencySamples ?? 1000;
+  const maxSamples = options.maxLatencySamples === undefined ? 1000 : options.maxLatencySamples;
+  if (!Number.isInteger(maxSamples) || maxSamples < 0) {
+    throw new TypeError("metrics: maxLatencySamples must be a non-negative finite integer");
+  }
   const onSample = options.onSample;
 
   let totalRequests = 0;

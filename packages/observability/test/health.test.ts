@@ -67,4 +67,85 @@ describe("health middleware", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
   });
+
+  test.each(["/healthz", "/readyz"])(
+    "HEAD %s runs the probe and returns GET status and headers without a body",
+    async (path) => {
+      for (const healthy of [true, false]) {
+        const app = createTestApp();
+        const calls: string[] = [];
+        app.use(
+          health({
+            liveness: () => {
+              calls.push("/healthz");
+              return healthy;
+            },
+            readiness: async () => {
+              calls.push("/readyz");
+              return healthy;
+            },
+          }),
+        );
+        const get = await app.request(path);
+        const head = await app.request(path, { method: "HEAD" });
+        expect(get.status).toBe(healthy ? 200 : 503);
+        expect(head.status).toBe(get.status);
+        expect(head.headers.get("content-type")).toBe(get.headers.get("content-type"));
+        expect(head.body).toBeNull();
+        expect(await head.text()).toBe("");
+        expect(calls).toEqual([path, path]);
+      }
+    },
+  );
+
+  test("HEAD honors custom liveness and readiness paths", async () => {
+    const app = createTestApp();
+    app.use(health({ path: "/live", readinessPath: "/ready", readiness: () => false }));
+    const live = await app.request("/live", { method: "HEAD" });
+    const ready = await app.request("/ready", { method: "HEAD" });
+    expect(live.status).toBe(200);
+    expect(ready.status).toBe(503);
+    expect(live.body).toBeNull();
+    expect(ready.body).toBeNull();
+  });
+
+  test.each([
+    ["POST", "/healthz"],
+    ["PUT", "/readyz"],
+    ["PATCH", "/healthz"],
+    ["DELETE", "/readyz"],
+    ["OPTIONS", "/healthz"],
+  ])(
+    "%s %s reaches downstream middleware and the business handler without running probes",
+    async (method, path) => {
+      const app = createTestApp();
+      let probes = 0;
+      app.use(
+        health({
+          liveness: () => {
+            probes++;
+            return true;
+          },
+          readiness: () => {
+            probes++;
+            return true;
+          },
+        }),
+      );
+      const visited: string[] = [];
+      app.use(async (_req, next) => {
+        visited.push("middleware");
+        return next();
+      });
+      app.route(method, path, () => {
+        visited.push("handler");
+        return Response.json({ method, business: true }, { status: 201 });
+      });
+      const response = await app.request(path, { method });
+      expect(response.status).toBe(201);
+      expect(await response.json()).toEqual({ method, business: true });
+      expect(visited).toEqual(["middleware", "handler"]);
+      expect(probes).toBe(0);
+    },
+  );
 });

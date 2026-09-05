@@ -1,14 +1,31 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import { type ZebraRequest, buildRequest } from "@zebra-web/core";
 import { createTestApp } from "@zebra-web/testing";
 
-import { type MetricsSnapshot, metrics } from "../src/index.ts";
+import { type MetricsOptions, type MetricsSnapshot, metrics } from "../src/index.ts";
 
 function makeReq(): ZebraRequest {
   return buildRequest(new Request("http://test.local/"), {});
 }
 
 const okNext = async (): Promise<Response> => new Response("ok", { status: 200 });
+
+async function measureDurations(durations: number[], options: MetricsOptions = {}) {
+  const m = metrics(options);
+  let now = 0;
+  const clock = spyOn(performance, "now").mockImplementation(() => now);
+  try {
+    for (const duration of durations) {
+      await m(makeReq(), async () => {
+        now += duration;
+        return new Response("ok");
+      });
+    }
+    return m.snapshot();
+  } finally {
+    clock.mockRestore();
+  }
+}
 
 describe("metrics middleware", () => {
   test("counts requests and thrown errors", async () => {
@@ -75,6 +92,79 @@ describe("metrics middleware", () => {
     expect(s.latencyP95).toBeGreaterThanOrEqual(s.latencyP50!);
   });
 
+  test("nearest-rank P95 selects sample 11 from 1..11", async () => {
+    const samples = Array.from({ length: 11 }, (_, index) => index + 1);
+    const snapshot = await measureDurations(samples);
+    expect(snapshot.latencySamples).toEqual(samples);
+    expect(snapshot.latencyP50).toBe(6);
+    expect(snapshot.latencyP95).toBe(11);
+  });
+
+  test("empty, single-value and unsorted samples use the same nearest-rank definition", async () => {
+    const empty = metrics().snapshot();
+    expect(empty.latencyP50).toBeUndefined();
+    expect(empty.latencyP95).toBeUndefined();
+    const single = await measureDurations([7]);
+    expect(single.latencyP50).toBe(7);
+    expect(single.latencyP95).toBe(7);
+    const unsorted = await measureDurations([40, 10, 30, 20]);
+    expect(unsorted.latencySamples).toEqual([40, 10, 30, 20]);
+    expect(unsorted.latencyP50).toBe(20);
+    expect(unsorted.latencyP95).toBe(40);
+  });
+
+  test.each([
+    ["NaN", Number.NaN],
+    ["Infinity", Number.POSITIVE_INFINITY],
+    ["-Infinity", Number.NEGATIVE_INFINITY],
+    ["negative", -1],
+    ["negative fraction", -0.5],
+    ["positive fraction", 1.5],
+    ["null", null as unknown as number],
+    ["string", "3" as unknown as number],
+  ] as const)(
+    "rejects invalid maxLatencySamples %s at construction",
+    (_label, maxLatencySamples) => {
+      expect(() => metrics({ maxLatencySamples })).toThrow(/maxLatencySamples/);
+    },
+  );
+
+  test.each([0, 1, 3, 1000])(
+    "1100 requests keep only the latest %i samples",
+    async (maxLatencySamples) => {
+      const durations = Array.from({ length: 1100 }, (_, index) => index + 1);
+      const snapshot = await measureDurations(durations, { maxLatencySamples });
+      expect(snapshot.totalRequests).toBe(1100);
+      expect(snapshot.latency.buckets.reduce((sum, count) => sum + count, 0)).toBe(1100);
+      expect(snapshot.latencySamples).toEqual(
+        durations.slice(durations.length - maxLatencySamples),
+      );
+    },
+  );
+
+  test("the default capacity remains 1000 samples", async () => {
+    const durations = Array.from({ length: 1100 }, (_, index) => index + 1);
+    const snapshot = await measureDurations(durations);
+    expect(snapshot.latencySamples).toEqual(durations.slice(100));
+  });
+
+  test("zero disables sample retention while preserving counters, histograms and callbacks", async () => {
+    const observations: MetricsSnapshot[] = [];
+    const snapshot = await measureDurations([7, 13], {
+      maxLatencySamples: 0,
+      onSample: (sample) => observations.push(sample),
+    });
+    expect(snapshot.latencySamples).toEqual([]);
+    expect(snapshot.latencyP50).toBeUndefined();
+    expect(snapshot.latencyP95).toBeUndefined();
+    expect(snapshot.totalRequests).toBe(2);
+    expect(snapshot.inFlight).toBe(0);
+    expect(snapshot.errors).toBe(0);
+    expect(snapshot.latency.buckets.reduce((sum, count) => sum + count, 0)).toBe(2);
+    expect(observations).toHaveLength(2);
+    expect(observations.map((sample) => sample.latencySamples)).toEqual([[], []]);
+  });
+
   test("keeps the latency sample window bounded", async () => {
     const m = metrics({ maxLatencySamples: 3 });
     for (let i = 0; i < 10; i++) await m(makeReq(), okNext);
@@ -100,8 +190,12 @@ describe("metrics middleware", () => {
     await m(makeReq(), okNext);
     const s1 = m.snapshot();
     s1.latency.buckets[0] = 999;
+    s1.latencySamples[0] = 999;
     const s2 = m.snapshot();
     expect(s2.latency.buckets[0]).not.toBe(999);
+    expect(s2.latencySamples[0]).not.toBe(999);
+    expect(s2.latencyP50).toBe(s1.latencyP50);
+    expect(s2.latencyP95).toBe(s1.latencyP95);
   });
 });
 
