@@ -81,6 +81,11 @@ export class ForumStore {
   }
 
   createUser(username: string, passwordHash: string): StoredUser {
+    // Registration hashes asynchronously, so enforce uniqueness again at the
+    // synchronous insertion point before allocating an ID.
+    if (this.findUserByName(username) !== undefined) {
+      throw new HttpError(409, "username_taken", "Username already taken");
+    }
     const user: StoredUser = { id: this.nextUserId++, username, passwordHash };
     this.users.push(user);
     return user;
