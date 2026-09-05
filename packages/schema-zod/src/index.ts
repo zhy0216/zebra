@@ -43,19 +43,17 @@ const SUBSCHEMA_KEYS = [
 ] as const;
 
 /**
- * Zod 4's native `toJSONSchema` does not emit `additionalProperties: false`
- * for zod objects (zod objects are closed by default at runtime). The old
+ * Zod 4's native input schema does not emit `additionalProperties: false`
+ * for ordinary zod objects (unknown input keys are stripped). The old
  * zod-to-json-schema (v3) output did, and MCP clients rely on the strictness:
  * an MCP `inputSchema` without it lets models invent extra argument fields
  * that are silently dropped by zod validation. Preserve the strict contract
- * by post-processing every plain object subschema (`type: "object"` with
- * `properties` and no existing `additionalProperties`) to close it.
+ * by closing plain object subschemas, except where intersection members need
+ * to accept each other's fields.
  *
  * `z.record` is untouched: it already carries `additionalProperties` (its
- * value schema) plus `propertyNames`, so the guard skips it. Union/intersection
- * containers (`anyOf`/`oneOf`/`allOf`) are walked into, but object *members*
- * of a union are plain closed zod objects and get the flag just like a
- * standalone object.
+ * value schema) plus `propertyNames`, so the guard skips it. Ordinary union
+ * members remain closed independently, as they describe alternative inputs.
  */
 function addClosedObjects(node: unknown): void {
   if (typeof node !== "object" || node === null) return;
@@ -64,6 +62,13 @@ function addClosedObjects(node: unknown): void {
     return;
   }
   const obj = node as Record<string, unknown>;
+  const intersection = Array.isArray(obj.allOf);
+  // A mixed intersection (unions, records, catchalls, references, etc.) cannot
+  // safely acquire closed members. This also applies to shared nested fields:
+  // closing either side's nested object can reject fields from the other side.
+  // Preserve native assertions throughout that subtree, including explicit
+  // additionalProperties constraints, rather than guessing a merged shape.
+  if (intersection && !mergeObjectIntersection(obj)) return;
   for (const key of MAP_KEYS) {
     const map = obj[key];
     if (typeof map === "object" && map !== null) {
@@ -71,6 +76,9 @@ function addClosedObjects(node: unknown): void {
     }
   }
   for (const key of SUBSCHEMA_KEYS) {
+    // Retain all original assertions without closing the original members.
+    // The merged properties below are separate copies and receive closure.
+    if (key === "allOf" && intersection) continue;
     const value = obj[key];
     if (Array.isArray(value)) {
       for (const child of value) addClosedObjects(child);
@@ -81,6 +89,65 @@ function addClosedObjects(node: unknown): void {
   if (obj.type === "object" && "properties" in obj && !("additionalProperties" in obj)) {
     obj.additionalProperties = false;
   }
+}
+
+/**
+ * Draft 7's additionalProperties only sees properties in the same subschema.
+ * For intersections of plain objects, put the combined shape on the allOf
+ * container and close it once. Keep allOf to preserve every original assertion;
+ * overlapping property schemas are themselves intersected, never overwritten.
+ * Explicit strict/catchall constraints remain in their original scope.
+ */
+function mergeObjectIntersection(obj: Record<string, unknown>): boolean {
+  if (
+    !Array.isArray(obj.allOf) ||
+    obj.allOf.length === 0 ||
+    "type" in obj ||
+    "properties" in obj ||
+    "additionalProperties" in obj
+  ) {
+    return false;
+  }
+  const members: Array<Record<string, unknown> & { properties: Record<string, unknown> }> = [];
+  for (const member of obj.allOf) {
+    if (
+      typeof member !== "object" ||
+      member === null ||
+      member.type !== "object" ||
+      typeof member.properties !== "object" ||
+      member.properties === null ||
+      Array.isArray(member.properties) ||
+      ["additionalProperties", "patternProperties", "$ref", "anyOf", "oneOf", "allOf"].some(
+        (key) => key in member,
+      )
+    ) {
+      return false;
+    }
+    members.push(member);
+  }
+  const propertySchemas = new Map<string, unknown[]>();
+  const required = new Set<string>();
+  for (const member of members) {
+    for (const [key, schema] of Object.entries(member.properties)) {
+      const schemas = propertySchemas.get(key) ?? [];
+      schemas.push(structuredClone(schema));
+      propertySchemas.set(key, schemas);
+    }
+    if (Array.isArray(member.required)) {
+      for (const key of member.required) {
+        if (typeof key === "string") required.add(key);
+      }
+    }
+  }
+  obj.type = "object";
+  obj.properties = Object.fromEntries(
+    [...propertySchemas].map(([key, schemas]) => [
+      key,
+      schemas.length === 1 ? schemas[0] : { allOf: schemas },
+    ]),
+  );
+  if (required.size > 0) obj.required = [...required];
+  return true;
 }
 
 /**

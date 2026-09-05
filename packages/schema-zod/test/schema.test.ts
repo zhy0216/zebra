@@ -62,6 +62,73 @@ test("arrays and nested objects are expressed", () => {
   });
 });
 
+test("object intersections close the combined shape and retain member assertions", () => {
+  const out = adapter.toJsonSchema(
+    z.intersection(z.object({ a: z.string() }), z.object({ b: z.string() })),
+  );
+  expect(out).toEqual({
+    type: "object",
+    properties: { a: { type: "string" }, b: { type: "string" } },
+    required: ["a", "b"],
+    additionalProperties: false,
+    allOf: [
+      { type: "object", properties: { a: { type: "string" } }, required: ["a"] },
+      { type: "object", properties: { b: { type: "string" } }, required: ["b"] },
+    ],
+  });
+});
+
+test("shared nested properties are intersected before applying closure", () => {
+  const out = adapter.toJsonSchema(
+    z.intersection(
+      z.object({ nested: z.object({ a: z.string() }), label: z.string().min(2) }),
+      z.object({ nested: z.object({ b: z.number() }), label: z.string().max(4) }),
+    ),
+  );
+  expect(out.properties).toMatchObject({
+    nested: {
+      type: "object",
+      properties: { a: { type: "string" }, b: { type: "number" } },
+      required: ["a", "b"],
+      additionalProperties: false,
+    },
+    label: {
+      allOf: [
+        { type: "string", minLength: 2 },
+        { type: "string", maxLength: 4 },
+      ],
+    },
+  });
+});
+
+test("intersections preserve optional, default and transform input schemas", () => {
+  const out = adapter.toJsonSchema(
+    z.intersection(
+      z.object({ value: z.string().transform((value) => value.length) }),
+      z.object({ page: z.number().default(1), tags: z.array(z.string()).optional() }),
+    ),
+  );
+  expect(out.required).toEqual(["value"]);
+  expect(out.properties).toEqual({
+    value: { type: "string" },
+    page: { type: "number", default: 1 },
+    tags: { type: "array", items: { type: "string" } },
+  });
+});
+
+test("mixed intersections preserve explicit strict and catchall constraints", () => {
+  const strict = z.strictObject({ a: z.string() });
+  const catchall = z.object({ a: z.string() }).catchall(z.number());
+  for (const schema of [strict, catchall]) {
+    const out = adapter.toJsonSchema(z.intersection(schema, z.object({ b: z.number() })));
+    expect(out.allOf).toEqual([
+      adapter.toJsonSchema(schema),
+      { type: "object", properties: { b: { type: "number" } }, required: ["b"] },
+    ]);
+    expect(out.additionalProperties).toBeUndefined();
+  }
+});
+
 test("unions, enums, literals, records and nullable are expressed", () => {
   // Zod 4 expresses unions and nullables via anyOf (old converter collapsed
   // them into a type array) and records via propertyNames — re-asserted per
