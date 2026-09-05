@@ -10,13 +10,23 @@ export interface McpArguments {
 }
 
 function substitutePath(path: string, params: Record<string, unknown>): string {
-  return path.replace(/([:*])([A-Za-z0-9_]+)/g, (_match, kind: string, name: string) => {
-    const value = params[name];
-    if (value === undefined) throw new Error(`Missing required path parameter "${kind}${name}"`);
-    return kind === "*"
-      ? String(value).split("/").map(encodeURIComponent).join("/")
-      : encodeURIComponent(String(value));
-  });
+  const segments = path.split("/");
+  // Core ignores trailing slashes when deciding whether a wildcard is terminal.
+  const lastSegment = segments.findLastIndex((segment) => segment !== "");
+  return segments
+    .map((segment, index) => {
+      if (!/^[:*][A-Za-z0-9_]+$/.test(segment) || (segment[0] === "*" && index !== lastSegment)) {
+        return segment;
+      }
+      const kind = segment[0];
+      const name = segment.slice(1);
+      const value = params[name];
+      if (value === undefined) throw new Error(`Missing required path parameter "${kind}${name}"`);
+      return kind === "*"
+        ? String(value).split("/").map(encodeURIComponent).join("/")
+        : encodeURIComponent(String(value));
+    })
+    .join("/");
 }
 
 /**
