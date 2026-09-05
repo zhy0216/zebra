@@ -47,6 +47,7 @@ test("HEAD falls back to GET with an empty body and preserved headers", async ()
 
   const res = await app.dispatch(new Request("http://x/hello", { method: "HEAD" }));
   expect(res.status).toBe(200);
+  expect(res.body).toBeNull();
   expect(await res.text()).toBe("");
   expect(res.headers.get("content-type")).toBe("text/plain");
   expect(res.headers.get("content-length")).toBe("5");
@@ -79,11 +80,13 @@ test("HEAD fallback on wildcard route", async () => {
 test("explicit HEAD route wins over the GET fallback", async () => {
   const app = makeApp();
   app.get("/x", async () => new Response("get"));
-  app.head("/x", async () => new Response("head"));
+  app.head("/x", async () => new Response("head", { headers: { "x-handler": "head" } }));
 
   const res = await app.dispatch(new Request("http://x/x", { method: "HEAD" }));
   expect(res.status).toBe(200);
-  expect(await res.text()).toBe("head");
+  expect(res.headers.get("x-handler")).toBe("head");
+  expect(res.body).toBeNull();
+  expect(await res.text()).toBe("");
 });
 
 test("HEAD fallback strips the body of error responses too", async () => {
@@ -101,6 +104,8 @@ test("HEAD on unknown path returns 404", async () => {
   const app = makeApp();
   const res = await app.dispatch(new Request("http://x/nope", { method: "HEAD" }));
   expect(res.status).toBe(404);
+  expect(res.body).toBeNull();
+  expect(res.headers.get("content-type")).toContain("application/problem+json");
 });
 
 test("HEAD on a path without GET returns 405 with Allow", async () => {
@@ -109,6 +114,8 @@ test("HEAD on a path without GET returns 405 with Allow", async () => {
 
   const res = await app.dispatch(new Request("http://x/x", { method: "HEAD" }));
   expect(res.status).toBe(405);
+  expect(res.body).toBeNull();
+  expect(res.headers.get("content-type")).toContain("application/problem+json");
   expect(res.headers.get("allow")).toBe("POST");
 });
 
@@ -192,7 +199,8 @@ test("contract procedure with HEAD method registers and dispatches", async () =>
 
   const res = await app.dispatch(new Request("http://x/ping", { method: "HEAD" }));
   expect(res.status).toBe(200);
-  expect(await res.json()).toBe("pong");
+  expect(res.body).toBeNull();
+  expect(res.headers.get("content-type")).toContain("application/json");
 });
 
 test("contract procedure with OPTIONS method registers and dispatches", async () => {

@@ -16,7 +16,7 @@ default_agent: codex
 | --- | --- | --- | --- | --- | --- |
 | [01-event-listeners.md](done/01-event-listeners.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：回收 once 注册并恢复 emit 快照语义（F01、F02）；验收通过，待协调器合并 |
 | [02-session-scope-identity.md](done/02-session-scope-identity.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：旧请求不再释放同名新 session record（F03）；验收通过，待协调器合并 |
-| [03-http-completion.md](03-http-completion.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 完成 hook 受错误/超时控制，HEAD 无正文且取消流（F04–F06） |
+| [03-http-completion.md](done/03-http-completion.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：完成 hook 受错误/超时控制，HEAD 无正文且取消流（F04–F06）；验收通过，待协调器合并 |
 | [04-session-record-keys.md](done/04-session-record-keys.md) | P1 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：session 特殊键安全读写与落库（F07）；验收通过，待协调器合并 |
 | [05-schema-await.md](done/05-schema-await.md) | P1 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：跨 realm Promise 的 schema 结果正确验证（F08）；验收通过，待协调器合并 |
 | [06-app-boundaries.md](done/06-app-boundaries.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：快照隔离、循环处理与应用配置校验（F09–F12）；验收通过，待协调器合并 |
@@ -32,7 +32,7 @@ default_agent: codex
 
 1. [01-event-listeners.md](done/01-event-listeners.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
 2. [02-session-scope-identity.md](done/02-session-scope-identity.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
-3. [03-http-completion.md](03-http-completion.md) — 依赖 01-event-listeners.md；依赖 02-session-scope-identity.md。
+3. [03-http-completion.md](done/03-http-completion.md) — 已完成并归档，验收通过，待协调器合并；依赖 01-event-listeners.md；依赖 02-session-scope-identity.md。
 4. [04-session-record-keys.md](done/04-session-record-keys.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
 5. [05-schema-await.md](done/05-schema-await.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
 6. [06-app-boundaries.md](done/06-app-boundaries.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。

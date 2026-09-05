@@ -136,12 +136,9 @@ export class AppInternals {
     try {
       const url = new URL(raw.url);
       let matched = this.router.find(raw.method, url.pathname);
-      // HEAD falls back to the GET handler when no HEAD route is registered;
-      // the response body is stripped afterwards (see headFromGet).
-      let headFromGet = false;
+      // Explicit HEAD routes take precedence; all HEAD responses lose their body below.
       if (matched === null && raw.method === "HEAD") {
         matched = this.router.find("GET", url.pathname);
-        headFromGet = matched !== null;
       }
       const route = matched?.handler;
       const req = buildRequest<Record<string, string>>(
@@ -159,17 +156,56 @@ export class AppInternals {
 
       let res: Response;
       if (listenRequestEvents) {
-        res = await this.errorMw(req, async () => {
-          return this.raceDeadline(deadline, async () => {
+        let requestFailed = false;
+        const response = this.headResponse(
+          raw,
+          await this.errorMw(req, async () => {
             try {
-              await this.events.emit("before.request", { request: req, route });
-              return await this.runPipeline(plan, req, raw, url, route, deadline);
+              return await this.raceDeadline(deadline, async () => {
+                await this.events.emit("before.request", { request: req, route });
+                return this.runPipeline(plan, req, raw, url, route, deadline);
+              });
             } catch (error) {
-              await this.emitRequestError(req, route, error, startedAt);
+              // Report only the winning outcome, never a late background rejection.
+              requestFailed = true;
+              await this.raceDeadline(deadline, () =>
+                this.emitRequestError(req, route, error, startedAt),
+              );
               throw error;
             }
-          });
+          }),
+        );
+        res = await this.errorMw(req, async () => {
+          try {
+            await this.raceDeadline(deadline, () =>
+              this.events.emit("after.request", {
+                request: req,
+                route,
+                response,
+                duration: performance.now() - startedAt,
+              }),
+            );
+            return response;
+          } catch (error) {
+            // A completion failure cannot replace the original error, except for
+            // an expired deadline, or recursively emit after.request again.
+            if (requestFailed && !deadline?.controller.signal.aborted) return response;
+            if (!requestFailed) {
+              await this.raceDeadline(deadline, () =>
+                this.emitRequestError(req, route, error, startedAt),
+              );
+            }
+            throw error;
+          }
         });
+        if (res !== response) {
+          // Session middleware may already have attached its cookie before the
+          // completion hook failed. Pending cookies are handled by errorMw.
+          const cookies = res.headers.getSetCookie();
+          for (const cookie of response.headers.getSetCookie()) {
+            if (!cookies.includes(cookie)) res.headers.append("set-cookie", cookie);
+          }
+        }
       } else {
         // Zero-listeners fast path: identical pipeline, no event wrapping.
         res = await this.errorMw(req, async () => {
@@ -178,22 +214,7 @@ export class AppInternals {
           );
         });
       }
-      if (headFromGet && res.body !== null) {
-        res = new Response(null, {
-          status: res.status,
-          statusText: res.statusText,
-          headers: res.headers,
-        });
-      }
-      if (listenRequestEvents) {
-        await this.events.emit("after.request", {
-          request: req,
-          route,
-          response: res,
-          duration: performance.now() - startedAt,
-        });
-      }
-      return res;
+      return this.headResponse(raw, res);
     } finally {
       clearTimeout(deadline?.timer);
       deadline?.detach();
@@ -203,6 +224,21 @@ export class AppInternals {
         this.drainWaiters.clear();
       }
     }
+  }
+
+  private headResponse(raw: Request, res: Response): Response {
+    if (raw.method !== "HEAD" || res.body === null) return res;
+    try {
+      // Release discarded streams without waiting for user-defined cancellation.
+      void res.body.cancel().catch(() => {});
+    } catch {
+      // Cancellation is best effort and must never replace the HEAD response.
+    }
+    return new Response(null, {
+      status: res.status,
+      statusText: res.statusText,
+      headers: res.headers,
+    });
   }
 
   async prepare(): Promise<void> {
@@ -345,10 +381,7 @@ export class AppInternals {
    * middleware. The underlying work keeps running in the background but can
    * observe the abort on `req.signal`.
    */
-  private raceDeadline(
-    deadline: RequestDeadline | null,
-    work: () => Promise<Response>,
-  ): Promise<Response> {
+  private raceDeadline<T>(deadline: RequestDeadline | null, work: () => Promise<T>): Promise<T> {
     if (deadline === null) return work();
     const { controller, ms } = deadline;
     return Promise.race([
@@ -386,16 +419,24 @@ export class AppInternals {
       };
       try {
         return await this.raceDeadline(deadline, async () => {
+          let response: Response;
           try {
-            return await this.runWithScopes(req, raw, url, route, scopes, plan);
-          } finally {
-            await disposeOnce();
+            response = await this.runWithScopes(req, raw, url, route, scopes, plan);
+          } catch (error) {
+            try {
+              await disposeOnce();
+            } catch {
+              // Disposal errors must not mask the original pipeline error.
+            }
+            throw error;
           }
+          await disposeOnce();
+          return response;
         });
       } catch (error) {
         // Timeout / client-disconnect path: the background work may never
-        // settle (hung handler), so dispose the scopes here — the work's
-        // own finally is guarded idempotent. Cleanup failures must not
+        // settle (hung handler), so dispose the scopes here — background
+        // cleanup is guarded idempotent. Cleanup failures must not
         // mask the 504 that is about to be answered.
         try {
           await disposeOnce();

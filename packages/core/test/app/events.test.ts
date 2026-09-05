@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { expect, test } from "bun:test";
+import { expect, spyOn, test } from "bun:test";
 import { Zebra } from "../../src/app/app.ts";
 import type { RegisteredRoute } from "../../src/app/types.ts";
 import { Container } from "../../src/di/container.ts";
@@ -255,4 +255,116 @@ test("events bus works on the default container app too", async () => {
   });
   await app.emit("user.created", { id: "u1", email: "a@example.com" });
   expect(fired).toBe(1);
+});
+
+test.each(["throw", "reject"])(
+  "after.request %s becomes one Problem+Json response",
+  async (mode) => {
+    const app = new Zebra();
+    const failure = new Error("completion failed");
+    const order: string[] = [];
+    const errors: unknown[] = [];
+    app.on("before.request", () => {
+      order.push("before");
+    });
+    app.get("/", () => {
+      order.push("handler");
+      return new Response("ok");
+    });
+    app.on("after.request", ({ response }) => {
+      order.push(`after:${response.status}`);
+      if (mode === "reject") return Promise.reject(failure);
+      throw failure;
+    });
+    app.on("after.request", () => {
+      order.push("unreachable");
+    });
+    app.on("request.error", ({ error }) => {
+      order.push("error");
+      errors.push(error);
+      throw new Error("error observer failed too");
+    });
+    try {
+      const res = await app.dispatch(new Request("http://x/"));
+      expect(res.status).toBe(500);
+      expect(res.headers.get("content-type")).toContain("application/problem+json");
+      expect(await res.json()).toEqual({
+        type: "https://errors.zebra.dev/internal",
+        status: 500,
+        title: "Internal Server Error",
+        instance: "/",
+      });
+      expect(order).toEqual(["before", "handler", "after:200", "error"]);
+      expect(errors).toEqual([failure]);
+    } finally {
+      await app.stop();
+    }
+  },
+);
+
+test.each([401, 503])("completion observers preserve the original %d failure", async (status) => {
+  const app = new Zebra();
+  const failure = new HttpError(
+    status,
+    "original",
+    "Original failure",
+    { source: "handler" },
+    {
+      "retry-after": "10",
+    },
+  );
+  const order: string[] = [];
+  const errors: unknown[] = [];
+  let observed: Response | undefined;
+  app.get("/", () => {
+    throw failure;
+  });
+  app.on("request.error", ({ error }) => {
+    order.push("error");
+    errors.push(error);
+    throw new Error("error observer failed");
+  });
+  app.on("after.request", ({ response }) => {
+    order.push(`after:${response.status}`);
+    observed = response;
+    return Promise.reject(new Error("completion failed"));
+  });
+  try {
+    const res = await app.dispatch(new Request("http://x/"));
+    expect(observed).toBe(res);
+    expect(res.status).toBe(status);
+    expect(res.headers.get("retry-after")).toBe("10");
+    expect(await res.json()).toMatchObject({
+      type: "https://errors.zebra.dev/original",
+      status,
+      detail: { source: "handler" },
+    });
+    expect(order).toEqual(["error", `after:${status}`]);
+    expect(errors).toEqual([failure]);
+  } finally {
+    await app.stop();
+  }
+});
+
+test("consumed request listeners restore the event-free dispatch path", async () => {
+  const app = new Zebra();
+  let completions = 0;
+  app.once("after.request", () => {
+    completions++;
+  });
+  app.get("/", () => new Response("ok"));
+  try {
+    await app.dispatch(new Request("http://x/"));
+    const emit = spyOn(app.events, "emit");
+    try {
+      const res = await app.dispatch(new Request("http://x/"));
+      expect(await res.text()).toBe("ok");
+      expect(emit).not.toHaveBeenCalled();
+      expect(completions).toBe(1);
+    } finally {
+      emit.mockRestore();
+    }
+  } finally {
+    await app.stop();
+  }
 });
