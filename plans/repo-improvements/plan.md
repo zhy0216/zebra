@@ -2,9 +2,9 @@
 
 ## 意图
 
-用户仅调用 `$auto-dev`，未指定功能需求，因此采用仓库探索模式：检查 Zebra 的现有实现与仓库校验，记录全部已确认改进点，将可保持 v1 API 兼容的修复拆成任务并交给 Herdr 执行。仓库是 Bun-first TypeScript monorepo，当前分支 `master`，分析基线 `eb94a2a`，12 个发布包均为 1.0.0。基础校验全部成功，但额外最小复现暴露请求体、生命周期、session、HTTP、MCP 和工程工具边界问题；通过测试不代表这些边界已有覆盖。
+用户仅调用 `$auto-dev`，未指定功能需求，因此采用仓库探索模式：检查 Zebra 的现有实现与仓库校验，记录全部已确认改进点，将可保持 v1 API 兼容的修复拆成任务。最初计划交给 Herdr，用户后续明确要求直接用当前会话的 subagent 完成 todo，因此执行方式改为当前 Codex 并行实现、复核并合并。仓库是 Bun-first TypeScript monorepo，当前分支 `master`，分析基线 `eb94a2a`，12 个发布包均为 1.0.0。基础校验全部成功，但额外最小复现暴露请求体、生命周期、session、HTTP、MCP 和工程工具边界问题；通过测试不代表这些边界已有覆盖。
 
-本次只提交本计划及 `todos/`；业务实现由新 OpenCode session 的 `$herdr-finish-plan repo-improvements` 完成。
+21 个任务的完成提交见 [todos/README.md](todos/README.md)，合并态验证与剩余 roadmap 见 [execution.md](execution.md)。
 
 ## 目标 / 非目标
 
@@ -17,7 +17,7 @@
 
 非目标：
 
-- 当前 session 不实现业务代码；不发布 npm、不 push、不部署文档，不自动升级项目发布版本。
+- 不发布 npm、不 push、不部署文档，不自动升级项目发布版本。
 - R01–R03 仅进入 roadmap，不生成执行 todo。
 - 不创建或重建 zvec-grep 持久索引。首次语义检索返回 `INDEX_MISSING`，随后使用已知文件名、配置键和函数名的 `rg` 检索与针对性源码读取。
 - 不把已有明确测试的行为（例如未绑定 WS upgrade 依赖在请求期返回 500）误判为待改 API。
@@ -180,7 +180,7 @@ bun audit --registry https://registry.npmjs.org
 - 当前依赖镜像证书错误是环境结果；使用官方 registry 完成只读审计，不关闭 TLS 校验、不改全局 registry。
 - 基础测试的覆盖率并未覆盖本计划新增的交错行为；不能仅以已有覆盖率替代回归验证。
 - 当前工作区开始时干净；提交前再次检查，若出现用户其他改动按 auto-dev 规则停止，不代为 stash / commit / discard。
-- Herdr 环境已验证可用；计划提交后再启动执行 agent，当前 session 不等待实现完成。
+- 后续执行遵循用户的 subagent 指令：各任务使用独立 worktree，复核后合并回 master 并清理；最终合并态统一验证。
 
 ## 外部依据与审计原文
 

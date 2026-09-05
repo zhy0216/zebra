@@ -45,7 +45,7 @@ throws a `TypeError` (buffered helpers return a rejected promise).
 
 | Method | Behavior |
 | --- | --- |
-| `body()` | by content-type: `application/json` → JSON; `multipart/form-data` → `FormData` (with `File` entries); `application/x-www-form-urlencoded` → `FormData`; anything else → text |
+| `body()` | by content-type: `application/json` → JSON; `multipart/form-data` → `FormData` (with `File` entries); `application/x-www-form-urlencoded` → a plain object (the last value wins for repeated keys); anything else → `Uint8Array` |
 | `json()` | forces JSON regardless of content-type. Empty body → `null`; invalid JSON → 400 `invalid_json` |
 | `text()` | raw text |
 | `form()` | multipart → `FormData` (`File` entries, constrained by `maxFiles` / `maxFileSize`); urlencoded → string entries; other content-types → empty `FormData` |

@@ -43,7 +43,7 @@ interface ZebraRequest<P, B, Q> {
 
 | 方法 | 行为 |
 | --- | --- |
-| `body()` | 按 content-type 解析：`application/json` → JSON；`multipart/form-data` → `FormData`（带 `File` 条目）；`application/x-www-form-urlencoded` → `FormData`；其他 → 文本 |
+| `body()` | 按 content-type 解析：`application/json` → JSON；`multipart/form-data` → `FormData`（带 `File` 条目）；`application/x-www-form-urlencoded` → 普通对象（重复键保留最后一个值）；其他 → `Uint8Array` |
 | `json()` | 无视 content-type 强制按 JSON 解析。空 body → `null`；非法 JSON → 400 `invalid_json` |
 | `text()` | 原始文本 |
 | `form()` | multipart → `FormData`（`File` 条目，受 `maxFiles`/`maxFileSize` 约束）；urlencoded → 字符串条目；其他 content-type → 空 `FormData` |

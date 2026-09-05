@@ -66,7 +66,7 @@
 
 初始可以并行 01、02、03、04、06；完成后按列表选择其他就绪任务。09、10、11 分属 client / mcp / schema-zod，业务实现可并行；11独占新增mcp/test/schema-intersection.test.ts，10只改其mcp.test.ts和transport.test.ts，不共享新helper或改根依赖。任何新增共享文件先协调/更新依赖，不能并行改同一文件。
 
-模型由 difficulty 决定：easy / medium → flash；hard → max。执行 orchestrator 按 auto-dev 使用 flash 启动，具体任务由 herdr-finish-plan 选模型。
+上表 flash/max 是最初 Herdr 调度方案的模型建议。用户随后要求直接使用当前会话的 subagent，本次执行由 3 个 Codex subagent 与主 agent 协同完成，均沿用会话模型；difficulty 保留为任务难度记录。
 
 ## 共同要求
 
@@ -76,3 +76,31 @@
 - release脚本测试只在临时repo/命令替身中执行，不能对工作仓库调用真实release写入模式。
 - 各文件列出独立校验命令；最终合并态运行 plan 中完整校验集。
 - audit允许仅剩R01已记录的开发工具链告警；F01的6条必须消失，不能把残留告警写成全绿。
+
+## 执行结果
+
+21/21 个任务已提交并合并到 `master`。各任务使用独立 worktree；最终交叉审查与集成验证见 [execution.md](../execution.md)。
+
+| 任务 | 状态 | 合并提交 |
+| --- | --- | --- |
+| [01-runtime-dependencies](01-runtime-dependencies.md) | 已完成 | `d36874f` |
+| [02-release-preflight](02-release-preflight.md) | 已完成 | `fa9bdfe` |
+| [03-request-body](03-request-body.md) | 已完成 | `9a92270`、复核 `12d5559` |
+| [04-disposal](04-disposal.md) | 已完成 | `84ffce5` |
+| [05-listen-concurrency](05-listen-concurrency.md) | 已完成 | `603db60` |
+| [06-static-http](06-static-http.md) | 已完成 | `e1057ce` |
+| [07-session-concurrency](07-session-concurrency.md) | 已完成 | `1fbe168`、复核 `a964495` |
+| [08-memory-stores](08-memory-stores.md) | 已完成 | `a31f011` |
+| [09-client-request](09-client-request.md) | 已完成 | `cd9694f` |
+| [10-mcp-bridge](10-mcp-bridge.md) | 已完成 | `fb4e099` |
+| [11-schema-intersections](11-schema-intersections.md) | 已完成 | `6afe754` |
+| [12-router-allow](12-router-allow.md) | 已完成 | `37e2805` |
+| [13-rate-limit-options](13-rate-limit-options.md) | 已完成 | `ace6112` |
+| [14-cors-vary](14-cors-vary.md) | 已完成 | `19972d1` |
+| [15-observability](15-observability.md) | 已完成 | `0b3a8f0` |
+| [16-forum-uniqueness](16-forum-uniqueness.md) | 已完成 | `62f7ca9` |
+| [17-coverage-gate](17-coverage-gate.md) | 已完成 | `590312a` |
+| [18-package-verification](18-package-verification.md) | 已完成 | `1a8ad01` |
+| [19-benchmark-gate](19-benchmark-gate.md) | 已完成 | `0d14602` |
+| [20-validation-scope](20-validation-scope.md) | 已完成 | `062675c` |
+| [21-docs-inventory](21-docs-inventory.md) | 已完成 | `f441a97` |
