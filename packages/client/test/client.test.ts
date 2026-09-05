@@ -2,6 +2,70 @@ import { expect, test } from "bun:test";
 import { zc } from "@zebra-web/contract";
 import { z } from "zod";
 import { ClientError, createClient } from "../src/index.ts";
+test("mixed-case headers override instead of combining authentication or content types", async () => {
+  const seen: Headers[] = [];
+  const api = createClient(contract, {
+    baseUrl: "http://x",
+    headers: () => ({ Authorization: "Bearer old", "Content-Type": "application/vnd.api+json" }),
+    fetch: fakeFetch((_url, init) => {
+      seen.push(new Headers(init.headers));
+      return new Response('{"id":1,"title":"t"}');
+    }),
+  });
+  await api.create({ body: { title: "t" }, headers: { authorization: "Bearer new" } });
+  expect(seen[0]!.get("authorization")).toBe("Bearer new");
+  expect(seen[0]!.get("content-type")).toBe("application/vnd.api+json");
+  await api.create({
+    body: { title: "t" },
+    headers: { "CONTENT-TYPE": "application/custom+json" },
+  });
+  expect(seen[1]!.get("authorization")).toBe("Bearer old");
+  expect(seen[1]!.get("content-type")).toBe("application/custom+json");
+});
+
+test("path values are never parsed again as parameter templates", async () => {
+  const urls: string[] = [];
+  const api = createClient(
+    {
+      get: zc.get("/x/:id/*rest").params(z.object({ id: z.string(), rest: z.string() })),
+    },
+    {
+      baseUrl: "http://x",
+      fetch: fakeFetch((url) => {
+        urls.push(url);
+        return new Response("null");
+      }),
+    },
+  );
+  await api.get({ params: { id: "*foo", rest: "*again/:id/a b" } });
+  expect(urls[0]).toBe("http://x/x/*foo/*again/%3Aid/a%20b");
+  await api.get({ params: { id: "a/b?#%", rest: "" } });
+  expect(urls[1]).toBe("http://x/x/a%2Fb%3F%23%25/");
+  await expect(api.get({ params: { id: "ok" } as { id: string; rest: string } })).rejects.toThrow(
+    '"*rest"',
+  );
+  expect(urls).toHaveLength(2);
+});
+
+test("base URL joining preserves prefixes, queries and encoded route values", async () => {
+  for (const [baseUrl, expected] of [
+    ["http://x", "http://x/blogs?page=2"],
+    ["http://x/", "http://x/blogs?page=2"],
+    ["http://x/api", "http://x/api/blogs?page=2"],
+    ["http://x/api/", "http://x/api/blogs?page=2"],
+  ] as const) {
+    const urls: string[] = [];
+    const api = createClient(contract, {
+      baseUrl,
+      fetch: fakeFetch((url) => {
+        urls.push(url);
+        return new Response("[]");
+      }),
+    });
+    await api.list({ query: { page: 2 } });
+    expect(urls).toEqual([expected]);
+  }
+});
 
 function fakeFetch(
   handler: (url: string, init: RequestInit) => Response | Promise<Response>,

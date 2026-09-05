@@ -3,15 +3,12 @@ import { type ContractProcedureDef, type ProblemJson, isProcedure } from "./prot
 import type { ClientOptions, ClientProcedure, ContractClient, ContractRouter } from "./types.ts";
 
 function substitutePath(path: string, params: Record<string, unknown>): string {
-  const withParams = path.replace(/:([A-Za-z0-9_]+)/g, (_match, name: string) => {
+  return path.replace(/([:*])([A-Za-z0-9_]+)/g, (_match, kind: string, name: string) => {
     const value = params[name];
-    if (value === undefined) throw new Error(`Missing required path parameter ":${name}"`);
-    return encodeURIComponent(String(value));
-  });
-  return withParams.replace(/\*([A-Za-z0-9_]+)/g, (_match, name: string) => {
-    const value = params[name];
-    if (value === undefined) throw new Error(`Missing required path parameter "*${name}"`);
-    return String(value).split("/").map(encodeURIComponent).join("/");
+    if (value === undefined) throw new Error(`Missing required path parameter "${kind}${name}"`);
+    return kind === "*"
+      ? String(value).split("/").map(encodeURIComponent).join("/")
+      : encodeURIComponent(String(value));
   });
 }
 
@@ -53,7 +50,8 @@ function makeCall(
       signal?: AbortSignal;
     };
 
-    const url = new URL(`${baseUrl}${substitutePath(def.path, params)}`);
+    const url = new URL(baseUrl);
+    url.pathname = `${url.pathname.replace(/\/+$/, "")}/${substitutePath(def.path, params).replace(/^\/+/, "")}`;
     for (const [key, value] of Object.entries(query)) {
       if (value === undefined || value === null) continue;
       url.searchParams.append(key, String(value));
@@ -63,7 +61,10 @@ function makeCall(
       method: def.method,
       ...(signal !== undefined ? { signal } : {}),
     };
-    const mergedHeaders = { ...resolveHeaders(), ...headers };
+    const mergedHeaders = new Headers();
+    for (const source of [resolveHeaders(), headers]) {
+      for (const [name, value] of Object.entries(source)) mergedHeaders.set(name, value);
+    }
     if (body !== undefined) {
       if (body instanceof FormData || body instanceof Blob) {
         // Native bodies pass through as-is: JSON.stringify would silently
@@ -71,13 +72,14 @@ function makeCall(
         // multipart boundary itself.
         init.body = body;
       } else {
-        if (mergedHeaders["content-type"] === undefined) {
-          mergedHeaders["content-type"] = "application/json";
+        if (!mergedHeaders.has("content-type")) {
+          mergedHeaders.set("content-type", "application/json");
         }
         init.body = JSON.stringify(body);
       }
     }
-    if (Object.keys(mergedHeaders).length > 0) init.headers = mergedHeaders;
+    const headerValues = Object.fromEntries(mergedHeaders);
+    if (Object.keys(headerValues).length > 0) init.headers = headerValues;
 
     const res = await doFetch(url.toString(), init);
     if (!res.ok) {
