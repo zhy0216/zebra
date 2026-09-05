@@ -47,44 +47,44 @@ interface Entry {
 /**
  * Default in-memory implementation backed by a `Map`. Expired entries are
  * removed lazily: `get`/`set`/`touch` sweep already-expired keys in bounded
- * passes (at most `SWEEP_BUDGET` per call, oldest first) so a single access
- * never pays an O(n) scan over a large store. Correctness never depends on
- * the sweep — every read re-checks its entry's expiry. No timers are used,
- * so nothing can leak. TTL is in milliseconds.
+ * passes (at most `SWEEP_BUDGET` per call, resuming the previous pass) so a
+ * single access never pays an O(n) scan over a large store. Correctness never
+ * depends on the sweep — every read re-checks its entry's expiry. No timers
+ * are used, so nothing can leak. TTL is in milliseconds.
  */
 export class MemoryStore implements SessionStore {
   private readonly ttl: number;
   private readonly entries = new Map<string, Entry>();
+  private sweepCursor = this.entries.entries();
 
   constructor(options: MemoryStoreOptions) {
     this.ttl = options.ttl;
   }
 
   async get(id: string): Promise<unknown | undefined> {
-    this.sweep();
-    const entry = this.entries.get(id);
+    const now = Date.now();
+    this.sweep(now);
+    const entry = this.activeEntry(id, now);
     if (entry === undefined) return undefined;
-    if (Date.now() >= entry.expiresAt) {
-      this.entries.delete(id);
-      return undefined;
-    }
     if (entry.tombstoneUntil !== undefined) return undefined;
     return entry.data;
   }
 
   async set(id: string, data: unknown): Promise<void> {
-    this.sweep();
+    const now = Date.now();
+    this.sweep(now);
     // Refuse to revive a session destroyed within the tombstone window.
-    if (this.entries.get(id)?.tombstoneUntil !== undefined) return;
-    this.entries.set(id, { data, expiresAt: Date.now() + this.ttl });
+    if (this.activeEntry(id, now)?.tombstoneUntil !== undefined) return;
+    this.entries.set(id, { data, expiresAt: now + this.ttl });
   }
 
   async touch(id: string, ttl?: number): Promise<void> {
-    this.sweep();
-    const entry = this.entries.get(id);
+    const now = Date.now();
+    this.sweep(now);
+    const entry = this.activeEntry(id, now);
     if (entry === undefined) return;
     if (entry.tombstoneUntil !== undefined) return;
-    entry.expiresAt = Date.now() + (ttl ?? this.ttl);
+    entry.expiresAt = now + (ttl ?? this.ttl);
   }
 
   async destroy(id: string): Promise<void> {
@@ -92,18 +92,36 @@ export class MemoryStore implements SessionStore {
     this.entries.set(id, { data: undefined, expiresAt: until, tombstoneUntil: until });
   }
 
+  /** Expiration checks on the requested id never depend on sweep progress. */
+  private activeEntry(id: string, now: number): Entry | undefined {
+    const entry = this.entries.get(id);
+    if (entry !== undefined && now >= entry.expiresAt) {
+      this.entries.delete(id);
+      return undefined;
+    }
+    return entry;
+  }
+
   /**
    * Removes already-expired entries, scanning at most `SWEEP_BUDGET` per call.
-   * Entries are inserted in creation order, so the head of the Map holds the
-   * oldest (most likely expired) ids first; entries behind the budget are
-   * reclaimed by later accesses or on direct `get`. Small stores (≤ budget)
-   * are fully swept, identical to the historical behavior.
+   * Retaining the live Map iterator prevents long-lived entries at the head
+   * from starving the tail. Wrap within the budget so small stores are still
+   * fully swept on each call, even after deletions or newly appended keys.
    */
-  private sweep(): void {
-    const now = Date.now();
-    let scanned = 0;
-    for (const [id, entry] of this.entries) {
-      if (++scanned > SWEEP_BUDGET) break;
+  private sweep(now: number): void {
+    const budget = Math.min(SWEEP_BUDGET, this.entries.size);
+    if (budget === 0) {
+      this.sweepCursor = this.entries.entries();
+      return;
+    }
+    for (let scanned = 0; scanned < budget; scanned++) {
+      let next = this.sweepCursor.next();
+      if (next.done) {
+        this.sweepCursor = this.entries.entries();
+        next = this.sweepCursor.next();
+      }
+      if (next.done) break;
+      const [id, entry] = next.value;
       if (now >= entry.expiresAt) this.entries.delete(id);
     }
   }

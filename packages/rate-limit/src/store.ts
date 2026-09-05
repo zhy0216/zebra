@@ -69,6 +69,7 @@ interface Entry {
 export class MemoryStore implements RateLimitStore {
   private readonly windowMs: number | undefined;
   private readonly buckets = new Map<string, Entry>();
+  private sweepCursor = this.buckets.entries();
 
   constructor(options: MemoryStoreOptions = {}) {
     this.windowMs = options.windowMs;
@@ -81,8 +82,8 @@ export class MemoryStore implements RateLimitStore {
         "MemoryStore: increment requires windowMs (constructor option or per-call argument)",
       );
     }
-    this.sweep();
     const now = Date.now();
+    this.sweep(now);
     const entry = this.buckets.get(key);
     if (entry === undefined || now >= entry.resetAt) {
       const fresh: Entry = { count: 1, resetAt: now + ms };
@@ -101,13 +102,24 @@ export class MemoryStore implements RateLimitStore {
    * Removes already-expired buckets, scanning at most `SWEEP_BUDGET` per call
    * so per-increment cost stays bounded. Without this, a long-lived process
    * under an ever-changing key space (e.g. per-IP keys behind `trustProxy`)
-   * would grow the map without limit.
+   * would grow the map without limit. The live cursor resumes each pass and
+   * wraps at the end, so long-lived counters cannot indefinitely hide expired
+   * entries and small stores are still fully scanned on each call.
    */
-  private sweep(): void {
-    const now = Date.now();
-    let scanned = 0;
-    for (const [key, entry] of this.buckets) {
-      if (++scanned > SWEEP_BUDGET) break;
+  private sweep(now: number): void {
+    const budget = Math.min(SWEEP_BUDGET, this.buckets.size);
+    if (budget === 0) {
+      this.sweepCursor = this.buckets.entries();
+      return;
+    }
+    for (let scanned = 0; scanned < budget; scanned++) {
+      let next = this.sweepCursor.next();
+      if (next.done) {
+        this.sweepCursor = this.buckets.entries();
+        next = this.sweepCursor.next();
+      }
+      if (next.done) break;
+      const [key, entry] = next.value;
       if (now >= entry.resetAt) this.buckets.delete(key);
     }
   }

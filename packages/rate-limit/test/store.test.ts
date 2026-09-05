@@ -1,4 +1,4 @@
-import { describe, expect, expectTypeOf, test } from "bun:test";
+import { describe, expect, expectTypeOf, spyOn, test } from "bun:test";
 import { MemoryStore } from "../src/store.ts";
 import type { IncrementResult, RateLimitStore } from "../src/store.ts";
 
@@ -108,6 +108,73 @@ describe("MemoryStore", () => {
     const buckets = (store as unknown as { buckets: Map<string, unknown> }).buckets;
     expect(buckets.size).toBe(1);
     expect(buckets.has("c")).toBe(true);
+  });
+
+  test("bounded sweeps reach expired tails behind 512 live counters", async () => {
+    let now = 0;
+    const clock = spyOn(Date, "now").mockImplementation(() => now);
+    const store = new MemoryStore({ windowMs: 100 });
+    const buckets = (store as unknown as { buckets: Map<string, { resetAt: number }> }).buckets;
+    try {
+      for (let i = 0; i < 512; i++) await store.increment(`live${i}`, 10_000);
+      for (let i = 0; i < 1200; i++) await store.increment(`expired${i}`);
+      expect(buckets.size).toBe(1712);
+      let inspected = 0;
+      for (const bucket of buckets.values()) {
+        const resetAt = bucket.resetAt;
+        Object.defineProperty(bucket, "resetAt", {
+          get() {
+            inspected++;
+            return resetAt;
+          },
+        });
+      }
+      now = 100;
+      const calls = Math.ceil(buckets.size / 512) + 1;
+      for (let i = 0; i < calls; i++) {
+        inspected = 0;
+        expect(await store.increment("live0")).toEqual({ count: i + 2, resetAt: 10_000 });
+        // The target check and returned resetAt account for two reads in
+        // addition to the sweep's maximum 512 entry inspections.
+        expect(inspected).toBeLessThanOrEqual(514);
+      }
+      expect(buckets.size).toBe(512);
+      expect([...buckets.keys()].every((key) => key.startsWith("live"))).toBe(true);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  test("sweeps survive resets, reinsertion, wraparound and regrowth after an empty map", async () => {
+    let now = 0;
+    const clock = spyOn(Date, "now").mockImplementation(() => now);
+    const store = new MemoryStore({ windowMs: 100 });
+    const buckets = (store as unknown as { buckets: Map<string, unknown> }).buckets;
+    try {
+      for (let i = 0; i < 1200; i++) await store.increment(`live${i}`, 10_000);
+      for (let i = 0; i < 600; i++) await store.increment(`expired${i}`);
+      now = 100;
+      for (let i = 0; i < 8; i++) {
+        await store.reset(`live${i}`);
+        await store.reset(`expired${i * 70}`);
+        expect((await store.increment(`live${i}`, 100)).count).toBe(1);
+        await store.increment(`new${i}`, 100);
+      }
+      expect([...buckets.keys()].some((key) => key.startsWith("expired"))).toBe(false);
+      now = 200;
+      for (let i = 0; i < 5; i++) await store.increment("live100");
+      expect(buckets.size).toBe(1200 - 8);
+      expect([...buckets.keys()].every((key) => key.startsWith("live"))).toBe(true);
+
+      for (const key of [...buckets.keys()]) await store.reset(key);
+      expect(buckets.size).toBe(0);
+      expect(await store.increment("regrown")).toEqual({ count: 1, resetAt: 300 });
+      now = 300;
+      expect(await store.increment("fresh")).toEqual({ count: 1, resetAt: 400 });
+      expect([...buckets.keys()]).toEqual(["fresh"]);
+    } finally {
+      clock.mockRestore();
+    }
   });
 
   test("increment without any windowMs rejects", async () => {

@@ -1,4 +1,4 @@
-import { describe, expect, expectTypeOf, test } from "bun:test";
+import { describe, expect, expectTypeOf, spyOn, test } from "bun:test";
 import { MemoryStore } from "../src/store.ts";
 import type { SessionStore } from "../src/store.ts";
 
@@ -131,6 +131,137 @@ describe("MemoryStore", () => {
     // Repeated accesses drain the rest of the store in bounded passes.
     await store.get("missing");
     expect(entries.size).toBe(0);
+  });
+
+  test("bounded sweeps reach expired tails behind 512 live entries", async () => {
+    let now = 0;
+    const clock = spyOn(Date, "now").mockImplementation(() => now);
+    const store = new MemoryStore({ ttl: 100 });
+    const entries = (store as unknown as { entries: Map<string, { expiresAt: number }> }).entries;
+    try {
+      for (let i = 0; i < 512; i++) {
+        await store.set(`live${i}`, i);
+        await store.touch(`live${i}`, 10_000);
+      }
+      for (let i = 0; i < 1200; i++) await store.set(`expired${i}`, i);
+      expect(entries.size).toBe(1712);
+
+      let inspected = 0;
+      for (const entry of entries.values()) {
+        const expiresAt = entry.expiresAt;
+        Object.defineProperty(entry, "expiresAt", {
+          get() {
+            inspected++;
+            return expiresAt;
+          },
+        });
+      }
+      now = 100;
+      const calls = Math.ceil(entries.size / 512) + 1;
+      for (let i = 0; i < calls; i++) {
+        inspected = 0;
+        await store.get("missing");
+        expect(inspected).toBeLessThanOrEqual(512);
+      }
+      expect(entries.size).toBe(512);
+      expect([...entries.keys()].every((key) => key.startsWith("live"))).toBe(true);
+      expect(await store.get("live0")).toBe(0);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  test("sweeps progress across insertion, deletion, tombstones, empty maps and regrowth", async () => {
+    let now = 0;
+    const clock = spyOn(Date, "now").mockImplementation(() => now);
+    const store = new MemoryStore({ ttl: 100 });
+    const entries = (store as unknown as { entries: Map<string, unknown> }).entries;
+    try {
+      for (let i = 0; i < 1200; i++) {
+        await store.set(`live${i}`, i);
+        await store.touch(`live${i}`, 10_000);
+      }
+      for (let i = 0; i < 600; i++) await store.set(`expired${i}`, i);
+      now = 100;
+      for (let i = 0; i < 8; i++) {
+        await store.get(`expired${i * 70}`);
+        await store.destroy(`live${i}`);
+        await store.set(`new${i}`, i);
+      }
+      expect([...entries.keys()].some((key) => key.startsWith("expired"))).toBe(false);
+      now = 200;
+      for (let i = 0; i < 5; i++) await store.get("missing");
+      expect(entries.size).toBe(1200 - 8);
+      expect([...entries.keys()].every((key) => key.startsWith("live"))).toBe(true);
+
+      now = 10_000;
+      for (let i = 0; i < 4; i++) await store.get("missing");
+      expect(entries.size).toBe(0);
+      await store.get("missing");
+      await store.set("regrown", "ok");
+      expect(await store.get("regrown")).toBe("ok");
+      now += 100;
+      await store.get("missing");
+      expect(entries.size).toBe(0);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  test("touch never revives an expired target even when the sweep does not reach it", async () => {
+    let now = 0;
+    const clock = spyOn(Date, "now").mockImplementation(() => now);
+    const store = new MemoryStore({ ttl: 100 });
+    try {
+      for (let i = 0; i < 512; i++) {
+        await store.set(`live${i}`, i);
+        await store.touch(`live${i}`, 10_000);
+      }
+      await store.set("target", "expired");
+      // Maintenance is advisory. Suppress it to guarantee this request's
+      // target is outside the sweep, independent of the cursor position.
+      const sweep = spyOn(store as unknown as { sweep(): void }, "sweep").mockImplementation(
+        () => {},
+      );
+      try {
+        now = 100;
+        await store.touch("target", 10_000);
+        expect(await store.get("target")).toBeUndefined();
+      } finally {
+        sweep.mockRestore();
+      }
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  test("set reuses an expired tombstone without a sweep and preserves a live tombstone", async () => {
+    let now = 0;
+    const clock = spyOn(Date, "now").mockImplementation(() => now);
+    const store = new MemoryStore({ ttl: 100 });
+    try {
+      for (let i = 0; i < 512; i++) {
+        await store.set(`live${i}`, i);
+        await store.touch(`live${i}`, 10_000);
+      }
+      await store.destroy("target");
+      const sweep = spyOn(store as unknown as { sweep(): void }, "sweep").mockImplementation(
+        () => {},
+      );
+      try {
+        now = 99;
+        await store.touch("target", 10_000);
+        await store.set("target", "blocked");
+        expect(await store.get("target")).toBeUndefined();
+        now = 100;
+        await store.set("target", "reused");
+        expect(await store.get("target")).toBe("reused");
+      } finally {
+        sweep.mockRestore();
+      }
+    } finally {
+      clock.mockRestore();
+    }
   });
 
   test("set resets the expiry for an existing id", async () => {
