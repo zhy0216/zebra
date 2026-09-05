@@ -18,12 +18,16 @@ function startApp(fn: (app: Zebra) => void) {
 
 function connectAndWait(port: number, path: string, headers?: Record<string, string>) {
   const ws = new WebSocket(`ws://localhost:${port}${path}`, headers ? { headers } : undefined);
+  let timer: ReturnType<typeof setTimeout> | undefined;
   return {
     ws,
     closed: new Promise<void>((resolve, reject) => {
       ws.onerror = () => reject(new Error("ws connection failed"));
       ws.onclose = () => resolve();
-      setTimeout(() => reject(new Error("timeout waiting for ws close")), 3000);
+      timer = setTimeout(() => reject(new Error("timeout waiting for ws close")), 3000);
+    }).finally(() => {
+      clearTimeout(timer);
+      ws.close();
     }),
   };
 }
@@ -72,7 +76,7 @@ test("upgrade handshake returns 101 and fires open", async () => {
     expect(opened).toBe(true);
     expect(closed).toBe(1);
   } finally {
-    void app.stop();
+    await app.stop();
   }
 });
 
@@ -91,18 +95,14 @@ test("close cleanup: close fires exactly once and the server-side socket reaches
   );
   const { port } = await app.listen({ port: 0 });
   try {
-    const { ws } = connectAndWait(port, "/chat");
+    const { ws, closed } = connectAndWait(port, "/chat");
     ws.onopen = () => ws.close(1000, "done");
-    await new Promise<void>((resolve, reject) => {
-      ws.onerror = () => reject(new Error("ws connection failed"));
-      ws.onclose = () => resolve();
-      setTimeout(() => reject(new Error("timeout waiting for ws close")), 3000);
-    });
+    await closed;
     for (let i = 0; i < 50 && closeCount === 0; i++) await Bun.sleep(10);
     expect(closeCount).toBe(1);
     expect(serverSocket.readyState).toBe(3); // WebSocket.CLOSED：连接已完全回收
   } finally {
-    void app.stop();
+    await app.stop();
   }
 });
 
@@ -117,7 +117,7 @@ test("message handler exceptions are contained and don't kill the connection", a
   );
   const { port } = await app.listen({ port: 0 });
   try {
-    const ws = new WebSocket(`ws://localhost:${port}/boom`);
+    const { ws, closed } = connectAndWait(port, "/boom");
     const messages: string[] = [];
     ws.onmessage = (e) => {
       messages.push(String(e.data));
@@ -132,11 +132,7 @@ test("message handler exceptions are contained and don't kill the connection", a
         ws.send("die");
         ws.send("ok");
       };
-      await new Promise<void>((resolve, reject) => {
-        ws.onerror = () => reject(new Error("ws connection failed"));
-        ws.onclose = () => resolve();
-        setTimeout(() => reject(new Error("timeout waiting for ws close")), 3000);
-      });
+      await closed;
     } finally {
       errorSpy.mockRestore();
     }
@@ -145,7 +141,7 @@ test("message handler exceptions are contained and don't kill the connection", a
     expect(wsErrorReported).toBe(true);
     expect(messages).toEqual(["echo ok"]);
   } finally {
-    void app.stop();
+    await app.stop();
   }
 });
 
@@ -167,20 +163,16 @@ test("HTTP and ws routes coexist on one app without interfering end-to-end", asy
     expect(http.status).toBe(200);
     expect(await http.text()).toBe("hi yang");
 
-    const ws = new WebSocket(`ws://localhost:${port}/chat/lobby`);
+    const { ws, closed } = connectAndWait(port, "/chat/lobby");
     const messages: string[] = [];
     ws.onmessage = (e) => {
       messages.push(String(e.data));
       if (messages.length === 2) ws.close();
     };
     ws.onopen = () => ws.send("ping");
-    await new Promise<void>((resolve, reject) => {
-      ws.onerror = () => reject(new Error("ws connection failed"));
-      ws.onclose = () => resolve();
-      setTimeout(() => reject(new Error("timeout waiting for ws messages")), 3000);
-    });
+    await closed;
     expect(messages).toEqual(["welcome to lobby", "echo lobby:ping"]);
   } finally {
-    void app.stop();
+    await app.stop();
   }
 });

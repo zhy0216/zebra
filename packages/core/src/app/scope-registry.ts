@@ -13,6 +13,7 @@ export interface RequestScopes {
   request: Container;
   ephemeralSession?: Container;
   sessionId?: string;
+  sessionRecord?: SessionScopeRecord;
 }
 
 /**
@@ -72,6 +73,7 @@ export class SessionScopeRegistry {
     return {
       request: record.container.createChildScope(ScopeKind.Request),
       sessionId,
+      sessionRecord: record,
     };
   }
 
@@ -89,8 +91,8 @@ export class SessionScopeRegistry {
       } catch (error) {
         errors.push(error);
       }
-    } else if (scopes.sessionId !== undefined) {
-      this.releaseSession(scopes.sessionId);
+    } else if (scopes.sessionId !== undefined && scopes.sessionRecord) {
+      this.releaseSession(scopes.sessionId, scopes.sessionRecord);
     }
     if (errors.length === 1) throw errors[0];
     if (errors.length > 1) throw new AggregateError(errors, "Failed to dispose request scopes");
@@ -155,9 +157,10 @@ export class SessionScopeRegistry {
     }
   }
 
-  private releaseSession(id: string): void {
-    const record = this.sessions.get(id);
-    if (!record) return;
+  private releaseSession(id: string, record: SessionScopeRecord): void {
+    // Explicit teardown can replace an id while older requests are still
+    // running. Their release must not affect the replacement or arm an orphan timer.
+    if (this.sessions.get(id) !== record) return;
     record.activeRequests = Math.max(0, record.activeRequests - 1);
     if (record.activeRequests === 0) {
       // Drop any stale timer before arming a fresh one — an orphaned timer
@@ -166,13 +169,16 @@ export class SessionScopeRegistry {
         clearTimeout(record.timer);
         record.timer = undefined;
       }
-      record.timer = this.scheduleSessionExpiry(id);
+      record.timer = this.scheduleSessionExpiry(id, record);
     }
   }
 
-  private scheduleSessionExpiry(id: string): ReturnType<typeof setTimeout> {
+  private scheduleSessionExpiry(
+    id: string,
+    record: SessionScopeRecord,
+  ): ReturnType<typeof setTimeout> {
     const timer = setTimeout(() => {
-      void this.expireSession(id).catch((error) => {
+      void this.expireSession(id, record).catch((error) => {
         console.error("[zebra] session cleanup failed:", error);
       });
     }, this.sessionTtl);
@@ -185,11 +191,10 @@ export class SessionScopeRegistry {
    * meantime instead of disposing a live container. The public
    * `disposeSession(id)` remains the explicit, unconditional escape hatch.
    */
-  private async expireSession(id: string): Promise<void> {
-    const record = this.sessions.get(id);
-    if (!record) return;
+  private async expireSession(id: string, record: SessionScopeRecord): Promise<void> {
+    if (this.sessions.get(id) !== record) return;
     if (record.activeRequests > 0) {
-      record.timer = this.scheduleSessionExpiry(id);
+      record.timer = this.scheduleSessionExpiry(id, record);
       return;
     }
     await this.disposeSession(id);
