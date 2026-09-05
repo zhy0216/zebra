@@ -51,7 +51,13 @@ function assertDeclaredSize(req: Request, limit: number): void {
   }
 }
 
-export async function readBody(req: Request, limit: number): Promise<Uint8Array> {
+export async function readBody(
+  req: Request,
+  limit: number,
+  // Called only after acquiring the reader, so consumers can distinguish
+  // stream failures from conflicting readers without changing raw errors.
+  onReadError?: (error: unknown) => void,
+): Promise<Uint8Array> {
   assertDeclaredSize(req, limit);
   if (req.bodyUsed) throw new TypeError("Request body has already been consumed");
   if (!req.body) return new Uint8Array();
@@ -66,11 +72,15 @@ export async function readBody(req: Request, limit: number): Promise<Uint8Array>
       if (done) break;
       size += value.byteLength;
       if (size > limit) {
-        await reader.cancel();
+        // Cancellation must neither replace the 413 nor delay it indefinitely.
+        void reader.cancel().catch(() => {});
         throw new HttpError(413, "payload_too_large", "Payload too large", { limit });
       }
       chunks.push(value);
     }
+  } catch (error) {
+    onReadError?.(error);
+    throw error;
   } finally {
     reader.releaseLock();
   }
@@ -86,7 +96,12 @@ export async function readBody(req: Request, limit: number): Promise<Uint8Array>
 
 export async function parseBody(req: Request, opts: BodyOptions): Promise<unknown> {
   const contentType = req.headers.get("content-type") ?? "";
-  const bytes = await readBody(req, effectiveLimit(opts, contentType.toLowerCase()));
+  const ct = contentType.toLowerCase();
+  const bytes = await readBody(req, effectiveLimit(opts, ct), (error) => {
+    if (ct.startsWith("multipart/form-data") && !(error instanceof HttpError)) {
+      throw new HttpError(400, "invalid_multipart", "Body is not valid multipart form data");
+    }
+  });
   return parseBufferedBody(bytes, opts, contentType);
 }
 

@@ -200,6 +200,75 @@ test("a shared size-limit failure rejects every buffering helper and cancels onc
   expect(cancelled).toBe(1);
 });
 
+test("shared multipart size-limit errors do not wait for stream cancellation", async () => {
+  const cancellation = Promise.withResolvers<void>();
+  let cancellations = 0;
+  const raw = new Request("http://x/", {
+    method: "POST",
+    headers: { "content-type": "multipart/form-data; boundary=X" },
+    body: new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.enqueue(new Uint8Array(8192));
+      },
+      cancel() {
+        cancellations++;
+        return cancellation.promise;
+      },
+    }),
+  });
+  const z = buildRequest(raw, {}, opts);
+  const result = Promise.allSettled([z.body(), z.json(), z.text(), z.form()]);
+  try {
+    const settled = await Promise.race([result, Bun.sleep(100).then(() => "pending" as const)]);
+    expect(settled).not.toBe("pending");
+    if (settled === "pending") return;
+    for (const entry of settled) {
+      expect(entry).toMatchObject({
+        status: "rejected",
+        reason: { status: 413, code: "payload_too_large" },
+      });
+    }
+    expect(cancellations).toBe(1);
+  } finally {
+    cancellation.resolve();
+    await result;
+  }
+});
+
+test("multipart body maps shared read failures without changing the other helpers' errors", async () => {
+  const failure = new TypeError("stream read failed");
+  const raw = new Request("http://x/", {
+    method: "POST",
+    headers: { "content-type": "multipart/form-data; boundary=X" },
+    body: new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.error(failure);
+      },
+    }),
+  });
+  const getReader = spyOn(raw.body!, "getReader");
+  const z = buildRequest(raw, {}, opts);
+  try {
+    const [text, body, json, form] = await Promise.allSettled([
+      z.text(),
+      z.body(),
+      z.json(),
+      z.form(),
+    ]);
+    expect(body).toMatchObject({
+      status: "rejected",
+      reason: { status: 400, code: "invalid_multipart" },
+    });
+    for (const result of [text, json, form]) {
+      expect(result).toEqual({ status: "rejected", reason: failure });
+    }
+    expect(z.body()).toBe(z.body());
+    expect(getReader).toHaveBeenCalledTimes(1);
+  } finally {
+    getReader.mockRestore();
+  }
+});
+
 test("req.form parses multipart with File entries", async () => {
   const form = new FormData();
   form.append("a", "1");
@@ -349,4 +418,26 @@ test("buffering an externally consumed raw request rejects instead of returning 
   await expect(z.body()).rejects.toBeInstanceOf(TypeError);
   await expect(z.text()).rejects.toBeInstanceOf(TypeError);
   expect(() => z.stream()).toThrow(TypeError);
+});
+
+test("multipart reader conflicts remain TypeErrors rather than invalid_multipart", async () => {
+  for (const claimedBy of ["stream", "locked", "consumed"] as const) {
+    const raw = new Request("http://x/", {
+      method: "POST",
+      headers: { "content-type": "multipart/form-data; boundary=X" },
+      body: "body",
+    });
+    const z = buildRequest(raw, {}, opts);
+    const stream = claimedBy === "stream" ? z.stream() : undefined;
+    const reader = claimedBy === "locked" ? raw.body!.getReader() : undefined;
+    if (claimedBy === "consumed") await raw.text();
+    try {
+      for (const result of await Promise.allSettled([z.body(), z.json(), z.text(), z.form()])) {
+        expect(result).toMatchObject({ status: "rejected", reason: expect.any(TypeError) });
+      }
+    } finally {
+      reader?.releaseLock();
+      await stream?.cancel();
+    }
+  }
 });

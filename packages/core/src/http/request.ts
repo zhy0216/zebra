@@ -92,6 +92,7 @@ class ZebraRequestImpl<P, B> implements ZebraRequest<P, B> {
   private textPromise: Promise<string> | null = null;
   private formPromise: Promise<FormData> | null = null;
   private streamClaimed = false;
+  private bodyReadFailed = false;
 
   constructor(
     raw: Request,
@@ -146,8 +147,18 @@ class ZebraRequestImpl<P, B> implements ZebraRequest<P, B> {
   }
 
   body(): Promise<B> {
-    this.bodyPromise ??= this.bytes().then((body) =>
-      parseBufferedBody(body, this.bodyOpts, this.contentType),
+    this.bodyPromise ??= this.bytes().then(
+      (body) => parseBufferedBody(body, this.bodyOpts, this.contentType),
+      (error) => {
+        if (
+          this.bodyReadFailed &&
+          this.ct.startsWith("multipart/form-data") &&
+          !(error instanceof HttpError)
+        ) {
+          throw new HttpError(400, "invalid_multipart", "Body is not valid multipart form data");
+        }
+        throw error;
+      },
     ) as Promise<B>;
     return this.bodyPromise;
   }
@@ -202,7 +213,9 @@ class ZebraRequestImpl<P, B> implements ZebraRequest<P, B> {
   private bytes(): Promise<Uint8Array> {
     this.bytesPromise ??= this.streamClaimed
       ? Promise.reject(new TypeError("Request body has already been claimed by stream()"))
-      : readBody(this.raw, effectiveLimit(this.bodyOpts, this.ct));
+      : readBody(this.raw, effectiveLimit(this.bodyOpts, this.ct), () => {
+          this.bodyReadFailed = true;
+        });
     return this.bytesPromise;
   }
 }

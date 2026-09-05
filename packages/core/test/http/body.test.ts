@@ -115,6 +115,49 @@ test("multipart over the total size limit rejects with 413 (streaming path)", as
   ).rejects.toMatchObject({ status: 413, code: "payload_too_large" });
 });
 
+test("multipart size-limit errors survive a rejected stream cancellation", async () => {
+  let cancellations = 0;
+  const req = new Request("http://x", {
+    method: "POST",
+    headers: { "content-type": "multipart/form-data; boundary=X" },
+    body: new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.enqueue(new Uint8Array(2048));
+      },
+      async cancel() {
+        cancellations++;
+        throw new Error("cancel failed");
+      },
+    }),
+  });
+  await expect(parseBody(req, defaultOpts)).rejects.toMatchObject({
+    status: 413,
+    code: "payload_too_large",
+  });
+  expect(cancellations).toBe(1);
+});
+
+test("multipart stream failures retain invalid_multipart while HttpErrors pass through", async () => {
+  for (const failure of [
+    new Error("socket reset"),
+    new TypeError("stream read failed"),
+    new HttpError(413, "payload_too_large", "Payload too large"),
+  ]) {
+    const req = new Request("http://x", {
+      method: "POST",
+      headers: { "content-type": "multipart/form-data; boundary=X" },
+      body: new ReadableStream<Uint8Array>({
+        pull(controller) {
+          controller.error(failure);
+        },
+      }),
+    });
+    const parsed = parseBody(req, defaultOpts);
+    if (failure instanceof HttpError) await expect(parsed).rejects.toBe(failure);
+    else await expect(parsed).rejects.toMatchObject({ status: 400, code: "invalid_multipart" });
+  }
+});
+
 test("multipart parse errors retain 400 for missing boundaries and empty payloads", async () => {
   for (const contentType of ["multipart/form-data", "multipart/form-data; boundary=X"]) {
     for (const body of [undefined, "", "invalid"]) {
