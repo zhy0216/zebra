@@ -5,7 +5,11 @@ import { join, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dir, "..");
 
-const SEMVER_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+const NUMERIC_IDENTIFIER = "(?:0|[1-9]\\d*)";
+const PRERELEASE_IDENTIFIER = "(?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*)";
+const SEMVER_RE = new RegExp(
+  `^${NUMERIC_IDENTIFIER}\\.${NUMERIC_IDENTIFIER}\\.${NUMERIC_IDENTIFIER}(?:-${PRERELEASE_IDENTIFIER}(?:\\.${PRERELEASE_IDENTIFIER})*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$`,
+);
 const TYPE_RE =
   /^(feat|fix|docs|chore|test|refactor|perf|build|ci|style|revert)(?:\(([^)]*)\))?:\s*(.+)$/;
 const CATEGORY_HEADERS = ["Features", "Bug fixes", "Docs", "Chores", "Tests", "Other"] as const;
@@ -22,7 +26,12 @@ type Pkg = {
   name: string;
   version: string;
   path: string;
-  data: Record<string, unknown> & { name?: string; version?: string; private?: boolean };
+  data: Record<string, unknown> & {
+    name?: string;
+    version?: string;
+    private?: boolean;
+    dependencies?: Record<string, string>;
+  };
 };
 
 function readJson(path: string): Record<string, any> {
@@ -39,13 +48,22 @@ function writeJson(path: string, data: unknown): void {
   writeFileSync(path, `${content}\n`);
 }
 
-function run(
-  cmd: string,
-  args: string[],
-  cwd: string,
-): { ok: boolean; stdout: string; stderr: string } {
+function run(cmd: string, args: string[], cwd: string) {
   const res = spawnSync(cmd, args, { cwd, encoding: "utf8" });
-  return { ok: res.status === 0, stdout: res.stdout ?? "", stderr: res.stderr ?? "" };
+  return { ...res, ok: res.status === 0, stdout: res.stdout ?? "", stderr: res.stderr ?? "" };
+}
+
+function runChecked(cmd: string, args: string[], cwd: string, failure: string) {
+  const res = run(cmd, args, cwd);
+  if (!res.ok) {
+    if (res.stdout) console.error(res.stdout.trimEnd());
+    if (res.stderr) console.error(res.stderr.trimEnd());
+    if (res.error) console.error(res.error.message);
+    const reason = res.signal ? `signal ${res.signal}` : `exit ${res.status ?? "unknown"}`;
+    console.error(`error: ${failure} (${reason})`);
+    process.exit(1);
+  }
+  return res;
 }
 
 function today(): string {
@@ -80,11 +98,45 @@ if (flag("--help") || flag("-h")) {
   process.exit(0);
 }
 
-const version = value("--version");
-if (!version || !SEMVER_RE.test(version)) {
-  console.error(`error: --version X.Y.Z required (got ${JSON.stringify(version)})`);
+const valueFlags = new Set(["--version", "--registry"]);
+const booleanFlags = new Set([
+  "--prepare",
+  "--publish",
+  "--publish-only",
+  "--tolerate-republish",
+  "--no-verify",
+]);
+const seen = new Set<string>();
+for (let i = 0; i < args.length; i++) {
+  const arg = args[i]!;
+  if (!valueFlags.has(arg) && !booleanFlags.has(arg)) {
+    console.error(`error: unknown argument ${JSON.stringify(arg)}`);
+    process.exit(1);
+  }
+  if (seen.has(arg)) {
+    console.error(`error: duplicate argument ${arg}`);
+    process.exit(1);
+  }
+  seen.add(arg);
+  if (valueFlags.has(arg)) {
+    const next = args[++i];
+    if (!next || next.startsWith("--")) {
+      console.error(`error: ${arg} requires a value`);
+      process.exit(1);
+    }
+  }
+}
+
+const requestedVersion = value("--version");
+if (
+  !requestedVersion ||
+  requestedVersion.trim() !== requestedVersion ||
+  !SEMVER_RE.test(requestedVersion)
+) {
+  console.error(`error: --version X.Y.Z required (got ${JSON.stringify(requestedVersion)})`);
   process.exit(1);
 }
+const version = requestedVersion;
 
 const prepare = flag("--prepare");
 const publish = flag("--publish");
@@ -111,6 +163,33 @@ if (publish && !registry) {
 
 const mode = dryRun ? "dry-run" : prepare ? "prepare" : publishOnly ? "publish-only" : "publish";
 console.log(`[release] version ${version} (${mode})`);
+
+const tag = `v${version}`;
+if (!dryRun && !publishOnly) {
+  const status = runChecked(
+    "git",
+    ["status", "--porcelain", "--untracked-files=all"],
+    ROOT,
+    "could not inspect the working tree",
+  );
+  if (status.stdout.trim() !== "") {
+    console.error("error: working tree must be clean before preparing or publishing a release");
+    console.error(status.stdout.trimEnd());
+    process.exit(1);
+  }
+  const existingTag = runChecked(
+    "git",
+    ["tag", "--list", tag],
+    ROOT,
+    "could not inspect the release tag",
+  );
+  if (existingTag.stdout.trim() !== "") {
+    console.error(
+      `error: release tag ${tag} already exists; use --publish --publish-only to publish a prepared release`,
+    );
+    process.exit(1);
+  }
+}
 
 // --- collect publishable packages from root workspaces ---------------------
 const rootPkg = readJson(join(ROOT, "package.json"));
@@ -215,8 +294,12 @@ for (const pkg of packages) visit(pkg);
 // non-semver tag (`v1-archive`); `git describe` would pick it and recompute
 // the same range on every release, duplicating the changelog.
 function lastTag(): string | null {
-  const res = run("git", ["tag", "--list", "v*", "--sort=-version:refname"], ROOT);
-  if (!res.ok) return null;
+  const res = runChecked(
+    "git",
+    ["tag", "--list", "v*", "--sort=-version:refname"],
+    ROOT,
+    "could not read release tags",
+  );
   const semverTag = res.stdout
     .split("\n")
     .map((t) => t.trim())
@@ -228,7 +311,7 @@ function commitSubjects(): string[] {
   const tag = lastTag();
   const args = ["log", "--format=%s"];
   if (tag) args.push(`${tag}..HEAD`);
-  const res = run("git", args, ROOT);
+  const res = runChecked("git", args, ROOT, "could not read changelog commits");
   return res.stdout
     .split("\n")
     .map((s) => s.trim())
@@ -244,7 +327,9 @@ function buildChangelogSection(): string {
       grouped.get("Other")!.push(subject);
       continue;
     }
-    const [, type, scope, rest] = m;
+    const type = m[1]!;
+    const scope = m[2];
+    const rest = m[3]!;
     const header = CATEGORY_MAP[type] ?? "Other";
     const item = (scope ? `${scope}: ${rest}` : rest).replaceAll("@zebra/", "@zebra-web/");
     grouped.get(header)!.push(item);
@@ -292,15 +377,9 @@ function writeChangelog(section: string): void {
 // --- verification -----------------------------------------------------------
 function verifyStep(): void {
   console.log("[release] verifying: bun run typecheck");
-  if (!run("bun", ["run", "typecheck"], ROOT).ok) {
-    console.error("error: typecheck failed — aborting");
-    process.exit(1);
-  }
+  runChecked("bun", ["run", "typecheck"], ROOT, "typecheck failed — aborting");
   console.log("[release] verifying: bun run test");
-  if (!run("bun", ["run", "test"], ROOT).ok) {
-    console.error("error: tests failed — aborting");
-    process.exit(1);
-  }
+  runChecked("bun", ["run", "test"], ROOT, "tests failed — aborting");
 }
 
 // --- execute (or print) -----------------------------------------------------
@@ -360,12 +439,7 @@ if (!prepare) {
     const publishArgs = ["publish", "--access", "public"];
     if (registry) publishArgs.push("--registry", registry);
     if (tolerateRepublish) publishArgs.push("--tolerate-republish");
-    const res = run("bun", publishArgs, join(ROOT, pkg.dir));
-    if (!res.ok) {
-      console.error(res.stderr);
-      console.error(`error: publish of ${pkg.name} failed — aborting`);
-      process.exit(1);
-    }
+    runChecked("bun", publishArgs, join(ROOT, pkg.dir), `publish of ${pkg.name} failed — aborting`);
   }
 }
 
@@ -376,19 +450,26 @@ if (publishOnly) {
 
 // Tag the release so the next changelog range starts here (lastTag() only
 // matches semver tags). Commit the bump + changelog first, then tag.
-const tag = `v${version}`;
 console.log(`[release] committing release (${tag})`);
-const addRes = run("git", ["add", "-A"], ROOT);
-const commitRes = run("git", ["commit", "-m", `chore(release): ${tag}`], ROOT);
-if (!addRes.ok || !commitRes.ok) {
-  console.error("error: release commit failed — aborting before tagging");
-  process.exit(1);
-}
-const tagRes = run("git", ["tag", tag], ROOT);
-if (!tagRes.ok) {
-  console.error(tagRes.stderr);
-  console.error(`error: tagging ${tag} failed`);
-  process.exit(1);
-}
+const releaseFiles = [
+  ...packages.map((pkg) => join(pkg.dir, "package.json")),
+  "packages/core/src/index.ts",
+  "CHANGELOG.md",
+];
+runChecked(
+  "git",
+  ["add", "--", ...releaseFiles],
+  ROOT,
+  "staging release files failed — aborting before commit",
+);
+// Verification/publish hooks can create or stage unrelated files after the
+// initial clean-tree check. Commit only the files owned by this release.
+runChecked(
+  "git",
+  ["commit", "--only", "-m", `chore(release): ${tag}`, "--", ...releaseFiles],
+  ROOT,
+  "release commit failed — aborting before tagging",
+);
+runChecked("git", ["tag", tag], ROOT, `tagging ${tag} failed`);
 
 console.log(`[release] done. tagged ${tag}`);
