@@ -44,6 +44,17 @@ function percentile(sorted: number[], p: number): number | undefined {
   return sorted[idx]!;
 }
 
+function sampleIndex(sorted: number[], value: number): number {
+  let low = 0;
+  let high = sorted.length;
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    if (sorted[mid]! < value) low = mid + 1;
+    else high = mid;
+  }
+  return low;
+}
+
 /**
  * Metrics middleware: counts requests, errors (thrown or status >= 500) and
  * in-flight concurrency (with its peak), and keeps a bounded latency sample
@@ -63,6 +74,12 @@ export function metrics(options: MetricsOptions = {}): MetricsMiddleware {
   let peakInFlight = 0;
   const buckets = new Array<number>(BUCKET_BOUNDS_MS.length).fill(0);
   const samples: number[] = [];
+  let nextSample = 0;
+  let evictedSample: number | undefined;
+  let sorted: number[] = [];
+  // Only distinguish no writes, one write and multiple writes since the last read.
+  // Defer ordered updates to snapshot() so sampling alone always stays O(1).
+  let samplesSinceSnapshot = 0;
 
   const mw: Middleware = async (_req, next) => {
     const start = performance.now();
@@ -82,8 +99,12 @@ export function metrics(options: MetricsOptions = {}): MetricsMiddleware {
       let idx = BUCKET_BOUNDS_MS.findIndex((bound) => ms <= bound);
       if (idx === -1) idx = BUCKET_BOUNDS_MS.length - 1;
       buckets[idx]!++;
-      samples.push(ms);
-      if (samples.length > maxSamples) samples.shift();
+      if (maxSamples > 0) {
+        evictedSample = samples[nextSample];
+        samples[nextSample] = ms;
+        nextSample = (nextSample + 1) % maxSamples;
+        if (samplesSinceSnapshot < 2) samplesSinceSnapshot++;
+      }
       if (onSample !== undefined) {
         try {
           onSample(snapshot());
@@ -95,14 +116,25 @@ export function metrics(options: MetricsOptions = {}): MetricsMiddleware {
   };
 
   function snapshot(): MetricsSnapshot {
-    const sorted = [...samples].sort((a, b) => a - b);
+    const latencySamples =
+      nextSample === 0 || nextSample === samples.length
+        ? samples.slice()
+        : samples.slice(nextSample).concat(samples.slice(0, nextSample));
+    if (samplesSinceSnapshot > 1) {
+      sorted = latencySamples.slice().sort((a, b) => a - b);
+    } else if (samplesSinceSnapshot === 1) {
+      if (evictedSample !== undefined) sorted.splice(sampleIndex(sorted, evictedSample), 1);
+      const latest = latencySamples[latencySamples.length - 1]!;
+      sorted.splice(sampleIndex(sorted, latest), 0, latest);
+    }
+    samplesSinceSnapshot = 0;
     return {
       totalRequests,
       errors,
       inFlight,
       peakInFlight,
       latency: { bucketBoundsMs: [...BUCKET_BOUNDS_MS], buckets: [...buckets] },
-      latencySamples: [...samples],
+      latencySamples,
       latencyP50: percentile(sorted, 50),
       latencyP95: percentile(sorted, 95),
     };

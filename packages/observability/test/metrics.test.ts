@@ -197,6 +197,146 @@ describe("metrics middleware", () => {
     expect(s2.latencyP50).toBe(s1.latencyP50);
     expect(s2.latencyP95).toBe(s1.latencyP95);
   });
+
+  for (const pattern of ["ascending", "descending", "duplicates", "random"] as const) {
+    test.each([0, 1, 3, 11, 64, 1000])(
+      `${pattern} samples match full-sort snapshots across repeated wraps at capacity %i`,
+      async (maxLatencySamples) => {
+        let seed = 0x5eed;
+        const length = maxLatencySamples * 3 + 17;
+        const durations = Array.from({ length }, (_, index) => {
+          if (pattern === "ascending") return index / 4;
+          if (pattern === "descending") return (length - index) / 4;
+          if (pattern === "duplicates") return [7, 7, 0, 13, 7][index % 5]!;
+          seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+          return (seed % 997) / 4;
+        });
+
+        for (const readMode of ["callback", "every request", "batched"] as const) {
+          let callbackCount = 0;
+          let callbackSnapshot: MetricsSnapshot | undefined;
+          const m = metrics({
+            maxLatencySamples,
+            ...(readMode === "callback"
+              ? {
+                  onSample: (snapshot: MetricsSnapshot) => {
+                    callbackCount++;
+                    callbackSnapshot = snapshot;
+                  },
+                }
+              : {}),
+          });
+          const expectedSamples: number[] = [];
+          const expectedBuckets = new Array<number>(11).fill(0);
+          const bounds = m.snapshot().latency.bucketBoundsMs;
+          let now = 0;
+          const clock = spyOn(performance, "now").mockImplementation(() => now);
+          try {
+            for (const [index, duration] of durations.entries()) {
+              await m(makeReq(), async () => {
+                now += duration;
+                return new Response("ok");
+              });
+              expectedSamples.push(duration);
+              if (expectedSamples.length > maxLatencySamples) expectedSamples.shift();
+              expectedBuckets[bounds.findIndex((bound) => duration <= bound)]!++;
+              if (readMode === "batched" && index % 7 !== 0 && index !== length - 1) continue;
+
+              const sorted = [...expectedSamples].sort((a, b) => a - b);
+              const expected: MetricsSnapshot = {
+                totalRequests: index + 1,
+                errors: 0,
+                inFlight: 0,
+                peakInFlight: 1,
+                latency: { bucketBoundsMs: bounds, buckets: expectedBuckets },
+                latencySamples: expectedSamples,
+                latencyP50: sorted[Math.ceil(0.5 * sorted.length) - 1],
+                latencyP95: sorted[Math.ceil(0.95 * sorted.length) - 1],
+              };
+              if (readMode === "callback") {
+                expect(callbackCount).toBe(index + 1);
+                expect(callbackSnapshot).toEqual(expected);
+                callbackSnapshot!.latencySamples.fill(-1);
+              }
+              for (let read = 0; read < 3; read++) {
+                const snapshot = m.snapshot();
+                expect(snapshot).toEqual(expected);
+                snapshot.latencySamples.reverse();
+                snapshot.latencySamples.push(-1);
+                snapshot.latencySamples.fill(-1);
+                snapshot.latency.buckets.fill(-1);
+                snapshot.latency.bucketBoundsMs.fill(-1);
+              }
+            }
+            expect(callbackCount).toBe(readMode === "callback" ? length : 0);
+          } finally {
+            clock.mockRestore();
+          }
+        }
+      },
+    );
+  }
+
+  test("throwing callbacks preserve responses, handler errors and completed snapshots", async () => {
+    const observations: MetricsSnapshot[] = [];
+    const callbackError = new Error("callback failed");
+    const m = metrics({
+      maxLatencySamples: 3,
+      onSample: (snapshot) => {
+        observations.push(snapshot);
+        throw callbackError;
+      },
+    });
+    const log = spyOn(console, "error").mockImplementation(() => {});
+    let now = 0;
+    const clock = spyOn(performance, "now").mockImplementation(() => now);
+    try {
+      const response = new Response("ok");
+      expect(
+        await m(makeReq(), async () => {
+          now += 7;
+          return response;
+        }),
+      ).toBe(response);
+      const failure = new Response("unavailable", { status: 503 });
+      expect(
+        await m(makeReq(), async () => {
+          now += 13;
+          return failure;
+        }),
+      ).toBe(failure);
+      const handlerError = new Error("handler failed");
+      await expect(
+        m(makeReq(), async () => {
+          now += 3;
+          throw handlerError;
+        }),
+      ).rejects.toBe(handlerError);
+      await m(makeReq(), async () => {
+        now += 5;
+        return response;
+      });
+      expect(observations.map((s) => [s.totalRequests, s.errors, s.inFlight])).toEqual([
+        [1, 0, 0],
+        [2, 1, 0],
+        [3, 2, 0],
+        [4, 2, 0],
+      ]);
+      expect(observations.map((s) => s.latencySamples)).toEqual([
+        [7],
+        [7, 13],
+        [7, 13, 3],
+        [13, 3, 5],
+      ]);
+      expect(m.snapshot()).toEqual(observations[3]!);
+      expect(m.snapshot().latency.buckets).toEqual([2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
+      expect(log).toHaveBeenCalledTimes(4);
+      expect(log).toHaveBeenCalledWith("[zebra/metrics] onSample threw:", callbackError);
+    } finally {
+      clock.mockRestore();
+      log.mockRestore();
+    }
+  });
 });
 
 describe("metrics middleware · integration through core", () => {

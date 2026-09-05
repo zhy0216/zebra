@@ -26,7 +26,7 @@ default_agent: codex
 | [10-mcp-call-isolation.md](done/10-mcp-call-isolation.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：隔离日志故障并建立工具名称索引（F17、F21）；验收通过，待协调器合并 |
 | [11-docs-pr-check.md](done/11-docs-pr-check.md) | P2 | easy | codex（继承默认） | gpt-6-astra / high | 已完成：PR 校验双语文档与 Pages 路径（F18）；验收通过，待协调器合并 |
 | [12-compatible-dependencies.md](12-compatible-dependencies.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 部分完成：Bun类型更新已验证；Zod4.5.4因冻结JSON Schema输出变化延后，原验收未全部通过 |
-| [13-metrics-sample-window.md](13-metrics-sample-window.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 优化有界采样窗口和精确分位数开销（F20） |
+| [13-metrics-sample-window.md](done/13-metrics-sample-window.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：环形采样窗口与精确分位数缓存（F20）；行为及性能验收通过，待协调器合并 |
 
 ## 文件
 
@@ -42,7 +42,7 @@ default_agent: codex
 10. [10-mcp-call-isolation.md](done/10-mcp-call-isolation.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
 11. [11-docs-pr-check.md](done/11-docs-pr-check.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
 12. [12-compatible-dependencies.md](12-compatible-dependencies.md) — 部分完成：Bun类型更新已验证；Zod4.5.4因冻结JSON Schema输出变化延后，原验收未全部通过；依赖：无。
-13. [13-metrics-sample-window.md](13-metrics-sample-window.md) — 依赖：无。
+13. [13-metrics-sample-window.md](done/13-metrics-sample-window.md) — 已完成并归档，行为及性能验收通过，待协调器合并；依赖：无。
 
 ## 依赖与并行
 
