@@ -141,10 +141,13 @@ export function sessionMiddleware(options: SessionMiddlewareOptions): SessionMid
     req.ctx.set(SESSION_KEY, session);
     try {
       const res = await next();
+      if (!session.isDestroyed()) await persistSession(store, session);
+      // Destruction can start while response-end persistence is awaiting the
+      // store. Wait for its queued deletion and expire the cookie in that case.
       if (session.isDestroyed()) {
+        await session.destroy();
         return appendSetCookie(res, expireCookie(cookieName, cookieOptions));
       }
-      await persistSession(store, session);
       if (session.isNew) {
         return appendSetCookie(
           res,
@@ -157,17 +160,18 @@ export function sessionMiddleware(options: SessionMiddlewareOptions): SessionMid
       // written, and make sure the error response carries the same cookie the
       // success path would have issued — the core error middleware appends
       // the stashed values after it builds the problem response.
-      if (session.isDestroyed()) {
-        stashSetCookie(req, expireCookie(cookieName, cookieOptions));
-      } else {
+      if (!session.isDestroyed()) {
         try {
           await persistSession(store, session);
         } catch {
           // Persistence failure must not mask the original error.
         }
-        if (session.isNew) {
-          stashSetCookie(req, serializeCookie(cookieName, sign(session.id, secret), cookieOptions));
-        }
+      }
+      if (session.isDestroyed()) {
+        await session.destroy();
+        stashSetCookie(req, expireCookie(cookieName, cookieOptions));
+      } else if (session.isNew) {
+        stashSetCookie(req, serializeCookie(cookieName, sign(session.id, secret), cookieOptions));
       }
       throw error;
     }
@@ -215,8 +219,9 @@ async function persistSession(store: SessionStore, session: RequestSessionIntern
   // an empty record would grow the store with every anonymous request.
   if (session.isNew && !session.isDirty()) return;
   if (session.isNew || session.isDirty()) {
-    await store.set(session.id, await session.data());
-    session.clearDirty();
+    // Share explicit flush's queue and revision bookkeeping. A mutation while
+    // the store is writing must remain dirty for the next persistence pass.
+    await session.flush();
   } else {
     await store.touch(session.id);
   }

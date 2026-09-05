@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { Zebra } from "@zebra-web/core";
+import { HttpError, Zebra } from "@zebra-web/core";
 import { type SessionStore, createSession, getSession, sessionMiddleware } from "../src/index.ts";
+import type { RequestSessionInternal } from "../src/session.ts";
 
 function deferred<T>() {
   let resolve!: (value: T | PromiseLike<T>) => void;
@@ -294,6 +295,217 @@ describe("session flush sequencing", () => {
     await write;
     expect(persisted).toEqual({ a: 1 });
     expect(handle.isDirty()).toBe(true);
+  });
+});
+
+describe("HTTP response-end persistence shares the session write queue", () => {
+  test.each([false, true])(
+    "changes during automatic persistence remain dirty (handler throws: %s)",
+    async (handlerThrows) => {
+      const store = new ControlledStore();
+      const entered = deferred<void>();
+      const release = deferred<void>();
+      store.onSet = async (_data, index) => {
+        if (index === 0) {
+          entered.resolve();
+          await release.promise;
+        }
+      };
+      let handle!: RequestSessionInternal;
+      const app = new Zebra();
+      app.use(sessionMiddleware({ secret: "test-only-secret", store }));
+      app.get("/", async (req) => {
+        handle = getSession(req) as RequestSessionInternal;
+        await handle.set("a", 1);
+        if (handlerThrows) throw new HttpError(409, "handler_failure", "handler failed");
+        return { ok: true };
+      });
+      const response = app.dispatch(new Request("http://test.local/"));
+      try {
+        await entered.promise;
+        await handle.set("b", 2);
+        release.resolve();
+        const res = await response;
+        expect(res.status).toBe(handlerThrows ? 409 : 200);
+        expect(res.headers.get("set-cookie")).toContain("sid=");
+        expect(store.value).toEqual({ a: 1 });
+        expect(handle.isDirty()).toBe(true);
+        await handle.flush();
+        expect(store.value).toEqual({ a: 1, b: 2 });
+        expect(handle.isDirty()).toBe(false);
+      } finally {
+        release.resolve();
+        await response;
+        await app.stop();
+      }
+    },
+  );
+
+  test("an explicit flush waits for an automatic write before saving the newer revision", async () => {
+    const store = new ControlledStore();
+    const entered = deferred<void>();
+    const release = deferred<void>();
+    store.onSet = async (_data, index) => {
+      if (index === 0) {
+        entered.resolve();
+        await release.promise;
+      }
+    };
+    let handle!: RequestSessionInternal;
+    const app = new Zebra();
+    app.use(sessionMiddleware({ secret: "test-only-secret", store }));
+    app.get("/", async (req) => {
+      handle = getSession(req) as RequestSessionInternal;
+      await handle.set("a", 1);
+      return { ok: true };
+    });
+    const response = app.dispatch(new Request("http://test.local/"));
+    let explicit: Promise<void> | undefined;
+    try {
+      await entered.promise;
+      await handle.set("b", 2);
+      explicit = handle.flush();
+      expect(await handle.get<number>("b")).toBe(2);
+      expect(store.writes).toEqual([{ a: 1 }]);
+      release.resolve();
+      expect((await response).status).toBe(200);
+      await explicit;
+      expect(store.events).toEqual(["set:0:start", "set:0:end", "set:1:start", "set:1:end"]);
+      expect(store.value).toEqual({ a: 1, b: 2 });
+      expect(handle.isDirty()).toBe(false);
+    } finally {
+      release.resolve();
+      await Promise.all([response, explicit]);
+      await app.stop();
+    }
+  });
+
+  test("automatic persistence waits behind an explicit write started by the handler", async () => {
+    const store = new ControlledStore();
+    const entered = deferred<void>();
+    const release = deferred<void>();
+    const handlerDone = deferred<void>();
+    store.onSet = async (_data, index) => {
+      if (index === 0) {
+        entered.resolve();
+        await release.promise;
+      }
+    };
+    let handle!: RequestSessionInternal;
+    let explicit: Promise<void> | undefined;
+    const app = new Zebra();
+    app.use(sessionMiddleware({ secret: "test-only-secret", store }));
+    app.get("/", async (req) => {
+      handle = getSession(req) as RequestSessionInternal;
+      await handle.set("a", 1);
+      explicit = handle.flush();
+      await entered.promise;
+      await handle.set("b", 2);
+      handlerDone.resolve();
+      return { ok: true };
+    });
+    const response = app.dispatch(new Request("http://test.local/"));
+    try {
+      await handlerDone.promise;
+      // Let the response middleware enqueue its write while storage is held.
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      expect(store.writes).toEqual([{ a: 1 }]);
+      release.resolve();
+      expect((await response).status).toBe(200);
+      await explicit;
+      expect(store.events).toEqual(["set:0:start", "set:0:end", "set:1:start", "set:1:end"]);
+      expect(store.value).toEqual({ a: 1, b: 2 });
+      expect(handle.isDirty()).toBe(false);
+    } finally {
+      release.resolve();
+      await Promise.all([response, explicit]);
+      await app.stop();
+    }
+  });
+
+  test.each([false, true])(
+    "destroy during automatic persistence deletes last and expires the cookie (handler throws: %s)",
+    async (handlerThrows) => {
+      const store = new ControlledStore();
+      const entered = deferred<void>();
+      const release = deferred<void>();
+      const deleting = deferred<void>();
+      const deleteRelease = deferred<void>();
+      store.onSet = async () => {
+        entered.resolve();
+        await release.promise;
+      };
+      store.onDestroy = async () => {
+        deleting.resolve();
+        await deleteRelease.promise;
+      };
+      let handle!: RequestSessionInternal;
+      const app = new Zebra();
+      app.use(sessionMiddleware({ secret: "test-only-secret", store }));
+      app.get("/", async (req) => {
+        handle = getSession(req) as RequestSessionInternal;
+        await handle.set("a", 1);
+        if (handlerThrows) throw new HttpError(409, "handler_failure", "handler failed");
+        return { ok: true };
+      });
+      let responded = false;
+      const response = app.dispatch(new Request("http://test.local/")).then((res) => {
+        responded = true;
+        return res;
+      });
+      let destroy: Promise<void> | undefined;
+      try {
+        await entered.promise;
+        destroy = handle.destroy();
+        expect(store.events).toEqual(["set:0:start"]);
+        release.resolve();
+        await deleting.promise;
+        expect(responded).toBe(false);
+        deleteRelease.resolve();
+        const res = await response;
+        await destroy;
+        expect(res.status).toBe(handlerThrows ? 409 : 200);
+        expect(res.headers.get("set-cookie")).toContain("Max-Age=0");
+        expect(store.events).toEqual(["set:0:start", "set:0:end", "destroy"]);
+        expect(store.value).toBeUndefined();
+        await handle.set("b", 2);
+        await handle.flush();
+        expect(store.writes).toHaveLength(1);
+      } finally {
+        release.resolve();
+        deleteRelease.resolve();
+        await Promise.all([response, destroy]);
+        await app.stop();
+      }
+    },
+  );
+
+  test("failed automatic persistence preserves the handler error and can be retried", async () => {
+    const store = new ControlledStore();
+    store.onSet = async () => {
+      throw new Error("store unavailable");
+    };
+    let handle!: RequestSessionInternal;
+    const app = new Zebra();
+    app.use(sessionMiddleware({ secret: "test-only-secret", store }));
+    app.get("/", async (req) => {
+      handle = getSession(req) as RequestSessionInternal;
+      await handle.set("a", 1);
+      throw new HttpError(409, "handler_failure", "handler failed");
+    });
+    try {
+      const res = await app.dispatch(new Request("http://test.local/"));
+      expect(res.status).toBe(409);
+      expect(await res.json()).toMatchObject({ type: "https://errors.zebra.dev/handler_failure" });
+      expect(res.headers.get("set-cookie")).toContain("sid=");
+      expect(handle.isDirty()).toBe(true);
+      store.onSet = async () => {};
+      await handle.flush();
+      expect(store.value).toEqual({ a: 1 });
+      expect(handle.isDirty()).toBe(false);
+    } finally {
+      await app.stop();
+    }
   });
 });
 
