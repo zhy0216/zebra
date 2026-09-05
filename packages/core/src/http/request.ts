@@ -2,7 +2,7 @@ import {
   type BodyOptions,
   effectiveLimit,
   limitStream,
-  parseBody,
+  parseBufferedBody,
   parseForm,
   readBody,
 } from "./body.ts";
@@ -18,19 +18,18 @@ export interface ZebraRequest<P = Record<string, string>, B = unknown, Q = Recor
   /**
    * Parses the body as JSON regardless of content-type. Lazy + memoized:
    * the body is buffered once (the same per-content-type `body` limits
-   * apply) and shared with `text()` / `form()`. Empty body → `null`;
-   * invalid JSON → 400 `invalid_json` `HttpError`. The body stream is
-   * single-consumption: call exactly one of `body()` / `json()` /
-   * `text()` / `form()` / `stream()`.
+   * apply) and shared with `body()` / `text()` / `form()`. Empty body →
+   * `null`; invalid JSON → 400 `invalid_json` `HttpError`. These buffering
+   * helpers can be combined, but cannot be combined with `stream()`.
    */
   json: () => Promise<unknown>;
-  /** Raw body text. Lazy + memoized (shares the buffered bytes with `json()` / `form()`). */
+  /** Raw body text. Lazy + memoized (shares bytes with `body()` / `json()` / `form()`). */
   text: () => Promise<string>;
   /**
    * Body as `FormData`: multipart → parsed with `File` entries (enforces
    * `maxFiles` / `maxFileSize`), urlencoded → string entries, any other
    * content-type → empty `FormData`. Lazy + memoized (shares the buffered
-   * bytes with `json()` / `text()`).
+   * bytes with `body()` / `json()` / `text()`).
    */
   form: () => Promise<FormData>;
   /**
@@ -38,7 +37,8 @@ export interface ZebraRequest<P = Record<string, string>, B = unknown, Q = Recor
    * limit (`limitStream`) — the non-buffering path for large uploads.
    * Not memoized: it consumes the stream, so it cannot be combined with the
    * buffering helpers, and when the limit trips the error surfaces when the
-   * stream is read.
+   * stream is read. Repeated calls or mixing with buffering helpers throws
+   * a `TypeError` (buffering helpers return a rejected promise).
    */
   stream: () => ReadableStream<Uint8Array>;
   ctx: Map<symbol, unknown>;
@@ -91,6 +91,7 @@ class ZebraRequestImpl<P, B> implements ZebraRequest<P, B> {
   private jsonPromise: Promise<unknown> | null = null;
   private textPromise: Promise<string> | null = null;
   private formPromise: Promise<FormData> | null = null;
+  private streamClaimed = false;
 
   constructor(
     raw: Request,
@@ -145,7 +146,9 @@ class ZebraRequestImpl<P, B> implements ZebraRequest<P, B> {
   }
 
   body(): Promise<B> {
-    this.bodyPromise ??= parseBody(this.raw, this.bodyOpts) as Promise<B>;
+    this.bodyPromise ??= this.bytes().then((body) =>
+      parseBufferedBody(body, this.bodyOpts, this.contentType),
+    ) as Promise<B>;
     return this.bodyPromise;
   }
 
@@ -175,6 +178,15 @@ class ZebraRequestImpl<P, B> implements ZebraRequest<P, B> {
   }
 
   stream(): ReadableStream<Uint8Array> {
+    if (
+      this.streamClaimed ||
+      this.bytesPromise !== null ||
+      this.raw.bodyUsed ||
+      this.raw.body?.locked
+    ) {
+      throw new TypeError("Request body has already been claimed by another reader");
+    }
+    this.streamClaimed = true;
     if (!this.raw.body) {
       return new ReadableStream<Uint8Array>({
         start(controller) {
@@ -185,10 +197,12 @@ class ZebraRequestImpl<P, B> implements ZebraRequest<P, B> {
     return this.raw.body.pipeThrough(limitStream(effectiveLimit(this.bodyOpts, this.ct)));
   }
 
-  /** Buffers the body once (limits enforced); `json` / `text` / `form` share
-   * the same bytes (the raw stream is single-consumption). */
+  /** Buffers once with limits; all buffering helpers share the pending read,
+   * bytes, and read failures. Streaming claims the raw body exclusively. */
   private bytes(): Promise<Uint8Array> {
-    this.bytesPromise ??= readBody(this.raw, effectiveLimit(this.bodyOpts, this.ct));
+    this.bytesPromise ??= this.streamClaimed
+      ? Promise.reject(new TypeError("Request body has already been claimed by stream()"))
+      : readBody(this.raw, effectiveLimit(this.bodyOpts, this.ct));
     return this.bytesPromise;
   }
 }

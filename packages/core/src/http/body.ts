@@ -53,6 +53,7 @@ function assertDeclaredSize(req: Request, limit: number): void {
 
 export async function readBody(req: Request, limit: number): Promise<Uint8Array> {
   assertDeclaredSize(req, limit);
+  if (req.bodyUsed) throw new TypeError("Request body has already been consumed");
   if (!req.body) return new Uint8Array();
 
   const reader = req.body.getReader();
@@ -84,12 +85,19 @@ export async function readBody(req: Request, limit: number): Promise<Uint8Array>
 }
 
 export async function parseBody(req: Request, opts: BodyOptions): Promise<unknown> {
-  const ct = (req.headers.get("content-type") ?? "").toLowerCase();
+  const contentType = req.headers.get("content-type") ?? "";
+  const bytes = await readBody(req, effectiveLimit(opts, contentType.toLowerCase()));
+  return parseBufferedBody(bytes, opts, contentType);
+}
 
-  if (ct.startsWith("multipart/form-data")) return parseMultipart(req, opts);
-
-  const bytes = await readBody(req, effectiveLimit(opts, ct));
-
+/** Internal: content-type parsing after the shared, size-limited byte read. */
+export async function parseBufferedBody(
+  bytes: Uint8Array,
+  opts: BodyOptions,
+  contentType: string,
+): Promise<unknown> {
+  const ct = contentType.toLowerCase();
+  if (ct.startsWith("multipart/form-data")) return parseMultipart(bytes, opts, contentType);
   if (ct.startsWith("application/json")) {
     try {
       const text = decoder.decode(bytes);
@@ -108,19 +116,16 @@ export async function parseBody(req: Request, opts: BodyOptions): Promise<unknow
   return bytes;
 }
 
-async function parseMultipart(req: Request, opts: BodyOptions) {
-  const limit = effectiveLimit(opts, "multipart/form-data");
-  assertDeclaredSize(req, limit);
+async function parseMultipart(bytes: Uint8Array, opts: BodyOptions, contentType: string) {
   try {
-    const body = req.body ? req.body.pipeThrough(limitStream(limit)) : null;
-    const parsedRequest = new Request(req.url, {
-      method: req.method,
-      headers: req.headers,
-      body,
+    const parsedRequest = new Request("http://x", {
+      method: "POST",
+      headers: { "content-type": contentType },
+      body: bytes,
     });
     const form = await parsedRequest.formData();
     checkForm(form, opts);
-    return form;
+    return form as FormData;
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError(400, "invalid_multipart", "Body is not valid multipart form data");
@@ -143,19 +148,7 @@ export async function parseForm(
   const ct = contentType.toLowerCase();
   if (ct.startsWith("multipart/form-data")) {
     if (bytes.byteLength === 0) return new FormData();
-    try {
-      const parsedRequest = new Request("http://x", {
-        method: "POST",
-        headers: { "content-type": contentType },
-        body: bytes,
-      });
-      const form = await parsedRequest.formData();
-      checkForm(form, opts);
-      return form as FormData;
-    } catch (error) {
-      if (error instanceof HttpError) throw error;
-      throw new HttpError(400, "invalid_multipart", "Body is not valid multipart form data");
-    }
+    return parseMultipart(bytes, opts, contentType);
   }
   if (ct.startsWith("application/x-www-form-urlencoded")) {
     const params = new URLSearchParams(decoder.decode(bytes));
