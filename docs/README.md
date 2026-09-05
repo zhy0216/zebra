@@ -68,6 +68,14 @@ Zebra is a Bun-first TypeScript web framework with first-class dependency inject
 | `@zebra-web/observability` | Observability middleware: requestId / accessLog / errorReporter / metrics / health |
 | `@zebra-web/redis` | Redis backends: `RedisRateLimitStore` + `RedisSessionStore` (zero runtime deps) |
 | `@zebra-web/testing` | In-process `createTestApp` / `createTestClient` |
+| `@zebra-web/mcp` | Contract procedures exposed as MCP tools through HTTP dispatch |
+| `@zebra-web/schema-zod` | Zod input JSON Schema adapter for MCP tool discovery |
+
+All 12 package manifests are at version 1.0.0 and use lockstep versioning. The
+[API freeze](api-freeze.md) lists the stable v1 surfaces; the [MCP guide](16-mcp.md)
+covers the MCP bridge and Zod adapter. The repository includes a bilingual
+VitePress site (`bun run docs:build`), a local performance gate (`bun run bench:check`),
+and a release workflow triggered by published GitHub Releases.
 
 ## Examples
 

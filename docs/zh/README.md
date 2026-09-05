@@ -68,6 +68,13 @@ Zebra 是一个 Bun-first 的 TypeScript Web 框架，把依赖注入（DI）当
 | `@zebra-web/observability` | 可观测性中间件：requestId / accessLog / errorReporter / metrics / health |
 | `@zebra-web/redis` | Redis 后端：`RedisRateLimitStore` + `RedisSessionStore`（零运行时依赖） |
 | `@zebra-web/testing` | 进程内 `createTestApp` / `createTestClient` |
+| `@zebra-web/mcp` | 通过 HTTP dispatch 将契约 procedure 暴露为 MCP 工具 |
+| `@zebra-web/schema-zod` | 为 MCP 工具发现生成 Zod 输入 JSON Schema |
+
+12 个包的 manifest 当前均为 1.0.0，采用锁步版本。[API 冻结文档](api-freeze.md)
+列出稳定的 v1 接口；[MCP 指南](16-mcp.md) 介绍 MCP 桥接与 Zod 适配器。
+仓库已包含双语 VitePress 文档站（`bun run docs:build`）、本地性能门禁
+（`bun run bench:check`）和由 GitHub Release 发布事件触发的包发布工作流。
 
 ## 示例
 

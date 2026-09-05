@@ -15,7 +15,7 @@ Typechecking uses `tsgo` (the native TypeScript compiler via
 All of these must pass from the repo root:
 
 ```sh
-bun run typecheck   # tsgo --noEmit across all workspaces
+bun run typecheck   # tsgo: package src/tests, examples, scripts, and benchmarks
 bun run lint        # biome check .
 bun run build       # dist/ bundles for every package
 bun run test        # bun test (includes the fuzz/property suites)
@@ -27,7 +27,7 @@ bun run verify:packages  # tarball smoke test (pack + install + import + tsgo)
 ## Style
 
 - Formatting and linting are enforced by [Biome](https://biomejs.dev/)
-  (`biome.json` at the root): 2-space indent, double quotes, no semicolons.
+  (`biome.json` at the root): 2-space indent, double quotes, semicolons.
 - Strict TypeScript: `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`.
   Imports use explicit `.ts` extensions; type-only imports use `import type`.
 - No comments unless they explain *why* (the codebase documents invariants
@@ -36,12 +36,21 @@ bun run verify:packages  # tarball smoke test (pack + install + import + tsgo)
 ## Tests
 
 - `bun:test` (`import { expect, test } from "bun:test"`), colocated in
-  `packages/<pkg>/test/` next to `src/`.
+  `packages/<pkg>/test/` next to `src/`. Example and tooling tests live in
+  `examples/*/test/`, `scripts/test/`, and `bench/test/`.
 - Deterministic property/fuzz tests live in `packages/*/test/fuzz/` — they use
   a seeded PRNG (mulberry32, see `packages/core/test/fuzz/prng.ts`) so failures
   reproduce; assertion messages carry the seed.
-- Keep tests fast: the fuzz suites are bounded to keep the whole run under a
-  few seconds.
+- Keep tests bounded and deterministic; use isolated fixtures for release and
+  subprocess failures.
+
+The root typecheck uses `tsconfig.json` with the shared strict settings. It includes
+all package sources and tests, example sources/tests/client demos, and scripts and
+benchmarks with their tests. Package-local typecheck commands remain available.
+CI also runs `bun test --coverage --coverage-reporter=lcov packages/core` followed
+by `bun run check:coverage` (90% core source line coverage). Build documentation
+changes with `bun run docs:build`; run `bun run bench:check` locally for performance
+changes because the baseline depends on the measurement machine.
 
 ## Commits
 

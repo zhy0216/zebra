@@ -30,11 +30,16 @@ interface ZebraRequest<P, B, Q> {
 
 ## Request body
 
-### Lazy and single-consumption
+### Lazy buffering and streaming
 
 The body is **lazily parsed and memoized**: the first call to `body()` / `json()` / `text()` / `form()` buffers the bytes once and later calls share them; `stream()` does not buffer.
 
-The raw stream is **single-consumption**: call exactly one of `body()` / `json()` / `text()` / `form()` / `stream()` (a second call reads an empty stream).
+The buffered helpers can be mixed or called concurrently: for example, `text()`
+and `json()` read the same bytes while applying their own parsing rules. The content-type
+size limit is enforced while buffering.
+`stream()` is an exclusive alternative: choose it before calling any buffered
+helper. Mixing streaming and buffered reads, or requesting the stream twice,
+throws a `TypeError` (buffered helpers return a rejected promise).
 
 ### Parsing rules
 

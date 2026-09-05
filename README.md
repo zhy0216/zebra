@@ -136,7 +136,7 @@ bun --filter example-better-auth test         # in-process integration tests
 
 | Package           | What it is                                          |
 | ----------------- | --------------------------------------------------- |
-| `@zebra-web/zebra`           | Public facade — re-exports `@zebra-web/core`, `@zebra-web/session` |
+| `@zebra-web/zebra`           | Public facade — re-exports core, CORS, session, and rate-limit APIs; `MemoryStore` / `MemoryStoreOptions` use `RateLimitMemoryStore` / `RateLimitMemoryStoreOptions` aliases |
 | `@zebra-web/core`     | App, DI container, router, HTTP, middleware, `implement`, event bus |
 | `@zebra-web/contract` | Contract builder + protocol (Standard Schema V1, zero deps) |
 | `@zebra-web/client`   | Derived type-safe client (zero deps)                |
@@ -144,20 +144,24 @@ bun --filter example-better-auth test         # in-process integration tests
 | `@zebra-web/cors`     | CORS middleware: preflight, origin allowlists, credentials echo |
 | `@zebra-web/rate-limit` | Fixed-window rate limiting: 429 Problem+Json, `X-RateLimit-*` headers, pluggable store |
 | `@zebra-web/testing`  | `createTestApp` / `createTestClient` in-process     |
+| `@zebra-web/observability` | Request IDs, access logs, error reporting, metrics, and health probes |
+| `@zebra-web/redis` | Redis adapters for session and rate-limit stores |
+| `@zebra-web/mcp` | Expose contract procedures as MCP tools through the HTTP dispatch pipeline |
+| `@zebra-web/schema-zod` | Zod input JSON Schema adapter for MCP tool discovery |
 
 ## Status
 
-**v1.0.0 is in preparation: API freeze is complete.** The public API surface of
-all packages (`@zebra-web/zebra` facade, `@zebra-web/core`, `@zebra-web/contract`, `@zebra-web/client`,
-`@zebra-web/testing`, `@zebra-web/session`, `@zebra-web/cors`, `@zebra-web/rate-limit`) is frozen
-as of [docs/api-freeze.md](docs/api-freeze.md) — that document defines the v1
-stability promise and the SemVer version policy (what requires a major). The
-framework includes DI (singleton / request / session / transient scopes), radix
-router, middleware, lifecycle, static files, WebSocket (`app.ws()` with DI
-upgrade decision), contract-first (`@zebra-web/contract`, `app.implement`,
-`@zebra-web/client`, `createTestClient`), cookie sessions, CORS, rate limiting, and
-testing helpers. Final v1.0.0 release tracks the remaining C2–C4 items (docs
-site, benchmarks, release pipeline).
+**The repository contains 12 packages at version 1.0.0**, versioned in lockstep.
+[docs/api-freeze.md](docs/api-freeze.md) records the frozen v1 surfaces and SemVer
+policy, including the observability and Redis packages. MCP and its Zod adapter
+are documented in [the MCP guide](docs/16-mcp.md).
+
+The bilingual VitePress docs site, local benchmark regression gate, and lockstep
+release workflow are implemented. Use `bun run docs:build` to build the site and
+`bun run bench:check` to compare performance against the machine-specific baseline.
+CI runs typechecking, lint, build, tests, package verification, and core coverage;
+the benchmark gate runs locally. The docs deployment workflow publishes the site
+from `master`, and the npm workflow runs when a GitHub Release is published.
 
 ## Release & packaging
 

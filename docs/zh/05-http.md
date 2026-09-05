@@ -30,11 +30,14 @@ interface ZebraRequest<P, B, Q> {
 
 ## 请求体
 
-### 惰性与单次消费
+### 惰性缓冲与流式读取
 
 请求体是**惰性解析 + 记忆化**的：第一次调用 `body()` / `json()` / `text()` / `form()` 时缓冲一次字节，之后共享；`stream()` 不缓冲。
 
-原始流是**单次消费**的：`body()` / `json()` / `text()` / `form()` / `stream()` 只能调用其中一个（否则第二个会读到空流）。
+缓冲型 helper 可以混用或并发调用：例如 `text()` 与 `json()` 读取同一份字节，
+各自应用解析规则；缓冲时按 content-type 执行大小限制。`stream()` 是互斥的流式读取方式，应在调用任何
+缓冲型 helper 前选择。混用流式与缓冲读取，或重复请求原始流，都会抛出
+`TypeError`（缓冲型 helper 返回 rejected promise）。
 
 ### 解析规则
 

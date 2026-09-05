@@ -2,7 +2,7 @@
 
 > A Bun-first TypeScript web framework with first-class dependency injection. Built on `Bun.serve` and Web Standard `Request`/`Response` — no Node compat layer. Every app is built around a DI `Container` whose graph is validated at boot.
 
-The framework is at v1.0: the public API surface is frozen (`docs/api-freeze.md` defines the stability promise and SemVer policy) across the facade `@zebra-web/zebra` and the packages `@zebra-web/core` (DI, radix router, middleware, lifecycle, static files, WebSocket), `@zebra-web/contract`, `@zebra-web/client`, `@zebra-web/testing`, `@zebra-web/session`, `@zebra-web/cors`, and `@zebra-web/rate-limit`. All packages are versioned in lockstep at 1.0.0.
+The repository contains 12 packages versioned in lockstep at 1.0.0. `docs/api-freeze.md` records the frozen v1 API surfaces and SemVer policy, including observability and Redis. The MCP bridge and its Zod adapter are described in `docs/16-mcp.md`. The bilingual docs site, local benchmark regression gate, and GitHub Release publishing workflow are implemented.
 
 Core principles:
 - DI is mandatory, not bolted on. Routes and middleware declare their dependencies via a named-object spec (`{ svc: Service }`); the container resolves them and validates the full graph (circular deps, scope violations) at boot. The `Zebra` instance exposes `injectSingleton` / `injectRequest` / `injectTransient` / `injectSession` (class bindings), `injectFactorySingleton`/`injectFactoryRequest`/… (factory bindings, with optional declared-deps form for boot validation), and `injectValue` (value bindings) — so most apps never construct a `Container` directly.
@@ -14,6 +14,7 @@ Core principles:
 ## Docs
 
 - [README](README.md): install, quick start, features, package layout
+- [English guides](docs/README.md) / [简体中文](docs/zh/README.md): full documentation index
 - [LICENSE](LICENSE): MIT
 
 ## Packages
@@ -27,9 +28,14 @@ Core principles:
 - [`@zebra-web/cors`](packages/cors): CORS middleware — preflight, origin allowlists, credentials echo
 - [`@zebra-web/rate-limit`](packages/rate-limit): fixed-window rate limiting — 429 Problem+Json, `X-RateLimit-*` headers, pluggable store
 
+- [`@zebra-web/observability`](packages/observability): request IDs, access logs, error reporting, metrics, health probes
+- [`@zebra-web/redis`](packages/redis): Redis adapters for session and rate-limit stores
+- [`@zebra-web/mcp`](packages/mcp): expose contract procedures as MCP tools through HTTP dispatch
+- [`@zebra-web/schema-zod`](packages/schema-zod): Zod input JSON Schema adapter for MCP discovery
+
 ## Public API surface
 
-The complete frozen export list for every package is in [`docs/api-freeze.md`](docs/api-freeze.md) — the authoritative v1 surface (stability promise + SemVer policy + per-package export lists). Summary of the core package surface (`packages/core/src/index.ts`):
+The recorded frozen export lists are in [`docs/api-freeze.md`](docs/api-freeze.md) — the authoritative v1 surface (stability promise + SemVer policy + per-package export lists). Summary of the core package surface (`packages/core/src/index.ts`):
 
 - App: `Zebra`, `ZebraOptions`, `ListenOptions`, `RouteHandler`, `DepsSpec`, `ResolvedDeps`, `RegisteredRoute`, `GroupApi`, `LifecycleEvent`, `LifecycleHandler`, `PathParams`, `JoinPath`, `SessionOptions`, `validateGraph`, `VERSION`
 - Events: `EventBus`, `EventEmitter`, `ZebraEventMap`, `EventHandler`, `EventPayload`, `EventArgs`, `Awaitable`, `EventPublisher`, built-in request/middleware event payload types (`BeforeRequestEvent`, `AfterRequestEvent`, `RequestErrorEvent`, `BeforeMiddlewareEvent`, `AfterMiddlewareEvent`, `MiddlewareErrorEvent`); extensible global `ZebraEvents` / `ZebraMiddlewareEvents`
@@ -64,4 +70,9 @@ Run from repo root: `bun --filter example-hello start`, `bun --filter example-bl
 - Lint/format: Biome (`bun run lint`, `bun run format`)
 - Test: `bun test`
 - Build all: `bun run build`
-- Typecheck all: `bun run typecheck`
+- Typecheck packages, examples (including tests/client demos), scripts, and benchmarks: `bun run typecheck`
+- Verify all 12 package tarballs in a clean installation: `bun run verify:packages`
+- Core coverage: `bun test --coverage --coverage-reporter=lcov packages/core`, then `bun run check:coverage` (90% source line coverage)
+- Bilingual docs: `bun run docs:dev` / `bun run docs:build`
+- Local benchmarks: `bun run bench` / `bun run bench:check` (machine-specific baseline; not a shared CI gate)
+- Releases: `scripts/release.ts` validates and prepares lockstep releases; `.github/workflows/publish-npm.yml` publishes on GitHub Release publication
