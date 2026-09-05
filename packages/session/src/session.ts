@@ -25,7 +25,7 @@ export interface RequestSession {
   readonly id: string;
   /** True when this request created the session (no valid sid cookie). */
   readonly isNew: boolean;
-  /** Value at `key`, loading session data lazily on first access. */
+  /** Value at `key`, sharing the first load. Failed loads reject and may be retried. */
   get<T = unknown>(key: string): Promise<T | undefined>;
   /** Sets `key` and marks the session dirty (persisted at response end). */
   set(key: string, value: unknown): Promise<void>;
@@ -34,7 +34,10 @@ export interface RequestSession {
   has(key: string): Promise<boolean>;
   /** The full data record (lazily loaded and cached per request); a shallow copy. */
   data(): Promise<Record<string, unknown>>;
-  /** Persists immediately; the middleware also persists at response end. */
+  /**
+   * Persists in order per handle; the middleware also persists at response end.
+   * Changes during a write remain dirty for the next flush.
+   */
   flush(): Promise<void>;
   /**
    * Destroys the session: removes its data from the store and marks the
@@ -61,23 +64,32 @@ export interface CreateSessionOptions {
 }
 
 export function createSession(options: CreateSessionOptions): RequestSessionInternal {
-  let cached: Record<string, unknown> | undefined =
+  let loaded: Promise<Record<string, unknown>> | undefined =
     typeof options.initial === "object" && options.initial !== null
-      ? cloneRecord(options.initial)
+      ? Promise.resolve(cloneRecord(options.initial))
       : undefined;
-  let dirty = false;
+  let revision = 0;
+  let persistedRevision = 0;
   let destroyed = false;
+  let writes = Promise.resolve();
+  let destroying: Promise<void> | undefined;
 
-  const load = async (): Promise<Record<string, unknown>> => {
-    if (cached === undefined) {
+  const load = (): Promise<Record<string, unknown>> => {
+    // Keep the successful promise too: every access observes the same record,
+    // including callers arriving while the first load is being resolved.
+    loaded ??= (async () => {
       const stored = await options.store.get(options.id);
-      cached =
-        stored !== null && typeof stored === "object"
-          ? cloneRecord(stored as Record<string, unknown>)
-          : {};
-    }
-    return cached;
+      return stored !== null && typeof stored === "object"
+        ? cloneRecord(stored as Record<string, unknown>)
+        : {};
+    })().catch((error) => {
+      loaded = undefined;
+      throw error;
+    });
+    return loaded;
   };
+
+  const isDirty = (): boolean => !destroyed && revision !== persistedRevision;
 
   return {
     id: options.id,
@@ -86,12 +98,18 @@ export function createSession(options: CreateSessionOptions): RequestSessionInte
       return (await load())[key] as T | undefined;
     },
     async set(key: string, value: unknown): Promise<void> {
-      (await load())[key] = value;
-      dirty = true;
+      if (destroyed) return;
+      const record = await load();
+      if (destroyed) return;
+      record[key] = value;
+      revision++;
     },
     async delete(key: string): Promise<void> {
-      delete (await load())[key];
-      dirty = true;
+      if (destroyed) return;
+      const record = await load();
+      if (destroyed) return;
+      delete record[key];
+      revision++;
     },
     async has(key: string): Promise<boolean> {
       return key in (await load());
@@ -99,29 +117,43 @@ export function createSession(options: CreateSessionOptions): RequestSessionInte
     // Returns a shallow copy: mutating the returned object must not silently
     // bypass the dirty tracking (only `set`/`delete` are persisted).
     data: async () => ({ ...(await load()) }),
-    async flush(): Promise<void> {
-      if (!destroyed && dirty) {
-        await options.store.set(options.id, await load());
-        dirty = false;
-      }
+    flush(): Promise<void> {
+      if (destroyed) return Promise.resolve();
+      const flushing = writes.then(async () => {
+        if (!isDirty()) return;
+        const record = await load();
+        if (!isDirty()) return;
+        const writingRevision = revision;
+        await options.store.set(options.id, cloneRecord(record));
+        persistedRevision = writingRevision;
+      });
+      // Return the failure to this caller, while allowing subsequent queued
+      // flushes (or destruction) to proceed after the failed write settles.
+      writes = flushing.catch(() => {});
+      return flushing;
     },
-    async destroy(): Promise<void> {
+    destroy(): Promise<void> {
+      if (destroying !== undefined) return destroying;
       destroyed = true;
-      dirty = false;
-      try {
-        await options.store.destroy(options.id);
-      } catch {
-        // Keep the handle inert even when the store backend failed: the
-        // response still carries the expiring Set-Cookie, so the client drops
-        // the cookie. Note the record may linger (store TTL expires it), so a
-        // replayed cookie could still match a leftover record until then —
-        // fail-open logout, acceptable since the client no longer holds it.
-      }
+      persistedRevision = revision;
+      // Delete after this handle's already-started writes. Queued flushes
+      // now skip persistence; other handles still rely on the store's own
+      // anti-revival guarantees.
+      destroying = writes.then(async () => {
+        try {
+          await options.store.destroy(options.id);
+        } catch {
+          // Keep the existing error policy: the handle remains inert and the
+          // response expires the cookie even if backend deletion failed.
+          // The stored record may remain until its TTL expires.
+        }
+      });
+      return destroying;
     },
-    isDirty: () => dirty,
+    isDirty,
     isDestroyed: () => destroyed,
     clearDirty: () => {
-      dirty = false;
+      persistedRevision = revision;
     },
   };
 }
