@@ -99,6 +99,13 @@ sessionMiddleware({
 
 `SECURE_COOKIE` is the frozen `{ httpOnly: true, sameSite: "lax" }` constant applied by default.
 
+Cookie `maxAge` is in seconds and must be finite: `NaN`, `Infinity`, and
+`-Infinity` throw `TypeError` during serialization. Positive fractions are
+rounded down before computing both `Max-Age` and `Expires` (`1.5` becomes `1`).
+Zero, negative values, and positive values below one second emit `Max-Age=0`
+with an epoch `Expires` to delete the cookie. A positive normalized value that
+puts `Expires` outside JavaScript's `Date` range also throws `TypeError`.
+
 ## Session-fixation protection
 
 - The signature only proves the cookie is **genuine**, not that the session is **alive**. Both the resolver and `openSession` consult the store before reusing an id: a verified id with no store record (destroyed or TTL-expired) is treated as a **new visitor** — a fresh sid + cookie replace the stale one instead of resurrecting the old session.
@@ -118,6 +125,14 @@ interface SessionStore {
 
 - `MemoryStore({ ttl })` — default, `Map`-backed, lazy sweep (at most `SWEEP_BUDGET` entries per access), no timers, no leaks; TTL in ms.
 - Roll your own backend (Redis / Postgres): implement this interface. `@zebra-web/redis` ships `RedisSessionStore` (see [Redis](14-redis.md)).
+
+`MemoryStore` and `RedisSessionStore` require finite millisecond values for
+constructor `ttl` and per-call `touch(id, ttl)` overrides. `NaN`, `Infinity`,
+and `-Infinity` fail with `TypeError`; invalid touches reject before any store
+read, write, or expiry sweep and leave existing data and expirations unchanged.
+Omitting the override uses the store's configured TTL. Finite overrides retain
+their value, including fractions; zero or negative overrides expire the session
+immediately.
 
 ## TTL ownership
 

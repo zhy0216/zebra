@@ -1,4 +1,4 @@
-import { describe, expect, expectTypeOf, test } from "bun:test";
+import { describe, expect, expectTypeOf, spyOn, test } from "bun:test";
 import type { SessionStore } from "@zebra-web/session";
 
 import { RedisSessionStore } from "../src/index.ts";
@@ -14,6 +14,16 @@ function makeStore(ttl = TTL, prefix = PREFIX): { store: RedisSessionStore; redi
   return { store, redis };
 }
 
+function recordCommands(redis: FakeRedis) {
+  return [
+    spyOn(redis, "get"),
+    spyOn(redis, "set"),
+    spyOn(redis, "incr"),
+    spyOn(redis, "del"),
+    spyOn(redis, "pexpire"),
+  ];
+}
+
 test("contract: any implementation is assignable", () => {
   makeStore();
   expectTypeOf<RedisSessionStore>().toMatchTypeOf<SessionStore>();
@@ -21,6 +31,86 @@ test("contract: any implementation is assignable", () => {
 });
 
 describe("RedisSessionStore", () => {
+  test.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    "rejects constructor ttl %s without Redis I/O",
+    (ttl) => {
+      const redis = new FakeRedis();
+      const commands = recordCommands(redis);
+      try {
+        expect(() => new RedisSessionStore(redis, { ttl })).toThrow(TypeError);
+        expect(() => new RedisSessionStore(redis, { ttl })).toThrow(/\bttl\b/);
+        for (const command of commands) expect(command).not.toHaveBeenCalled();
+      } finally {
+        for (const command of commands) command.mockRestore();
+      }
+    },
+  );
+
+  test.each([0, -1, 0.5, Number.MAX_VALUE, -Number.MAX_VALUE])(
+    "accepts finite constructor ttl %s",
+    (ttl) => {
+      expect(makeStore(ttl).store).toBeInstanceOf(RedisSessionStore);
+    },
+  );
+
+  test.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    "rejects touch ttl %s without Redis I/O or changing records",
+    async (ttl) => {
+      const { store, redis } = makeStore(100);
+      const commands = recordCommands(redis);
+      try {
+        redis.now = 0;
+        await store.set("expired", "old");
+        redis.now = 50;
+        await store.set("live", { visits: 1 });
+        await store.destroy("destroyed");
+        redis.now = 100;
+        const calls = structuredClone(commands.map((command) => command.mock.calls));
+        const values = new Map(redis.values);
+        const expiresAt = new Map(redis.expiresAt);
+        for (const id of ["live", "expired", "destroyed", "missing"]) {
+          const result = store.touch(id, ttl);
+          await expect(result).rejects.toBeInstanceOf(TypeError);
+          await expect(result).rejects.toThrow(/\bttl\b/);
+        }
+        expect(commands.map((command) => command.mock.calls)).toEqual(calls);
+        expect(redis.values).toEqual(values);
+        expect(redis.expiresAt).toEqual(expiresAt);
+        redis.now = 149;
+        expect(await store.get("live")).toEqual({ visits: 1 });
+        await store.set("destroyed", "blocked");
+        expect(await store.get("destroyed")).toBeUndefined();
+        redis.now = 150;
+        expect(await store.get("live")).toBeUndefined();
+        await store.set("destroyed", "reused");
+        expect(await store.get("destroyed")).toBe("reused");
+      } finally {
+        for (const command of commands) command.mockRestore();
+      }
+    },
+  );
+
+  test.each([0, -0, -1, -0.5, -Number.MAX_VALUE])(
+    "touch ttl %s expires immediately without tombstoning the id",
+    async (ttl) => {
+      const { store } = makeStore();
+      await store.set("s", "old");
+      await store.touch("s", ttl);
+      expect(await store.get("s")).toBeUndefined();
+      await store.set("s", "new");
+      expect(await store.get("s")).toBe("new");
+    },
+  );
+
+  test("finite fractional ttl values are passed to Redis unchanged", async () => {
+    const { store, redis } = makeStore(0.5);
+    redis.now = 0;
+    await store.set("s", 1);
+    expect(redis.expiresAt.get(`${PREFIX}s`)).toBe(0.5);
+    await store.touch("s", 1.5);
+    expect(redis.expiresAt.get(`${PREFIX}s`)).toBe(1.5);
+  });
+
   test("set/get round trip preserves all serializable values", async () => {
     const { store } = makeStore();
     await store.set("a", { visits: 1, user: "alice" });

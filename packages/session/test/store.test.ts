@@ -54,6 +54,90 @@ test("contract holds for an unrelated fake implementation", () =>
   assertStoreContract(new FakeStore()));
 
 describe("MemoryStore", () => {
+  test.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    "rejects constructor ttl %s",
+    (ttl) => {
+      expect(() => new MemoryStore({ ttl })).toThrow(TypeError);
+      expect(() => new MemoryStore({ ttl })).toThrow(/\bttl\b/);
+    },
+  );
+
+  test.each([0, -1, 0.5, Number.MAX_VALUE, -Number.MAX_VALUE])(
+    "accepts finite constructor ttl %s",
+    (ttl) => {
+      expect(new MemoryStore({ ttl })).toBeInstanceOf(MemoryStore);
+    },
+  );
+
+  test.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    "rejects touch ttl %s before reading, sweeping or changing records",
+    async (ttl) => {
+      let now = 0;
+      const clock = spyOn(Date, "now").mockImplementation(() => now);
+      const store = new MemoryStore({ ttl: 100 });
+      const entries = (store as unknown as { entries: Map<string, unknown> }).entries;
+      try {
+        await store.set("expired", "old");
+        now = 50;
+        await store.set("live", { visits: 1 });
+        await store.destroy("destroyed");
+        now = 100;
+        const before = structuredClone(entries);
+        const reads = spyOn(entries, "get");
+        try {
+          for (const id of ["live", "expired", "destroyed", "missing"]) {
+            const result = store.touch(id, ttl);
+            await expect(result).rejects.toBeInstanceOf(TypeError);
+            await expect(result).rejects.toThrow(/\bttl\b/);
+          }
+          expect(reads).not.toHaveBeenCalled();
+          expect(entries).toEqual(before);
+        } finally {
+          reads.mockRestore();
+        }
+        now = 149;
+        expect(await store.get("live")).toEqual({ visits: 1 });
+        await store.set("destroyed", "blocked");
+        expect(await store.get("destroyed")).toBeUndefined();
+        now = 150;
+        expect(await store.get("live")).toBeUndefined();
+        await store.set("destroyed", "reused");
+        expect(await store.get("destroyed")).toBe("reused");
+      } finally {
+        clock.mockRestore();
+      }
+    },
+  );
+
+  test.each([0, -0, -1, -0.5, -Number.MAX_VALUE])(
+    "touch ttl %s expires immediately without tombstoning the id",
+    async (ttl) => {
+      const store = new MemoryStore({ ttl: 60_000 });
+      await store.set("s", "old");
+      await store.touch("s", ttl);
+      expect(await store.get("s")).toBeUndefined();
+      await store.set("s", "new");
+      expect(await store.get("s")).toBe("new");
+    },
+  );
+
+  test("fractional ttl values retain millisecond precision", async () => {
+    let now = 0;
+    const clock = spyOn(Date, "now").mockImplementation(() => now);
+    try {
+      const store = new MemoryStore({ ttl: 0.5 });
+      await store.set("s", 1);
+      expect(await store.get("s")).toBe(1);
+      await store.touch("s", 1.5);
+      now = 1;
+      expect(await store.get("s")).toBe(1);
+      now = 2;
+      expect(await store.get("s")).toBeUndefined();
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
   test("get returns undefined after ttl expires", async () => {
     const store = new MemoryStore({ ttl: 50 });
     await store.set("s", "value");

@@ -53,13 +53,14 @@ export function serializeCookie(
 ): string {
   let cookie = `${name}=${encodeURIComponent(value)}`;
   if (options.maxAge !== undefined) {
-    // RFC 6265 requires a non-negative integer; negative values are clamped
-    // so the "delete" semantics stay well-formed (Max-Age=0 + past Expires).
-    const maxAge = options.maxAge < 0 ? 0 : options.maxAge;
-    cookie += `; Max-Age=${maxAge}`;
+    if (!Number.isFinite(options.maxAge)) throw new TypeError("maxAge must be finite");
+    const maxAge = Math.max(0, Math.floor(options.maxAge));
     // maxAge 0 means "delete now": the Expires must be in the past (epoch).
-    const expires = maxAge <= 0 ? new Date(0) : new Date(Date.now() + maxAge * 1000);
-    cookie += `; Expires=${expires.toUTCString()}`;
+    const expires = maxAge === 0 ? new Date(0) : new Date(Date.now() + maxAge * 1000);
+    if (!Number.isFinite(expires.getTime())) {
+      throw new TypeError("maxAge must produce an Expires within the Date range");
+    }
+    cookie += `; Max-Age=${maxAge}; Expires=${expires.toUTCString()}`;
   }
   if (options.domain !== undefined) cookie += `; Domain=${options.domain}`;
   if (options.path !== undefined) cookie += `; Path=${options.path}`;

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, spyOn, test } from "bun:test";
 
 import { parseCookies, parseSignedCookie, serializeCookie } from "../src/cookie.ts";
 import { sign } from "../src/sign.ts";
@@ -63,6 +63,58 @@ test("maxAge emits Max-Age seconds and a valid Expires", () => {
   expect(Number.isNaN(at)).toBe(false);
   expect(at).toBeGreaterThanOrEqual(before + 86400_000 - 1000);
   expect(at).toBeLessThanOrEqual(after + 86400_000 + 1000);
+});
+
+test.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.MAX_VALUE])(
+  "maxAge %s rejects without appending an invalid Set-Cookie",
+  (maxAge) => {
+    const headers = new Headers({ "Set-Cookie": "existing=1" });
+    const append = () => headers.append("Set-Cookie", serializeCookie("sid", "abc", { maxAge }));
+    expect(append).toThrow(TypeError);
+    expect(append).toThrow(/\bmaxAge\b/);
+    expect(headers.getSetCookie()).toEqual(["existing=1"]);
+  },
+);
+
+test("positive fractional maxAge is floored before calculating Expires", () => {
+  const clock = spyOn(Date, "now").mockReturnValue(1_700_000_000_750);
+  try {
+    const cookie = serializeCookie("sid", "abc", { maxAge: 1.5 });
+    expect(cookie).toBe("sid=abc; Max-Age=1; Expires=Tue, 14 Nov 2023 22:13:21 GMT");
+    const expires = /Expires=([^;]+)/.exec(cookie)?.[1];
+    expect(Date.parse(expires!)).toBe(1_700_000_001_000);
+  } finally {
+    clock.mockRestore();
+  }
+});
+
+test.each([0, -0, -5, -0.5, -Number.MAX_VALUE, Number.MIN_VALUE, 0.5, 0.9999999999999999])(
+  "maxAge %s normalizes to cookie deletion",
+  (maxAge) => {
+    expect(serializeCookie("sid", "abc", { maxAge })).toBe(
+      "sid=abc; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+    );
+  },
+);
+
+test("Date range is checked after normalizing maxAge", () => {
+  const clock = spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
+  try {
+    const maxAge = 8_638_300_000_000;
+    for (const seconds of [maxAge, maxAge + 0.75]) {
+      const cookie = serializeCookie("sid", "abc", { maxAge: seconds });
+      expect(cookie).toBe(
+        "sid=abc; Max-Age=8638300000000; Expires=Sat, 13 Sep 275760 00:00:00 GMT",
+      );
+      const expires = /Expires=([^;]+)/.exec(cookie)?.[1];
+      expect(Date.parse(expires!)).toBe(8_640_000_000_000_000);
+    }
+    const serializeOutOfRange = () => serializeCookie("sid", "abc", { maxAge: maxAge + 1 });
+    expect(serializeOutOfRange).toThrow(TypeError);
+    expect(serializeOutOfRange).toThrow(/\bmaxAge\b/);
+  } finally {
+    clock.mockRestore();
+  }
 });
 
 test("negative maxAge is clamped to 0 (delete semantics stay well-formed)", () => {

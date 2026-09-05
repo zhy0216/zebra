@@ -58,6 +58,7 @@ export class MemoryStore implements SessionStore {
   private sweepCursor = this.entries.entries();
 
   constructor(options: MemoryStoreOptions) {
+    if (!Number.isFinite(options.ttl)) throw new TypeError("ttl must be finite");
     this.ttl = options.ttl;
   }
 
@@ -79,12 +80,14 @@ export class MemoryStore implements SessionStore {
   }
 
   async touch(id: string, ttl?: number): Promise<void> {
+    const duration = ttl ?? this.ttl;
+    if (!Number.isFinite(duration)) throw new TypeError("touch ttl must be finite");
     const now = Date.now();
     this.sweep(now);
     const entry = this.activeEntry(id, now);
     if (entry === undefined) return;
     if (entry.tombstoneUntil !== undefined) return;
-    entry.expiresAt = now + (ttl ?? this.ttl);
+    entry.expiresAt = now + duration;
   }
 
   async destroy(id: string): Promise<void> {

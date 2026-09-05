@@ -91,6 +91,13 @@ sessionMiddleware({
 
 `SECURE_COOKIE` 是冻结的 `{ httpOnly: true, sameSite: "lax" }` 常量，默认应用。
 
+Cookie 的 `maxAge` 单位为秒，必须是有限数值：`NaN`、`Infinity` 和
+`-Infinity` 会在序列化时抛出 `TypeError`。正小数先向下取整，再计算
+`Max-Age` 和 `Expires`（例如 `1.5` 归整为 `1`）。零、负数和小于一秒的
+正数均输出 `Max-Age=0` 与 Unix 纪元的 `Expires`，表示删除 cookie。
+归整后的正值若使 `Expires` 超出 JavaScript `Date` 的可表示范围，同样抛出
+`TypeError`。
+
 ## 防会话固定攻击
 
 - 签名只证明 cookie 是**真的**，不证明会话还**活着**。resolver 与 `openSession` 在复用 id 前都会查 store：校验通过但 store 里没有记录（已销毁或已过期）的 id 视为**新访客**——生成新 sid + 新 cookie 替换旧的，绝不复活旧会话。
@@ -110,6 +117,12 @@ interface SessionStore {
 
 - `MemoryStore({ ttl })` —— 默认，`Map` 后端，惰性清扫（每次访问最多扫 `SWEEP_BUDGET` 条），无计时器、无泄漏；TTL 毫秒。
 - 自建后端（Redis / Postgres）：实现该接口即可。`@zebra-web/redis` 已提供 `RedisSessionStore`（见 [Redis](14-redis.md)）。
+
+`MemoryStore` 和 `RedisSessionStore` 的构造参数 `ttl` 以及每次
+`touch(id, ttl)` 的覆盖值都必须是有限数值，单位为毫秒。`NaN`、`Infinity`
+和 `-Infinity` 会以 `TypeError` 失败；无效的 touch 会在任何存储读取、写入
+或过期清扫前拒绝执行，已有数据与到期时间保持不变。省略覆盖值时使用 store
+配置的 TTL。有限覆盖值保持原值（包括小数），零或负数让会话立即过期。
 
 ## TTL 归属
 

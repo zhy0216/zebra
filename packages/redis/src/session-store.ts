@@ -45,6 +45,7 @@ export class RedisSessionStore implements SessionStore {
   private readonly prefix: string;
 
   constructor(client: RedisLike, options: RedisSessionStoreOptions) {
+    if (!Number.isFinite(options.ttl)) throw new TypeError("ttl must be finite");
     this.client = client;
     this.ttl = options.ttl;
     this.prefix = options.prefix ?? DEFAULT_PREFIX;
@@ -84,9 +85,11 @@ export class RedisSessionStore implements SessionStore {
   }
 
   async touch(id: string, ttl?: number): Promise<void> {
+    const duration = ttl ?? this.ttl;
+    if (!Number.isFinite(duration)) throw new TypeError("touch ttl must be finite");
     if (await this.isTombstoned(id)) return;
     // `pexpire` on a missing key returns 0 — a no-op, matching `MemoryStore`.
-    await this.client.pexpire(this.dataKey(id), ttl ?? this.ttl);
+    await this.client.pexpire(this.dataKey(id), duration);
   }
 
   async destroy(id: string): Promise<void> {
