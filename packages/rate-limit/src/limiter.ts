@@ -46,10 +46,10 @@ export async function checkLimit(
   windowMs: number,
   max: number,
 ): Promise<RateLimitResult> {
-  if (typeof windowMs !== "number" || windowMs <= 0) {
+  if (!Number.isFinite(windowMs) || windowMs <= 0) {
     throw new TypeError("checkLimit: windowMs must be a positive number");
   }
-  if (typeof max !== "number" || max <= 0) {
+  if (!Number.isFinite(max) || max <= 0) {
     throw new TypeError("checkLimit: max must be a positive number");
   }
   const { count, resetAt } = await store.increment(key, windowMs);

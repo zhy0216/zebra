@@ -111,10 +111,10 @@ function withHeaders(res: Response, headers: Record<string, string>): Response {
 }
 
 export function rateLimit(options: RateLimitOptions): Middleware {
-  if (typeof options.windowMs !== "number" || options.windowMs <= 0) {
+  if (!Number.isFinite(options.windowMs) || options.windowMs <= 0) {
     throw new Error("rateLimit: windowMs must be a positive number");
   }
-  if (typeof options.max !== "number" || options.max <= 0) {
+  if (!Number.isFinite(options.max) || options.max <= 0) {
     throw new Error("rateLimit: max must be a positive number");
   }
   const windowMs = options.windowMs;

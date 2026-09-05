@@ -98,6 +98,52 @@ describe("MemoryStore", () => {
     expect(long.resetAt - short.resetAt).toBeLessThan(1_000);
   });
 
+  for (const source of ["per-call", "constructor default"] as const) {
+    test.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, 0, -1])(
+      `rejects ${source} windowMs %s without changing or sweeping buckets`,
+      async (windowMs) => {
+        let now = 0;
+        const clock = spyOn(Date, "now").mockImplementation(() => now);
+        const store = new MemoryStore({
+          windowMs: source === "constructor default" ? windowMs : 1_000,
+        });
+        const buckets = (store as unknown as { buckets: Map<string, IncrementResult> }).buckets;
+        try {
+          await store.increment("expired", 1);
+          await store.increment("active", 1_000);
+          const before = [...buckets].map<[string, IncrementResult]>(([key, entry]) => [
+            key,
+            { ...entry },
+          ]);
+          now = 5;
+          for (const key of ["new", "active"]) {
+            await expect(
+              store.increment(key, source === "per-call" ? windowMs : undefined),
+            ).rejects.toThrow(/windowMs/);
+            expect([...buckets]).toEqual(before);
+          }
+        } finally {
+          clock.mockRestore();
+        }
+      },
+    );
+  }
+
+  test("accepts positive fractional default and per-call windows", async () => {
+    let now = 1_000;
+    const clock = spyOn(Date, "now").mockImplementation(() => now);
+    const store = new MemoryStore({ windowMs: 0.5 });
+    try {
+      expect(await store.increment("default")).toEqual({ count: 1, resetAt: 1_000.5 });
+      expect(await store.increment("override", 1.25)).toEqual({ count: 1, resetAt: 1_001.25 });
+      now = 1_000.5;
+      expect(await store.increment("default")).toEqual({ count: 1, resetAt: 1_001 });
+      expect(await store.increment("override", 1.25)).toEqual({ count: 2, resetAt: 1_001.25 });
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
   test("expired buckets are swept so the map cannot grow without limit", async () => {
     const store = new MemoryStore({ windowMs: 60_000 });
     await store.increment("a", 10);
@@ -179,7 +225,7 @@ describe("MemoryStore", () => {
 
   test("increment without any windowMs rejects", async () => {
     const store = new MemoryStore();
-    expect(store.increment("k")).rejects.toThrow(/windowMs/);
+    await expect(store.increment("k")).rejects.toThrow(/windowMs/);
   });
 });
 

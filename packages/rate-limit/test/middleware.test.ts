@@ -9,11 +9,11 @@
 // end-to-end Problem+Json contract (core turns the thrown `HttpError` into
 // `application/problem+json` and copies its headers onto the response).
 
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import { HttpError, type ZebraRequest, buildRequest } from "@zebra-web/core";
 import { type TestApp, createTestApp } from "@zebra-web/testing";
 
-import { rateLimit } from "../src/index.ts";
+import { MemoryStore, rateLimit } from "../src/index.ts";
 
 const WINDOW_MS = 60_000;
 
@@ -23,6 +23,44 @@ function makeReq(path = "/", init: RequestInit = {}, ip?: string): ZebraRequest 
 
 /** `next` returning a canned success response. */
 const okNext = async (): Promise<Response> => new Response("ok", { status: 200 });
+
+describe("rateLimit middleware · option validation", () => {
+  for (const option of ["windowMs", "max"] as const) {
+    test.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, 0, -1])(
+      `rejects ${option} %s when creating the middleware`,
+      (value) => {
+        const store = new MemoryStore();
+        const increment = spyOn(store, "increment");
+        expect(() => rateLimit({ windowMs: WINDOW_MS, max: 5, store, [option]: value })).toThrow(
+          new Error(`rateLimit: ${option} must be a positive number`),
+        );
+        expect(increment).not.toHaveBeenCalled();
+      },
+    );
+  }
+
+  test("positive fractional options retain finite response and rejection headers", async () => {
+    const clock = spyOn(Date, "now").mockReturnValue(1_000);
+    try {
+      const mw = rateLimit({ windowMs: 0.5, max: 1.5 });
+      const res = await mw(makeReq(), okNext);
+      expect(res.headers.get("x-rate-limit-limit")).toBe("1.5");
+      expect(res.headers.get("x-rate-limit-remaining")).toBe("0.5");
+      expect(res.headers.get("x-rate-limit-reset")).toBe("1");
+      await expect(mw(makeReq(), okNext)).rejects.toMatchObject({
+        status: 429,
+        headers: {
+          "x-rate-limit-limit": "1.5",
+          "x-rate-limit-remaining": "0",
+          "x-rate-limit-reset": "1",
+          "retry-after": "1",
+        },
+      });
+    } finally {
+      clock.mockRestore();
+    }
+  });
+});
 
 describe("rateLimit middleware · within window", () => {
   test("passes requests through and injects Limit/Remaining/Reset headers", async () => {

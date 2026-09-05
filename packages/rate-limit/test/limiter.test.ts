@@ -4,7 +4,7 @@
 // counter, lazy window rotation on increment, and the read-modify-write done
 // synchronously, without awaiting, before the promise resolves).
 
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 
 import { checkLimit, createLimiter } from "../src/limiter.ts";
 import type { IncrementResult, RateLimitStore } from "../src/store.ts";
@@ -124,10 +124,40 @@ describe("checkLimit · fixed window", () => {
     expect(r).toEqual({ allowed: true, count: 1, remaining: 4, resetAt: 15_000 });
   });
 
-  test("rejects invalid windowMs or max", async () => {
-    const store = new FakeStore();
-    expect(checkLimit(store, "k", 0, 5)).rejects.toThrow();
-    expect(checkLimit(store, "k", 10_000, 0)).rejects.toThrow();
+  test.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, 0, -1])(
+    "rejects windowMs %s before incrementing the store",
+    async (windowMs) => {
+      const store = new FakeStore();
+      const increment = spyOn(store, "increment");
+      await expect(checkLimit(store, "k", windowMs, 5)).rejects.toThrow(TypeError);
+      expect(increment).not.toHaveBeenCalled();
+    },
+  );
+
+  test.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, 0, -1])(
+    "rejects max %s before incrementing the store",
+    async (max) => {
+      const store = new FakeStore();
+      const increment = spyOn(store, "increment");
+      await expect(checkLimit(store, "k", 10_000, max)).rejects.toThrow(TypeError);
+      expect(increment).not.toHaveBeenCalled();
+    },
+  );
+
+  test("preserves positive fractional windows and limits through createLimiter", async () => {
+    const limiter = createLimiter(new FakeStore());
+    expect(await limiter.check("k", 0.5, 1.5)).toEqual({
+      allowed: true,
+      count: 1,
+      remaining: 0.5,
+      resetAt: 0.5,
+    });
+    expect(await limiter.check("k", 0.5, 1.5)).toEqual({
+      allowed: false,
+      count: 2,
+      remaining: 0,
+      resetAt: 0.5,
+    });
   });
 });
 

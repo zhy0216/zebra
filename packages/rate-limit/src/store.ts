@@ -82,6 +82,9 @@ export class MemoryStore implements RateLimitStore {
         "MemoryStore: increment requires windowMs (constructor option or per-call argument)",
       );
     }
+    if (!Number.isFinite(ms) || ms <= 0) {
+      throw new Error("MemoryStore: windowMs must be a positive number");
+    }
     const now = Date.now();
     this.sweep(now);
     const entry = this.buckets.get(key);
