@@ -61,7 +61,7 @@ test("inject: disallowed origin → no CORS headers, body untouched", async () =
   const app = makeApp({ origin: ["https://allowed.example"] });
   const res = await get(app, "https://evil.example");
   expect(res.headers.get("access-control-allow-origin")).toBeNull();
-  expect(res.headers.get("vary")).toBeNull();
+  expect(res.headers.get("vary")).toBe("Origin");
   expect(res.headers.get("access-control-allow-credentials")).toBeNull();
   expect(await res.text()).toBe("ok");
 });

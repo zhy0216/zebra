@@ -23,6 +23,24 @@ const DEFAULT_METHODS = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIO
 
 const PREFLIGHT_REQUEST_HEADERS = "access-control-request-headers";
 
+function mergeVary(headers: Headers, field: string): void {
+  const fields: string[] = [];
+  const seen = new Set<string>();
+  for (const entry of [...(headers.get("vary") ?? "").split(","), field]) {
+    const value = entry.trim();
+    if (value === "*") {
+      headers.set("vary", "*");
+      return;
+    }
+    const key = value.toLowerCase();
+    if (value !== "" && !seen.has(key)) {
+      seen.add(key);
+      fields.push(value);
+    }
+  }
+  headers.set("vary", fields.join(", "));
+}
+
 // C2: preflight handling.
 //
 // An `OPTIONS` request carrying `Access-Control-Request-Method` is a CORS
@@ -38,6 +56,7 @@ export function cors(opts: CorsOptions = {}): Middleware {
   const exposedHeaders = opts.exposedHeaders;
   const maxAge = opts.maxAge;
   const origin = opts.origin ?? DEFAULT_ORIGIN;
+  const variesByOrigin = origin !== DEFAULT_ORIGIN || credentials;
 
   return async (req, next) => {
     const isPreflight =
@@ -52,15 +71,17 @@ export function cors(opts: CorsOptions = {}): Middleware {
 
       const headers = new Headers();
       headers.set("access-control-allow-origin", reflected);
-      // A concrete echoed origin must be matched per-request; `*` needs no Vary.
-      if (reflected !== "*") headers.set("vary", "Origin");
+      if (variesByOrigin) mergeVary(headers, "Origin");
       if (credentials) headers.set("access-control-allow-credentials", "true");
       headers.set("access-control-allow-methods", methods.join(", "));
       const requested = req.headers.get(PREFLIGHT_REQUEST_HEADERS);
       if (allowedHeaders !== undefined) {
         headers.set("access-control-allow-headers", allowedHeaders.join(", "));
-      } else if (requested !== null) {
-        headers.set("access-control-allow-headers", requested);
+      } else {
+        // The absent-header response is a variant too: a cache must not
+        // reuse it for a later request asking to send additional headers.
+        mergeVary(headers, "Access-Control-Request-Headers");
+        if (requested !== null) headers.set("access-control-allow-headers", requested);
       }
       if (maxAge !== undefined) headers.set("access-control-max-age", String(maxAge));
       return new Response(null, { status: 204, headers });
@@ -68,23 +89,22 @@ export function cors(opts: CorsOptions = {}): Middleware {
 
     // C3: actual-request header injection.
     //
-    // Only a request carrying a *matching* Origin is cross-origin and gets
-    // CORS headers; no Origin header (same-origin / non-browser) or a
-    // disallowed origin passes the response through untouched. The handler's
-    // response is wrapped, never mutated, so its body/status semantics are
-    // preserved (see the session package's appendSetCookie pattern).
+    // Only matching origins receive Access-Control headers. When the policy
+    // varies by origin, every variant (including denied or absent Origin)
+    // declares Vary so a cached response cannot suppress a later allowance.
+    // Wrap the handler response to preserve its body/status and headers.
     const reflected = resolveAllowOrigin(req.headers.get("origin"), origin, credentials);
-    if (reflected === null) return next();
+    if (reflected === null && !variesByOrigin) return next();
 
     const res = await next();
     const headers = new Headers(res.headers);
-    headers.set("access-control-allow-origin", reflected);
-    // A concrete echoed origin must be matched per-request; `*` needs no Vary.
-    // Append rather than set: a handler-supplied Vary must be preserved.
-    if (reflected !== "*") headers.append("vary", "Origin");
-    if (credentials) headers.set("access-control-allow-credentials", "true");
-    if (exposedHeaders !== undefined) {
-      headers.set("access-control-expose-headers", exposedHeaders.join(", "));
+    if (variesByOrigin) mergeVary(headers, "Origin");
+    if (reflected !== null) {
+      headers.set("access-control-allow-origin", reflected);
+      if (credentials) headers.set("access-control-allow-credentials", "true");
+      if (exposedHeaders !== undefined) {
+        headers.set("access-control-expose-headers", exposedHeaders.join(", "));
+      }
     }
     return new Response(res.body, {
       status: res.status,
