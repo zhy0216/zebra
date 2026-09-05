@@ -21,6 +21,7 @@ import type { Middleware } from "../middleware/types.ts";
 import { buildBunWebSocketHandler } from "../ws/handler.ts";
 import { Group, type GroupApi } from "./group.ts";
 import { AppInternals } from "./internals.ts";
+import { snapshotContract } from "./route-snapshot.ts";
 import type {
   DepsSpec,
   ListenOptions,
@@ -64,10 +65,30 @@ export class Zebra {
     const sessionTtl = opts.sessionTtl ?? opts.session?.ttl ?? DEFAULT_SESSION_TTL;
     const gracePeriod = opts.gracePeriod ?? DEFAULT_GRACE_PERIOD;
     const requestTimeout = opts.requestTimeout;
-    if (sessionTtl <= 0) throw new RangeError("session.ttl must be greater than zero");
-    if (gracePeriod < 0) throw new RangeError("gracePeriod must not be negative");
-    if (requestTimeout !== undefined && requestTimeout <= 0) {
-      throw new RangeError("requestTimeout must be greater than zero");
+    if (!Number.isFinite(sessionTtl) || sessionTtl <= 0) {
+      throw new RangeError("sessionTtl (session.ttl) must be finite and greater than zero");
+    }
+    if (!Number.isFinite(gracePeriod) || gracePeriod < 0) {
+      throw new RangeError("gracePeriod must be finite and must not be negative");
+    }
+    if (requestTimeout !== undefined && (!Number.isFinite(requestTimeout) || requestTimeout <= 0)) {
+      throw new RangeError("requestTimeout must be finite and greater than zero");
+    }
+    const bodyOpts: BodyOptions = {
+      maxSize: opts.body?.maxSize ?? DEFAULT_BODY.maxSize,
+      json: { ...DEFAULT_BODY.json, ...(opts.body?.json ?? {}) },
+      form: { ...DEFAULT_BODY.form, ...(opts.body?.form ?? {}) },
+      multipart: { ...DEFAULT_BODY.multipart, ...(opts.body?.multipart ?? {}) },
+    };
+    for (const [name, value] of Object.entries({
+      "body.maxSize": bodyOpts.maxSize,
+      "body.json.limit": bodyOpts.json.limit,
+      "body.form.limit": bodyOpts.form.limit,
+      "body.multipart.limit": bodyOpts.multipart.limit,
+      "body.multipart.maxFiles": bodyOpts.multipart.maxFiles,
+      "body.multipart.maxFileSize": bodyOpts.multipart.maxFileSize,
+    })) {
+      if (!Number.isFinite(value)) throw new RangeError(`${name} must be finite`);
     }
     this.trustProxy = opts.trustProxy ?? false;
     const container = opts.container ?? new Container();
@@ -79,12 +100,7 @@ export class Zebra {
       gracePeriod,
       requestTimeout,
       exposeStack: opts.errors?.exposeStack ?? false,
-      bodyOpts: {
-        maxSize: opts.body?.maxSize ?? DEFAULT_BODY.maxSize,
-        json: { ...DEFAULT_BODY.json, ...(opts.body?.json ?? {}) },
-        form: { ...DEFAULT_BODY.form, ...(opts.body?.form ?? {}) },
-        multipart: { ...DEFAULT_BODY.multipart, ...(opts.body?.multipart ?? {}) },
-      },
+      bodyOpts,
     });
     this.verbs = {
       add: (method, path, handler) => this.route(method, path, handler),
@@ -100,6 +116,7 @@ export class Zebra {
 
   /** Frozen copies of all registered routes (OpenAPI/introspection seam). */
   get routeTable(): ReadonlyArray<RegisteredRoute> {
+    const snapshots = new WeakMap<object, object>();
     return Object.freeze(
       this.internals.routes.map((route) => {
         const copy: RegisteredRoute = {
@@ -107,7 +124,9 @@ export class Zebra {
           deps: route.deps ? Object.freeze({ ...route.deps }) : null,
           middlewares: Object.freeze([...route.middlewares]) as Middleware[],
         };
-        if (route.contract !== undefined) copy.contract = deepFreeze({ ...route.contract });
+        if (route.contract !== undefined) {
+          copy.contract = snapshotContract(route.contract, snapshots);
+        }
         return Object.freeze(copy);
       }),
     );
@@ -620,12 +639,4 @@ export class Zebra {
   async dispatch(raw: Request, ip?: string | (() => string | undefined)): Promise<Response> {
     return this.internals.dispatch(raw, ip);
   }
-}
-
-function deepFreeze<T>(value: T): T {
-  for (const key of Object.keys(value as object) as Array<keyof T>) {
-    const v = value[key];
-    if (v !== null && typeof v === "object") deepFreeze(v);
-  }
-  return Object.freeze(value);
 }

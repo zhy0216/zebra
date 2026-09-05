@@ -64,6 +64,11 @@ interface ZebraRequest<P, B, Q> {
 
 `Bun.serve` 层的 `maxRequestBodySize`（`ListenOptions`，默认 128MB）是独立的传输层上限，先于任何 handler 执行。
 
+所有应用层 body 上限（`maxSize`、`json.limit`、`form.limit`、`multipart.limit`、
+`multipart.maxFiles` 和 `multipart.maxFileSize`）必须是有限数值。`NaN` 和正负无穷
+会在构造 `Zebra` 时抛出 `RangeError`，错误信息包含字段名。零上限和小数上限仍受支持，
+不会对上限取整。
+
 ```ts
 const z = new Zebra({
   body: { json: { limit: 256 * 1024 }, multipart: { maxFiles: 4 } },
@@ -171,6 +176,10 @@ class HttpError extends Error {
 ```ts
 const z = new Zebra({ requestTimeout: 5_000 });
 ```
+
+`requestTimeout` 必须是大于零的有限数值，非法值在构造阶段抛出 `RangeError`，小数毫秒仍受支持。
+`session.ttl`（默认 30 分钟）及其优先级更高的别名 `sessionTtl` 遵循相同约束。
+`gracePeriod`（默认 10,000 毫秒）必须是非负有限数值，允许为零。
 
 - 到期后请求被中止，客户端收到 504 `request_timeout`（Problem+Json，`detail.limit` 为毫秒数）。
 - handler 可在 `req.signal` 上监听 `abort` 提前停止后台工作；`signal` 在客户端断开时同样触发（来自 Bun 原始 `Request.signal`）。

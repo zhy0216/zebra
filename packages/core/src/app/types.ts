@@ -68,6 +68,7 @@ export type RouteHandler<
 > = (req: ZebraRequest<P, B, Q>, deps: D) => unknown | Promise<unknown>;
 
 export interface SessionOptions {
+  /** Idle TTL in milliseconds; finite and greater than zero. Default: 30 minutes. */
   ttl?: number;
   resolver?: (req: Request) => string | undefined | Promise<string | undefined>;
   /**
@@ -86,14 +87,18 @@ export interface SessionOptions {
 
 export interface ZebraOptions {
   container?: Container;
+  /** Body limits must be finite; non-finite values throw RangeError at construction. */
   body?: Partial<BodyOptions>;
   errors?: { exposeStack?: boolean };
   session?: SessionOptions;
   sessionResolver?: SessionOptions["resolver"];
+  /** Takes precedence over session.ttl; finite and greater than zero. */
   sessionTtl?: number;
+  /** Shutdown drain time in milliseconds; finite and nonnegative. Default: 10,000. */
   gracePeriod?: number;
   /**
-   * Per-request deadline in milliseconds. When the dispatch pipeline
+   * Per-request deadline in milliseconds; finite and greater than zero.
+   * Invalid values throw RangeError at construction. When the dispatch pipeline
    * (middleware + handler, including body parsing and session resolution)
    * has not produced a response within the deadline, the request is aborted
    * and the client receives a 504 Problem+Json (`request_timeout`).

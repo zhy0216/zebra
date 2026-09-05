@@ -66,6 +66,11 @@ Overridable at construction (`ZebraOptions.body`), with these defaults:
 
 `Bun.serve`'s `maxRequestBodySize` (`ListenOptions`, default 128MB) is a separate transport-level cap that runs before any handler.
 
+All app-level body limits (`maxSize`, `json.limit`, `form.limit`, `multipart.limit`,
+`multipart.maxFiles`, and `multipart.maxFileSize`) must be finite. `NaN` and either
+infinity throw a `RangeError` when constructing `Zebra`, with the field name in the
+message. Zero and fractional limits remain supported; limits are not rounded.
+
 ```ts
 const z = new Zebra({
   body: { json: { limit: 256 * 1024 }, multipart: { maxFiles: 4 } },
@@ -183,6 +188,12 @@ With `exposeStack: true`, unknown errors (not HttpError/ValidationError) include
 ```ts
 const z = new Zebra({ requestTimeout: 5_000 });
 ```
+
+`requestTimeout` must be finite and greater than zero; invalid values throw
+`RangeError` at construction. Fractional milliseconds remain supported. The same
+constraint applies to `session.ttl` (default 30 minutes) and its higher-priority
+alias `sessionTtl`. `gracePeriod` (default 10,000 ms) must be finite and nonnegative;
+zero is allowed.
 
 - When it fires, the request is aborted and the client receives a 504 `request_timeout` (Problem+Json, `detail.limit` = ms).
 - Handlers can listen for `abort` on `req.signal` to stop background work early; the signal also fires on client disconnect (from Bun's raw `Request.signal`).

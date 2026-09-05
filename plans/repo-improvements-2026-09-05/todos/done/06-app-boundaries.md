@@ -22,3 +22,26 @@ agent: inherit
 ## 校验与交付
 
 运行 `bun test packages/core/test/contract/route-table.test.ts packages/core/test/app/options-validation.test.ts packages/core/test/app/timeout.test.ts packages/core/test/http/body.test.ts`、`bun run typecheck`、`bun run lint`、`DOCS_BASE=/zebra/ bun run docs:build`、`git diff --check`。不修改其他任务的源文件或已有 session/timeout 测试；新增测试采用本文件指定路径。
+
+## 完成记录
+
+- 状态：已完成本任务全部验收；2026-09-05 在协调器持有集成锁期间归档，待协调器仓库级校验与合并。
+- 执行 agent：codex；model：gpt-6-astra；effort：max。
+- 集成基线：`8af73f3e275dab53d56c7f792d36c658f961f8b5`。在本任务 worktree 执行 rebase 成功，无冲突，无需修改实现。
+- T1 快照隔离：普通 metadata/errors/mcp 数据复制后冻结，原 meta/tags/errors 和 MCP 声明仍可修改，旧快照不随原对象变化。身份表保留循环及跨字段、跨路由的共享引用，table/route/contract 保持冻结。
+- T1 外部边界：Zod、自定义 Standard Schema、函数及其他外部实例保留原引用；读取快照时 schema getter 调用次数为 0。dispatch 的输入转换、输出裁剪与转换、422 输入错误和 500 输出验证错误均通过回归测试。
+- T2 非有限配置：10 个配置入口分别覆盖 NaN、正负 Infinity，均在构造阶段抛出带字段名的 RangeError；未创建服务器或 timer，未进入应用回调。
+- T2 兼容范围：覆盖 sessionTtl 优先于 session.ttl、默认值、原有有限范围、小数值、gracePeriod=0，以及各 body 零上限。maxSize=NaN/json.limit=1 在构造时失败；合法 json.limit=1 的小请求成功、超限请求返回 413。
+- 文件边界：实现只涉及 app.ts、私有 route-snapshot.ts、app/types.ts、指定两个测试文件及双语 HTTP 文档；保留 master 已合入任务，不修改其他任务源码或已有 session/timeout 测试。
+
+rebase 后重新运行的校验：
+
+| 命令 | 结果 |
+| --- | --- |
+| `bun test packages/core/test/contract/route-table.test.ts packages/core/test/app/options-validation.test.ts packages/core/test/app/timeout.test.ts packages/core/test/http/body.test.ts` | exit 0；73 pass / 0 fail，385 expect()，4 files |
+| `bun run typecheck` | exit 0 |
+| `bun run lint` | exit 0；252 files，No fixes applied |
+| `DOCS_BASE=/zebra/ bun run docs:build` | exit 0；VitePress 1.6.4，3.19s |
+| `git diff --check` / `git diff master --check` | exit 0 |
+
+无剩余 blocker。audit 和 benchmark 留待协调器安排仓库级校验；本任务未修改真实 benchmark baseline。README 仅更新本任务的完成状态及 done/ 链接，plan.md 和其他任务状态保持不变。
