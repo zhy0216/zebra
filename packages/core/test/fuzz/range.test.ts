@@ -6,7 +6,7 @@ import { int, mulberry32, pick } from "./prng.ts";
 // --- range fuzz --------------------------------------------------------------
 //
 // Random `Range` values (plus occasional valid-style ranges and a matching
-// ETag) against the fixed 11-byte fixture `hello.txt\n`:
+// ETag) against the fixed fixture `hello world\n`:
 //   1. status is always one of {200, 206, 304, 416}.
 //   2. a 206's content-range is self-consistent: 0 <= start <= end < size and
 //      content-length matches the range length.
@@ -14,7 +14,7 @@ import { int, mulberry32, pick } from "./prng.ts";
 
 const root = resolve(import.meta.dir, "../http/fixtures/static");
 const opts = { index: "index.html", maxAge: 60 };
-const SIZE = 11; // "hello world\n"
+const SIZE = Bun.file(resolve(root, "hello.txt")).size;
 
 const RANGE_ALPHABET = "bytes=0123456789- ,*abxy";
 
@@ -22,6 +22,7 @@ test("fuzz: Range/If-None-Match handling is self-consistent", async () => {
   const rnd = mulberry32(0x7a4e9);
   const etag = (await serveStatic(root, "hello.txt", opts)).headers.get("etag");
   expect(etag).not.toBeNull();
+  const seen = new Set<number>();
 
   for (let i = 0; i < 2500; i++) {
     let value: string;
@@ -38,15 +39,18 @@ test("fuzz: Range/If-None-Match handling is self-consistent", async () => {
       value = s;
     }
 
-    const headers = new Headers();
+    const headers = new Headers({ range: value });
     if (rnd() < 0.15) headers.set("if-none-match", etag ?? "");
+    else if (rnd() < 0.15) headers.set("if-range", '"stale"');
     const res = await serveStatic(root, "hello.txt", opts, headers);
     const status = res.status;
+    seen.add(status);
     const headerDesc = JSON.stringify(Object.fromEntries(headers.entries()));
     expect(
       [200, 206, 304, 416],
       `seed 0x7a4e9 iter ${i} range ${JSON.stringify(value)} headers ${headerDesc}`,
     ).toContain(status);
+    if (headers.has("if-range")) expect(status).toBe(200);
 
     if (status === 206) {
       const cr = res.headers.get("content-range") ?? "";
@@ -69,4 +73,5 @@ test("fuzz: Range/If-None-Match handling is self-consistent", async () => {
       expect(res.headers.get("content-range")).toBe(`bytes */${SIZE}`);
     }
   }
+  expect([...seen].sort()).toEqual([200, 206, 304, 416]);
 });

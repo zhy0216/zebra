@@ -32,6 +32,48 @@ test("app.static serves the configured index at the mount path", async () => {
   expect(await res.text()).toBe("static hello\n");
 });
 
+test("static conditional requests retain HEAD metadata and suppress the body", async () => {
+  const app = new Zebra();
+  app.static("/assets", fixtures);
+  const first = await app.dispatch(new Request("http://x/assets/hello.txt"));
+  const etag = first.headers.get("etag")!;
+  for (const method of ["GET", "HEAD"]) {
+    const res = await app.dispatch(
+      new Request("http://x/assets/hello.txt", {
+        method,
+        headers: { range: "bytes=0-1", "if-range": '"stale"' },
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-length")).toBe(first.headers.get("content-length"));
+    expect(res.headers.get("content-range")).toBeNull();
+    expect(await res.text()).toBe(method === "HEAD" ? "" : "static hello\n");
+    const unchanged = await app.dispatch(
+      new Request("http://x/assets/hello.txt", {
+        method,
+        headers: { "if-none-match": etag.slice(2) },
+      }),
+    );
+    expect(unchanged.status).toBe(304);
+    expect(await unchanged.text()).toBe("");
+  }
+});
+
+test("separate static mounts keep different directory index configurations", async () => {
+  const app = new Zebra();
+  const shared = resolve(import.meta.dir, "../http/fixtures");
+  app.static("/html", shared, { index: "index.html" });
+  app.static("/text", shared, { index: "hello.txt" });
+  for (const mount of ["html", "text", "text", "html"]) {
+    const res = await app.dispatch(new Request(`http://x/${mount}/static`));
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain(
+      mount === "html" ? "text/html" : "text/plain",
+    );
+    expect(await res.text()).toBe(mount === "html" ? "<h1>Index</h1>\n" : "hello world\n");
+  }
+});
+
 test("app.static rejects a symlink inside root pointing outside root (403)", async () => {
   const dir = mkdtempSync(join(tmpdir(), "zebra-app-static-"));
   try {

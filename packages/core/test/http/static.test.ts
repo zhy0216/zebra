@@ -1,5 +1,5 @@
-import { afterAll, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { afterAll, expect, spyOn, test } from "bun:test";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { serveStatic } from "../../src/http/static.ts";
@@ -82,11 +82,136 @@ test("emits a weak ETag and honors If-None-Match", async () => {
   expect(amongMany.status).toBe(304);
 });
 
+test("If-None-Match weakly compares strong and weak tags in lists", async () => {
+  const first = await serveStatic(root, "hello.txt", opts);
+  const etag = first.headers.get("etag")!;
+  const strong = etag.slice(2);
+  for (const value of [strong, etag, `"other", ${strong}`, `W/"other", ${etag}`, "*"]) {
+    const res = await serveStatic(root, "hello.txt", opts, new Headers({ "if-none-match": value }));
+    expect(res.status).toBe(304);
+    expect(res.headers.get("etag")).toBe(etag);
+    expect(await res.text()).toBe("");
+  }
+  const mismatch = await serveStatic(
+    root,
+    "hello.txt",
+    opts,
+    new Headers({ "if-none-match": 'W/"different", "other"' }),
+  );
+  expect(mismatch.status).toBe(200);
+  expect(await mismatch.text()).toBe("hello world\n");
+});
+
 test("serves a single byte range", async () => {
   const res = await serveStatic(root, "hello.txt", opts, new Headers({ range: "bytes=0-4" }));
   expect(res.status).toBe(206);
   expect(res.headers.get("content-range")).toMatch(/^bytes 0-4\//);
   expect(await res.text()).toBe("hello");
+});
+
+test("If-Range mismatches and weak validators ignore valid and unsatisfiable ranges", async () => {
+  const first = await serveStatic(root, "hello.txt", opts);
+  const etag = first.headers.get("etag")!;
+  for (const condition of ['"stale"', etag, etag.slice(2), "not-a-date", "*"]) {
+    for (const range of ["bytes=0-1", "bytes=999-1000"]) {
+      const res = await serveStatic(
+        root,
+        "hello.txt",
+        opts,
+        new Headers({ range, "if-range": condition }),
+      );
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-range")).toBeNull();
+      expect(res.headers.get("content-length")).toBe("12");
+      expect(await res.text()).toBe("hello world\n");
+    }
+  }
+});
+
+test("If-Range accepts only an exact, sufficiently old HTTP date", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "zebra-static-if-range-"));
+  const modified = new Date("Sat, 01 Jan 2000 00:00:00 GMT");
+  const clock = spyOn(Date, "now").mockReturnValue(modified.getTime() + 60_000);
+  try {
+    const path = join(dir, "file.txt");
+    writeFileSync(path, "abcdef");
+    utimesSync(path, modified, modified);
+    const noCache = { ...opts, cacheTtl: 0 };
+    const first = await serveStatic(dir, "file.txt", noCache);
+    expect(first.headers.get("last-modified")).toBe(modified.toUTCString());
+
+    for (const condition of [
+      modified.toUTCString(),
+      "Saturday, 01-Jan-00 00:00:00 GMT",
+      "Sat Jan  1 00:00:00 2000",
+    ]) {
+      const res = await serveStatic(
+        dir,
+        "file.txt",
+        noCache,
+        new Headers({ range: "bytes=0-1", "if-range": condition }),
+      );
+      expect(res.status).toBe(206);
+      expect(res.headers.get("content-range")).toBe("bytes 0-1/6");
+      expect(res.headers.get("content-length")).toBe("2");
+      expect(await res.text()).toBe("ab");
+    }
+
+    for (const condition of [
+      "Fri, 31 Dec 1999 23:59:59 GMT",
+      "Sat, 01 Jan 2000 00:00:01 GMT",
+      "Sat, 01 Jan 2100 00:00:00 GMT",
+      modified.toISOString(),
+      "Fri, 01 Jan 2000 00:00:00 GMT",
+      "Sat, 32 Dec 1999 00:00:00 GMT",
+    ]) {
+      const res = await serveStatic(
+        dir,
+        "file.txt",
+        noCache,
+        new Headers({ range: "bytes=0-1", "if-range": condition }),
+      );
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-range")).toBeNull();
+      expect(await res.text()).toBe("abcdef");
+    }
+
+    clock.mockReturnValue(modified.getTime() + 59_999);
+    const recent = await serveStatic(
+      dir,
+      "file.txt",
+      noCache,
+      new Headers({ range: "bytes=0-1", "if-range": modified.toUTCString() }),
+    );
+    expect(recent.status).toBe(200);
+    expect(await recent.text()).toBe("abcdef");
+  } finally {
+    clock.mockRestore();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("If-Range without Range has no effect and If-None-Match takes precedence", async () => {
+  const initial = await serveStatic(root, "hello.txt", opts);
+  const ordinary = await serveStatic(
+    root,
+    "hello.txt",
+    opts,
+    new Headers({ "if-range": '"stale"' }),
+  );
+  expect(ordinary.status).toBe(200);
+  const conditional = await serveStatic(
+    root,
+    "hello.txt",
+    opts,
+    new Headers({
+      range: "bytes=0-1",
+      "if-range": '"stale"',
+      "if-none-match": initial.headers.get("etag")!,
+    }),
+  );
+  expect(conditional.status).toBe(304);
+  expect(conditional.headers.get("content-range")).toBeNull();
 });
 
 test("a multi-range request is answered with the full 200, not a 416", async () => {
@@ -163,6 +288,23 @@ test("repeated requests hit the cache with identical headers and correct bodies"
     new Headers({ "if-none-match": etag ?? "" }),
   );
   expect(notModified.status).toBe(304);
+});
+
+test("directory cache entries distinguish index options in both request orders", async () => {
+  const fixturesRoot = resolve(root, "..");
+  for (const index of ["index.html", "hello.txt", "hello.txt", "index.html"]) {
+    const configured = { ...opts, index };
+    const cold = await serveStatic(fixturesRoot, "static", { ...configured, cacheTtl: 0 });
+    const warm = await serveStatic(fixturesRoot, "static", configured);
+    const repeated = await serveStatic(fixturesRoot, "static", configured);
+    const expected = index === "index.html" ? "<h1>Index</h1>\n" : "hello world\n";
+    const mime = index === "index.html" ? "text/html" : "text/plain";
+    for (const res of [cold, warm, repeated]) {
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain(mime);
+      expect(await res.text()).toBe(expected);
+    }
+  }
 });
 
 test("cache TTL: stale metadata within TTL, refreshed after expiry", async () => {

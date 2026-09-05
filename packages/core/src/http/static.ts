@@ -36,15 +36,17 @@ function realRoot(root: string): string {
 // --- bounded metadata cache -------------------------------------------------
 //
 // Hot-path requests to the same file skip both `statSync` (twice on directory
-// paths) and `realpathSync`. Keyed by the lexical absolute target (the root is
-// part of the key), so different roots never collide. Bounded by a max entry
-// count; Map insertion order + re-insert on hit approximates LRU eviction.
+// paths) and `realpathSync`. Keys include the root, lexical target and index
+// option: the same directory can serve different configured index files.
+// Bounded by a max entry count; Map insertion order + re-insert on hit
+// approximates LRU eviction.
 // Misses (404/403) are never cached, so newly created files appear immediately.
 
 interface FileMeta {
   realTarget: string;
   size: number;
   etag: string;
+  modifiedAt: number;
   lastModified: string;
   contentType: string;
   fetchedAt: number;
@@ -108,6 +110,49 @@ function parseRange(value: string, size: number): ByteRange | null {
   return { start, end: Math.min(requestedEnd, size - 1) };
 }
 
+/** Accept the three HTTP-date formats, rejecting Date.parse's loose inputs. */
+function parseHttpDate(value: string): number | undefined {
+  let normalized = value.endsWith(" GMT") ? value : `${value} GMT`;
+  const rfc850 =
+    /^(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday), (\d{2})-([A-Z][a-z]{2})-(\d{2}) (\d{2}:\d{2}:\d{2}) GMT$/.exec(
+      value,
+    );
+  if (rfc850 !== null) {
+    const [, weekday, day, month, shortYear, time] = rfc850;
+    const future = new Date(Date.now());
+    let year = Math.floor(future.getUTCFullYear() / 100) * 100 + Number(shortYear);
+    future.setUTCFullYear(future.getUTCFullYear() + 50);
+    const format = () => `${weekday!.slice(0, 3)}, ${day} ${month} ${year} ${time} GMT`;
+    if (Date.parse(format()) > future.getTime()) year -= 100;
+    normalized = format();
+  }
+  const timestamp = Date.parse(normalized);
+  if (Number.isNaN(timestamp)) return undefined;
+  const canonical = new Date(timestamp).toUTCString();
+  if (value === canonical || (rfc850 !== null && normalized === canonical)) return timestamp;
+
+  const [weekday, day, month, year, time] = canonical.split(" ");
+  const asctime = `${weekday!.slice(0, 3)} ${month} ${String(Number(day)).padStart(2, " ")} ${time} ${year}`;
+  return value === asctime ? timestamp : undefined;
+}
+
+function matchesIfRange(value: string, meta: FileMeta): boolean {
+  // RFC 9110 §13.1.5 requires strong comparison. Our generated weak ETags
+  // cannot authorize a partial response, even with the same opaque value.
+  if (value.startsWith('"') || value.startsWith("W/")) {
+    return !meta.etag.startsWith("W/") && !value.startsWith("W/") && value === meta.etag;
+  }
+  const timestamp = parseHttpDate(value);
+  // Require an exact date match, not the <= comparison used for IMS.
+  // Conservatively accept dates only after a 60-second modification window;
+  // recent or future mtimes cannot establish a strong date validator here.
+  return (
+    timestamp !== undefined &&
+    timestamp === Date.parse(meta.lastModified) &&
+    Date.now() - meta.modifiedAt >= 60_000
+  );
+}
+
 /** Builds the full response (304 / 416 / 206 / 200) from cached file metadata. */
 function respond(meta: FileMeta, requestHeaders: Headers, maxAge: number): Response {
   const headers = new Headers({
@@ -123,7 +168,10 @@ function respond(meta: FileMeta, requestHeaders: Headers, maxAge: number): Respo
     ifNoneMatch
       ?.split(",")
       .map((candidate) => candidate.trim())
-      .some((candidate) => candidate === "*" || candidate === meta.etag)
+      .some(
+        (candidate) =>
+          candidate === "*" || candidate.replace(/^W\//, "") === meta.etag.replace(/^W\//, ""),
+      )
   ) {
     return new Response(null, { status: 304, headers });
   }
@@ -142,10 +190,15 @@ function respond(meta: FileMeta, requestHeaders: Headers, maxAge: number): Respo
 
   const file = Bun.file(meta.realTarget);
   const requestedRange = requestHeaders.get("range");
+  const ifRange = requestHeaders.get("if-range");
   // Multi-range requests (bytes=a-b,c-d) are answered with the full 200
   // instead of a 416: RFC 9110 §14.2 allows ignoring a Range header, and a
   // satisfiable multi-range must never be reported unsatisfiable.
-  if (requestedRange !== null && !requestedRange.includes(",")) {
+  if (
+    requestedRange !== null &&
+    !requestedRange.includes(",") &&
+    (ifRange === null || matchesIfRange(ifRange, meta))
+  ) {
     const range = parseRange(requestedRange, meta.size);
     if (!range) {
       headers.set("content-range", `bytes */${meta.size}`);
@@ -207,8 +260,9 @@ export async function serveStatic(
   }
 
   const ttl = opts.cacheTtl ?? DEFAULT_CACHE_TTL;
+  const cacheKey = JSON.stringify([absRoot, absTarget, opts.index]);
   if (ttl > 0) {
-    const cached = cacheGet(absTarget, ttl);
+    const cached = cacheGet(cacheKey, ttl);
     if (cached !== undefined) {
       return respond(cached, requestHeaders, opts.maxAge);
     }
@@ -260,14 +314,16 @@ export async function serveStatic(
   }
 
   const file = Bun.file(realTarget);
+  const modifiedAt = file.lastModified;
   const meta: FileMeta = {
     realTarget,
     size: file.size,
-    etag: `W/"${file.lastModified}-${file.size}"`,
-    lastModified: new Date(file.lastModified).toUTCString(),
+    etag: `W/"${modifiedAt}-${file.size}"`,
+    modifiedAt,
+    lastModified: new Date(modifiedAt).toUTCString(),
     contentType: file.type || "application/octet-stream",
     fetchedAt: Date.now(),
   };
-  if (ttl > 0) cacheSet(absTarget, meta);
+  if (ttl > 0) cacheSet(cacheKey, meta);
   return respond(meta, requestHeaders, opts.maxAge);
 }
