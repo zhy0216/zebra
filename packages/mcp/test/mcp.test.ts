@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, spyOn, test } from "bun:test";
 import {
   CallToolResultSchema,
   ErrorCode,
@@ -9,7 +9,7 @@ import { type StandardSchemaV1, prefix, zc } from "@zebra-web/contract";
 import { HttpError, Zebra } from "@zebra-web/core";
 import { zodSchemaAdapter } from "@zebra-web/schema-zod";
 import { z } from "zod";
-import { type McpServerOptions, createMcpServer } from "../src/index.ts";
+import { type McpLogEntry, type McpServerOptions, createMcpServer } from "../src/index.ts";
 
 const Topic = z.object({ id: z.number(), title: z.string().min(1), content: z.string() });
 
@@ -121,14 +121,16 @@ function makeServer(app: Zebra, extra: Partial<McpServerOptions> = {}) {
 test("tools/list returns only .mcp()-declared procedures, with name and description from .mcp()", async () => {
   const mcp = makeServer(buildApp());
   const { tools } = await mcp.listTools();
-  const names = tools.map((t) => t.name).sort();
+  const names = tools.map((t) => t.name);
   expect(names).toEqual([
-    "create_topic",
     "get_topic",
-    "get_topic_raw",
     "list_topics",
+    "create_topic",
     "remove_topic",
+    "get_topic_raw",
   ]);
+  expect(mcp.tools).toEqual(tools);
+  expect(tools).not.toBe(mcp.tools);
   const getTopic = tools.find((t) => t.name === "get_topic")!;
   expect(getTopic.description).toBe("获取主题");
   for (const tool of tools) expect(ToolSchema.safeParse(tool).success).toBe(true);
@@ -337,6 +339,55 @@ test("distinct tool names sharing a route remain independently discoverable", as
   }
 });
 
+test("nested tools dispatch by name at the first, middle and last declaration positions", async () => {
+  const app = new Zebra();
+  const contract = {
+    nested: {
+      first: zc.get("/first").mcp("z_first", "first"),
+      deeper: {
+        hidden: zc.get("/hidden"),
+        middle: zc.get("/middle").mcp("a_middle", "middle"),
+      },
+    },
+    last: prefix("/last", { get: zc.get("/item").mcp("m_last", "last") }),
+  };
+  const calls: string[] = [];
+  const result = (position: string) => {
+    calls.push(position);
+    return { position };
+  };
+  app.implement(contract, {
+    nested: {
+      first: async () => result("first"),
+      deeper: {
+        hidden: async () => result("hidden"),
+        middle: async () => result("middle"),
+      },
+    },
+    last: { get: async () => result("last") },
+  });
+  const mcp = createMcpServer({ app, contract, schema: zodSchemaAdapter() });
+  try {
+    for (const [name, position] of [
+      ["m_last", "last"],
+      ["z_first", "first"],
+      ["a_middle", "middle"],
+    ] as const) {
+      expect((await mcp.callTool({ name })).structuredContent).toEqual({ position });
+    }
+    expect(calls).toEqual(["last", "first", "middle"]);
+    const names = ["z_first", "a_middle", "m_last"];
+    expect(mcp.tools.map((tool) => tool.name)).toEqual(names);
+    const listed = await mcp.listTools();
+    expect(listed.tools.map((tool) => tool.name)).toEqual(names);
+    listed.tools.reverse();
+    expect((await mcp.listTools()).tools.map((tool) => tool.name)).toEqual(names);
+    expect(mcp.tools.map((tool) => tool.name)).toEqual(names);
+  } finally {
+    await mcp.close();
+  }
+});
+
 test("callTool maps arguments → dispatch → JSON result with structured content", async () => {
   const app = buildApp();
   await app.dispatch(
@@ -435,10 +486,24 @@ test("a handler returning a plain Response surfaces as text content", async () =
 });
 
 test("unknown tools raise MethodNotFound", async () => {
-  const mcp = makeServer(buildApp());
-  expect(mcp.callTool({ name: "nope" })).rejects.toThrowError(
-    new McpError(ErrorCode.MethodNotFound, "Unknown tool: nope"),
-  );
+  let logs = 0;
+  const mcp = makeServer(buildApp(), {
+    logger: () => {
+      logs++;
+      throw new Error("logger failed");
+    },
+  });
+  try {
+    const call = mcp.callTool({ name: "nope" });
+    await expect(call).rejects.toBeInstanceOf(McpError);
+    await expect(call).rejects.toMatchObject({
+      code: ErrorCode.MethodNotFound,
+      message: new McpError(ErrorCode.MethodNotFound, "Unknown tool: nope").message,
+    });
+    expect(logs).toBe(0);
+  } finally {
+    await mcp.close();
+  }
 });
 
 test("headers option maps MCP context into HTTP headers (auth middleware sees it)", async () => {
@@ -616,6 +681,160 @@ test("logger receives request id, tool name and status for each call", async () 
   expect(entries[0]?.requestId.length).toBeGreaterThan(0);
   expect(entries[0]?.durationMs).toBeGreaterThanOrEqual(0);
 });
+
+test.each(["absent", "normal", "throw", "reject"] as const)(
+  "logger %s preserves successful mutations and isError results",
+  async (mode) => {
+    let mutations = 0;
+    let response: Response | undefined;
+    const entries: McpLogEntry[] = [];
+    const consumed: boolean[] = [];
+    const app = new Zebra();
+    const contract = {
+      mutate: zc.post("/mutate").mcp("mutate", "mutate"),
+      fail: zc.get("/fail").mcp("fail", "fail"),
+    };
+    app.implement(contract, {
+      mutate: async () => {
+        response = Response.json({ mutations: ++mutations }, { status: 201 });
+        return response;
+      },
+      fail: async () => {
+        throw new HttpError(409, "conflict", "Already exists");
+      },
+    });
+    const logger: McpServerOptions["logger"] = (entry) => {
+      entries.push(entry);
+      consumed.push(response?.bodyUsed ?? false);
+      if (mode === "throw") throw new Error("logger failed");
+      if (mode === "reject") return Promise.reject(new Error("async logger failed"));
+    };
+    const mcp = createMcpServer({
+      app,
+      contract,
+      schema: zodSchemaAdapter(),
+      ...(mode === "absent" ? {} : { logger }),
+    });
+    try {
+      expect(await mcp.callTool({ name: "mutate" })).toEqual({
+        content: [{ type: "text", text: '{"mutations":1}' }],
+        structuredContent: { mutations: 1 },
+      });
+      expect(mutations).toBe(1);
+      expect(await mcp.callTool({ name: "fail" })).toEqual({
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              type: "https://errors.zebra.dev/conflict",
+              status: 409,
+              title: "Already exists",
+              instance: "/fail",
+            }),
+          },
+        ],
+        isError: true,
+      });
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      expect(entries).toEqual(
+        mode === "absent"
+          ? []
+          : [
+              {
+                requestId: expect.any(String),
+                tool: "mutate",
+                status: 201,
+                durationMs: expect.any(Number),
+              },
+              {
+                requestId: expect.any(String),
+                tool: "fail",
+                status: 409,
+                durationMs: expect.any(Number),
+              },
+            ],
+      );
+      expect(consumed).toEqual(mode === "absent" ? [] : [true, true]);
+      expect(mutations).toBe(1);
+    } finally {
+      await mcp.close();
+    }
+  },
+);
+
+test("a pending logger does not delay a tool result and its later rejection is consumed", async () => {
+  const logging = Promise.withResolvers<void>();
+  const started = Promise.withResolvers<void>();
+  let mutations = 0;
+  let logs = 0;
+  const app = new Zebra();
+  const contract = { mutate: zc.post("/mutate").mcp("mutate", "mutate") };
+  app.implement(contract, { mutate: async () => ({ mutations: ++mutations }) });
+  const mcp = createMcpServer({
+    app,
+    contract,
+    schema: zodSchemaAdapter(),
+    logger: () => {
+      logs++;
+      started.resolve();
+      return logging.promise;
+    },
+  });
+  const call = mcp.callTool({ name: "mutate" });
+  try {
+    const nextTurn = started.promise.then(
+      () => new Promise<void>((resolve) => setImmediate(resolve)),
+    );
+    const result = await Promise.race([call, nextTurn]);
+    expect(result?.structuredContent).toEqual({ mutations: 1 });
+    expect(mutations).toBe(1);
+    expect(logs).toBe(1);
+  } finally {
+    logging.reject(new Error("late logger failure"));
+    await call.catch(() => {});
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    await mcp.close();
+  }
+  expect(mutations).toBe(1);
+  expect(logs).toBe(1);
+});
+
+test.each(["headers", "dispatch", "response"] as const)(
+  "%s failures propagate unchanged without calling the logger",
+  async (stage) => {
+    const failure = new Error(`${stage} failed`);
+    const app = new Zebra();
+    let logs = 0;
+    const dispatch = spyOn(app, "dispatch").mockImplementation(async () => {
+      if (stage === "dispatch") throw failure;
+      return new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.error(failure);
+          },
+        }),
+      );
+    });
+    const mcp = makeServer(app, {
+      headers: () => {
+        if (stage === "headers") throw failure;
+        return {};
+      },
+      logger: () => {
+        logs++;
+        throw new Error("logger failed");
+      },
+    });
+    try {
+      await expect(mcp.callTool({ name: "list_topics" })).rejects.toBe(failure);
+      expect(dispatch).toHaveBeenCalledTimes(stage === "headers" ? 0 : 1);
+      expect(logs).toBe(0);
+    } finally {
+      dispatch.mockRestore();
+      await mcp.close();
+    }
+  },
+);
 
 test("an aborted signal is observable on req.signal inside the pipeline", async () => {
   const app = new Zebra();

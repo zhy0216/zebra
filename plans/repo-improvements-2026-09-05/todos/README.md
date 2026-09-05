@@ -23,7 +23,7 @@ default_agent: codex
 | [07-body-content-length.md](done/07-body-content-length.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：严格验证声明长度与巨大数值（F13）；验收通过，待协调器合并 |
 | [08-session-option-validation.md](done/08-session-option-validation.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：拒绝非有限 TTL 并规范化 cookie 时间（F14、F15）；验收通过，待协调器合并 |
 | [09-contract-paths.md](09-contract-paths.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | client/MCP 只插值完整参数片段（F16） |
-| [10-mcp-call-isolation.md](10-mcp-call-isolation.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 日志失败隔离与工具名称索引（F17、F21） |
+| [10-mcp-call-isolation.md](done/10-mcp-call-isolation.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：隔离日志故障并建立工具名称索引（F17、F21）；验收通过，待协调器合并 |
 | [11-docs-pr-check.md](11-docs-pr-check.md) | P2 | easy | codex（继承默认） | gpt-6-astra / high | PR 校验双语文档与 Pages 路径（F18） |
 | [12-compatible-dependencies.md](12-compatible-dependencies.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 同范围更新 Bun 类型和 Zod 锁定解析（F19） |
 | [13-metrics-sample-window.md](13-metrics-sample-window.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 优化有界采样窗口和精确分位数开销（F20） |
@@ -39,7 +39,7 @@ default_agent: codex
 7. [07-body-content-length.md](done/07-body-content-length.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
 8. [08-session-option-validation.md](done/08-session-option-validation.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
 9. [09-contract-paths.md](09-contract-paths.md) — 依赖：无。
-10. [10-mcp-call-isolation.md](10-mcp-call-isolation.md) — 依赖：无。
+10. [10-mcp-call-isolation.md](done/10-mcp-call-isolation.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
 11. [11-docs-pr-check.md](11-docs-pr-check.md) — 依赖：无。
 12. [12-compatible-dependencies.md](12-compatible-dependencies.md) — 依赖：无。
 13. [13-metrics-sample-window.md](13-metrics-sample-window.md) — 依赖：无。

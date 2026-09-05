@@ -6,6 +6,43 @@ import { Zebra } from "@zebra-web/core";
 import { zodSchemaAdapter } from "@zebra-web/schema-zod";
 import { createMcpServer } from "../src/index.ts";
 
+test.each(["throw", "reject"] as const)(
+  "SDK tools/call preserves a single mutation when the logger can %s",
+  async (mode) => {
+    let mutations = 0;
+    let logs = 0;
+    const app = new Zebra();
+    const contract = { mutate: zc.post("/mutate").mcp("mutate", "mutate") };
+    app.implement(contract, { mutate: async () => ({ mutations: ++mutations }) });
+    const mcp = createMcpServer({
+      app,
+      contract,
+      schema: zodSchemaAdapter(),
+      logger: () => {
+        logs++;
+        if (mode === "throw") throw new Error("logger failed");
+        return Promise.reject(new Error("async logger failed"));
+      },
+    });
+    const client = new Client({ name: "test-client", version: "1.0.0" });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    try {
+      await mcp.connect(serverTransport);
+      await client.connect(clientTransport);
+      expect(await client.callTool({ name: "mutate" })).toEqual({
+        content: [{ type: "text", text: '{"mutations":1}' }],
+        structuredContent: { mutations: 1 },
+      });
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      expect(mutations).toBe(1);
+      expect(logs).toBe(1);
+    } finally {
+      await client.close();
+      await mcp.close();
+    }
+  },
+);
+
 test("SDK tools/call cancellation reaches a running Zebra handler", async () => {
   const entered = Promise.withResolvers<AbortSignal>();
   const release = Promise.withResolvers<void>();

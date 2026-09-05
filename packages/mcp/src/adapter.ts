@@ -89,6 +89,7 @@ export interface ZebraMcpServer {
 export function createMcpServer(opts: McpServerOptions): ZebraMcpServer {
   const baseUrl = opts.baseUrl ?? "http://mcp.local";
   const manifests = collectTools(opts.contract, opts.schema);
+  const manifestsByName = new Map(manifests.map((manifest) => [manifest.name, manifest]));
   const tools = manifests.map(toTool);
 
   const sdk = new Server(
@@ -110,7 +111,7 @@ export function createMcpServer(opts: McpServerOptions): ZebraMcpServer {
       return { tools: [...tools] };
     },
     async callTool(input): Promise<CallToolResult> {
-      const manifest = manifests.find((m) => m.name === input.name);
+      const manifest = manifestsByName.get(input.name);
       if (manifest === undefined) {
         throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${input.name}`);
       }
@@ -122,12 +123,18 @@ export function createMcpServer(opts: McpServerOptions): ZebraMcpServer {
       });
       const res = await opts.app.dispatch(request);
       const result = await responseToResult(res);
-      opts.logger?.({
-        requestId,
-        tool: input.name,
-        status: res.status,
-        durationMs: Math.round((performance.now() - started) * 100) / 100,
-      });
+      try {
+        const logged: unknown = opts.logger?.({
+          requestId,
+          tool: input.name,
+          status: res.status,
+          durationMs: Math.round((performance.now() - started) * 100) / 100,
+        });
+        // A void-typed callback can still return a promise at runtime.
+        if (logged !== undefined) Promise.resolve(logged).catch(() => {});
+      } catch {
+        // Diagnostics must never replace the completed tool result.
+      }
       return result;
     },
     connect(transport) {
