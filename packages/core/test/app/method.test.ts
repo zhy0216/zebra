@@ -5,6 +5,31 @@ import { z } from "zod";
 import { Zebra } from "../../src/app/app.ts";
 import { Container } from "../../src/di/container.ts";
 import { HttpError } from "../../src/http/errors.ts";
+test("OPTIONS and 405 include methods from static, param and wildcard branches", async () => {
+  const app = makeApp();
+  app.get("/users/me", () => "static");
+  app.post("/users/:id", (req) => req.params.id);
+  app.patch("/users/*rest", () => "wildcard");
+  try {
+    const options = await app.dispatch(new Request("http://x/users/me", { method: "OPTIONS" }));
+    const rejected = await app.dispatch(new Request("http://x/users/me", { method: "DELETE" }));
+    expect(options.status).toBe(204);
+    expect(rejected.status).toBe(405);
+    for (const res of [options, rejected]) {
+      expect(res.headers.get("allow")?.split(", ").sort()).toEqual([
+        "GET",
+        "HEAD",
+        "PATCH",
+        "POST",
+      ]);
+    }
+    const post = await app.dispatch(new Request("http://x/users/me", { method: "POST" }));
+    expect(post.status).toBe(200);
+    expect(await post.json()).toBe("me");
+  } finally {
+    await app.stop();
+  }
+});
 
 function makeApp(): Zebra {
   return new Zebra({ container: new Container() });

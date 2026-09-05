@@ -63,29 +63,23 @@ export class Router<T> {
 
   /** Methods that would match this path if the method differed, or null when the path itself is unknown. */
   allowedMethods(path: string): string[] | null {
-    return this.collectMethods(this.root, splitPath(path), 0);
+    const methods = new Set<string>();
+    this.collectMethods(this.root, splitPath(path), 0, methods);
+    return methods.size > 0 ? [...methods] : null;
   }
 
-  private collectMethods(node: Node<T>, parts: string[], idx: number): string[] | null {
+  private collectMethods(node: Node<T>, parts: string[], idx: number, methods: Set<string>): void {
     if (idx === parts.length) {
-      if (node.handlers.size > 0) return [...node.handlers.keys()];
-      const wildcard = node.wildcard;
-      if (wildcard && wildcard.handlers.size > 0) return [...wildcard.handlers.keys()];
-      return null;
-    }
-    const part = parts[idx]!;
-    const staticChild = node.static.get(part);
-    if (staticChild) {
-      const r = this.collectMethods(staticChild, parts, idx + 1);
-      if (r !== null) return r;
-    }
-    if (node.param) {
-      const r = this.collectMethods(node.param, parts, idx + 1);
-      if (r !== null) return r;
+      for (const method of node.handlers.keys()) methods.add(method);
+    } else {
+      const staticChild = node.static.get(parts[idx]!);
+      if (staticChild) this.collectMethods(staticChild, parts, idx + 1, methods);
+      if (node.param) this.collectMethods(node.param, parts, idx + 1, methods);
     }
     const wildcard = node.wildcard;
-    if (wildcard && wildcard.handlers.size > 0) return [...wildcard.handlers.keys()];
-    return null;
+    if (wildcard) {
+      for (const method of wildcard.handlers.keys()) methods.add(method);
+    }
   }
 
   private walk(

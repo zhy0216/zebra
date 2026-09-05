@@ -1,5 +1,27 @@
 import { expect, test } from "bun:test";
 import { Router } from "../../src/router/radix.ts";
+test("allowed methods union every matching branch without changing route precedence", () => {
+  const router = new Router<string>();
+  router.add("GET", "/users/me", "static");
+  router.add("POST", "/users/:id", "param");
+  router.add("PATCH", "/users/*rest", "wildcard");
+  router.add("GET", "/users/*rest", "fallback");
+  expect(router.allowedMethods("/users/me")).toEqual(["GET", "POST", "PATCH"]);
+  expect(router.find("GET", "/users/me")?.handler).toBe("static");
+  expect(router.find("POST", "/users/me")?.params).toEqual({ id: "me" });
+  expect(router.allowedMethods("/users/other")).toEqual(["POST", "PATCH", "GET"]);
+  expect(router.allowedMethods("/users/a/b")).toEqual(["PATCH", "GET"]);
+  expect(router.allowedMethods("/missing")).toBeNull();
+});
+
+test("allowed methods include terminal routes and empty wildcards", () => {
+  const router = new Router<string>();
+  router.add("GET", "/files", "exact");
+  router.add("PUT", "/files/*rest", "empty-wildcard");
+  expect(router.allowedMethods("/files")).toEqual(["GET", "PUT"]);
+  expect(router.allowedMethods("/files/")).toEqual(["GET", "PUT"]);
+  expect(router.find("PUT", "/files")?.params).toEqual({ rest: "" });
+});
 
 test("static route match", () => {
   const r = new Router<string>();
