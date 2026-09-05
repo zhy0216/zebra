@@ -88,6 +88,8 @@ export class AppInternals {
 
   frozen = false;
   server: Server<WsData> | null = null;
+  /** Covers boot and ready, including the period before a server exists. */
+  starting = false;
   booted = false;
   stopped = false;
   stopping: Promise<void> | null = null;

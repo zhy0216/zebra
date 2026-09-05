@@ -159,8 +159,23 @@ export class Zebra {
 
   async listen(opts: ListenOptions): Promise<{ port: number }> {
     if (this.internals.stopped) throw new Error("Zebra has been stopped and cannot listen again");
-    if (this.internals.server) throw new Error("Zebra is already listening");
+    if (this.internals.server || this.internals.starting) {
+      throw new Error("Zebra is already listening");
+    }
+    // Acquire the guard before prepare() can invoke any user boot hooks.
+    this.internals.starting = true;
+    try {
+      return await this.performListen(opts);
+    } finally {
+      this.internals.starting = false;
+    }
+  }
+
+  private async performListen(opts: ListenOptions): Promise<{ port: number }> {
     await this.prepare();
+    // stop() can run during boot, including from inside a boot hook. Do not
+    // wait for startup in stop(): that would deadlock a hook awaiting stop().
+    if (this.internals.stopped) throw new Error("Zebra has been stopped and cannot listen again");
     const serveOpts: {
       port: number;
       hostname?: string;
@@ -191,9 +206,16 @@ export class Zebra {
     try {
       await this.internals.events.emit("ready");
     } catch (error) {
-      await this.stop();
+      try {
+        await this.stop();
+      } catch (cleanupError) {
+        // The caller must receive the ready hook's original failure. The
+        // separate shutdown failure remains visible in diagnostics and stop().
+        console.error("[zebra] shutdown after ready failure failed:", cleanupError);
+      }
       throw error;
     }
+    if (this.internals.stopped) throw new Error("Zebra has been stopped and cannot listen again");
     return { port: server.port as number };
   }
 
