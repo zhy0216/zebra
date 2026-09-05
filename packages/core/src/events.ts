@@ -17,8 +17,8 @@ interface ListenerEntry {
   /** The original handler passed by the caller — identity used by `off` and dedup. */
   orig: (...args: any[]) => Awaitable<void>;
   once: boolean;
-  /** Tombstone: removed during an in-flight dispatch; see `emit` snapshot. */
-  removed: boolean;
+  /** Shared by in-flight snapshots so a once entry can only be invoked once. */
+  consumed: boolean;
 }
 
 /**
@@ -47,7 +47,6 @@ export class EventBus<Events> {
     for (let i = 0; i < bucket.length; i++) {
       const entry = bucket[i]!;
       if (entry.orig === handler) {
-        entry.removed = true;
         bucket.splice(i, 1);
         if (bucket.length === 0) this.entries.delete(event);
         break;
@@ -65,10 +64,17 @@ export class EventBus<Events> {
     if (!bucket || bucket.length === 0) return;
     const snapshot = bucket.slice();
     for (const entry of snapshot) {
-      if (entry.removed) continue;
-      // `once` listeners are unsubscribed before running so a throwing listener
-      // never fires again.
-      if (entry.once) entry.removed = true;
+      if (entry.once) {
+        if (entry.consumed) continue;
+        entry.consumed = true;
+        // Remove by entry identity: its handler may already have a new registration.
+        const currentBucket = this.entries.get(event);
+        const index = currentBucket?.indexOf(entry) ?? -1;
+        if (currentBucket && index !== -1) {
+          currentBucket.splice(index, 1);
+          if (currentBucket.length === 0) this.entries.delete(event);
+        }
+      }
       await entry.invoke(...args);
     }
   }
@@ -114,7 +120,7 @@ export class EventBus<Events> {
       invoke: handler as (...args: any[]) => Awaitable<void>,
       orig: handler as (...args: any[]) => Awaitable<void>,
       once,
-      removed: false,
+      consumed: false,
     });
   }
 }
