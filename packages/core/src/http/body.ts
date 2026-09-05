@@ -42,11 +42,13 @@ export function effectiveLimit(opts: BodyOptions, contentType: string): number {
 function assertDeclaredSize(req: Request, limit: number): void {
   const value = req.headers.get("content-length");
   if (value === null) return;
-  const length = Number(value);
-  if (!Number.isFinite(length) || length < 0) {
+  if (value === "" || /[^0-9]/.test(value)) {
     throw new HttpError(400, "invalid_content_length", "Invalid Content-Length header");
   }
-  if (length > limit) {
+  const length = Number(value);
+  // Reject obvious overflow first; compare large integers exactly so rounding
+  // cannot hide a declaration just above the limit.
+  if (length > limit || (!Number.isSafeInteger(length) && BigInt(value) > limit)) {
     throw new HttpError(413, "payload_too_large", "Payload too large", { limit });
   }
 }

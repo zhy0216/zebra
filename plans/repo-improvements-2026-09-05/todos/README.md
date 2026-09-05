@@ -20,7 +20,7 @@ default_agent: codex
 | [04-session-record-keys.md](done/04-session-record-keys.md) | P1 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：session 特殊键安全读写与落库（F07）；验收通过，待协调器合并 |
 | [05-schema-await.md](done/05-schema-await.md) | P1 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：跨 realm Promise 的 schema 结果正确验证（F08）；验收通过，待协调器合并 |
 | [06-app-boundaries.md](done/06-app-boundaries.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：快照隔离、循环处理与应用配置校验（F09–F12）；验收通过，待协调器合并 |
-| [07-body-content-length.md](07-body-content-length.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 严格验证声明长度与巨大数值（F13） |
+| [07-body-content-length.md](done/07-body-content-length.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：严格验证声明长度与巨大数值（F13）；验收通过，待协调器合并 |
 | [08-session-option-validation.md](done/08-session-option-validation.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：拒绝非有限 TTL 并规范化 cookie 时间（F14、F15）；验收通过，待协调器合并 |
 | [09-contract-paths.md](09-contract-paths.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | client/MCP 只插值完整参数片段（F16） |
 | [10-mcp-call-isolation.md](10-mcp-call-isolation.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 日志失败隔离与工具名称索引（F17、F21） |
@@ -36,7 +36,7 @@ default_agent: codex
 4. [04-session-record-keys.md](done/04-session-record-keys.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
 5. [05-schema-await.md](done/05-schema-await.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
 6. [06-app-boundaries.md](done/06-app-boundaries.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
-7. [07-body-content-length.md](07-body-content-length.md) — 依赖：无。
+7. [07-body-content-length.md](done/07-body-content-length.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
 8. [08-session-option-validation.md](done/08-session-option-validation.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
 9. [09-contract-paths.md](09-contract-paths.md) — 依赖：无。
 10. [10-mcp-call-isolation.md](10-mcp-call-isolation.md) — 依赖：无。
