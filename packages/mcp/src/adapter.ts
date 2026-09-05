@@ -139,7 +139,9 @@ export function createMcpServer(opts: McpServerOptions): ZebraMcpServer {
   };
 
   sdk.setRequestHandler(ListToolsRequestSchema, async () => server.listTools());
-  sdk.setRequestHandler(CallToolRequestSchema, async (request) => server.callTool(request.params));
+  sdk.setRequestHandler(CallToolRequestSchema, async (request, extra) =>
+    server.callTool({ ...request.params, signal: extra.signal }),
+  );
 
   return server;
 }

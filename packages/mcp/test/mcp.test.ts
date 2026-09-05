@@ -5,7 +5,7 @@ import {
   McpError,
   ToolSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { zc } from "@zebra-web/contract";
+import { type StandardSchemaV1, prefix, zc } from "@zebra-web/contract";
 import { HttpError, Zebra } from "@zebra-web/core";
 import { zodSchemaAdapter } from "@zebra-web/schema-zod";
 import { z } from "zod";
@@ -178,6 +178,165 @@ test("inputSchema is generated from the contract schema, namespaced by part", as
   expect(listTopics.inputSchema.required).toBeUndefined(); // all-optional query
 });
 
+test("body namespaces reflect scalar, array, union and intersection omission behavior", async () => {
+  const cases = [
+    { schema: z.string(), body: "value", required: true },
+    { schema: z.array(z.number()), body: [1, 2], required: true },
+    { schema: z.object({ value: z.string() }), body: { value: "ok" }, required: true },
+    { schema: z.object({ value: z.string().optional() }), body: {}, required: false },
+    { schema: z.union([z.string(), z.array(z.number())]), body: "ok", required: true },
+    {
+      schema: z.union([z.string(), z.object({ value: z.string().optional() })]),
+      body: {},
+      required: false,
+    },
+    {
+      schema: z.intersection(
+        z.object({ value: z.string() }),
+        z.object({ flag: z.boolean().optional() }),
+      ),
+      body: { value: "ok" },
+      required: true,
+    },
+    {
+      schema: z.intersection(
+        z.object({ value: z.string().optional() }),
+        z.object({ flag: z.boolean().optional() }),
+      ),
+      body: {},
+      required: false,
+    },
+  ];
+  for (const { schema, body, required } of cases) {
+    const app = new Zebra();
+    const contract = { echo: zc.post("/echo").body(schema).mcp("echo", "echo") };
+    app.implement(contract, { echo: async (req) => ({ value: await req.body() }) });
+    const mcp = createMcpServer({ app, contract, schema: zodSchemaAdapter() });
+    try {
+      const { tools } = await mcp.listTools();
+      expect(tools[0]!.inputSchema.required?.includes("body") ?? false).toBe(required);
+      const omitted = await mcp.callTool({ name: "echo" });
+      expect(omitted.isError ?? false).toBe(required);
+      if (required) {
+        expect(JSON.parse((omitted.content[0] as { text: string }).text)).toMatchObject({
+          status: 422,
+        });
+      } else {
+        expect(omitted.structuredContent).toEqual({ value: {} });
+      }
+      const supplied = await mcp.callTool({ name: "echo", arguments: { body } });
+      expect(supplied.structuredContent).toEqual({ value: body });
+    } finally {
+      await mcp.close();
+    }
+  }
+});
+
+test("query namespaces preserve optional objects across anyOf and allOf", async () => {
+  const cases = [
+    { schema: z.object({ value: z.string().optional() }), required: false },
+    {
+      schema: z.union([z.object({ value: z.string() }), z.object({ flag: z.string().optional() })]),
+      required: false,
+    },
+    {
+      schema: z.union([z.object({ value: z.string() }), z.object({ flag: z.string() })]),
+      required: true,
+    },
+    {
+      schema: z.intersection(
+        z.object({ value: z.string() }),
+        z.object({ flag: z.string().optional() }),
+      ),
+      required: true,
+    },
+    {
+      schema: z.intersection(
+        z.object({ value: z.string().optional() }),
+        z.object({ flag: z.string().optional() }),
+      ),
+      required: false,
+    },
+  ];
+  for (const { schema, required } of cases) {
+    const app = new Zebra();
+    const contract = { echo: zc.get("/echo").query(schema).mcp("echo", "echo") };
+    app.implement(contract, { echo: async (req) => ({ value: req.query }) });
+    const mcp = createMcpServer({ app, contract, schema: zodSchemaAdapter() });
+    try {
+      const { tools } = await mcp.listTools();
+      expect(tools[0]!.inputSchema.required?.includes("query") ?? false).toBe(required);
+      const omitted = await mcp.callTool({ name: "echo" });
+      expect(omitted.isError ?? false).toBe(required);
+      if (!required) expect(omitted.structuredContent).toEqual({ value: {} });
+    } finally {
+      await mcp.close();
+    }
+  }
+});
+
+test("tool discovery infers required input without executing Standard Schema validation", async () => {
+  let validations = 0;
+  const input: StandardSchemaV1<string> = {
+    "~standard": {
+      version: 1,
+      vendor: "test",
+      validate: async (value) => {
+        validations++;
+        return typeof value === "string" ? { value } : { issues: [{ message: "Expected string" }] };
+      },
+    },
+  };
+  const app = new Zebra();
+  const contract = { echo: zc.post("/echo").body(input).mcp("echo", "echo") };
+  app.implement(contract, { echo: async (req) => ({ value: await req.body() }) });
+  const mcp = createMcpServer({
+    app,
+    contract,
+    schema: { toJsonSchema: () => ({ type: "string" }) },
+  });
+  try {
+    const { tools } = await mcp.listTools();
+    expect(validations).toBe(0);
+    expect(tools[0]!.inputSchema.required).toEqual(["body"]);
+    expect(
+      (await mcp.callTool({ name: "echo", arguments: { body: "ok" } })).structuredContent,
+    ).toEqual({ value: "ok" });
+    expect(validations).toBe(1);
+  } finally {
+    await mcp.close();
+  }
+});
+
+test("duplicate tool names fail at creation across nested and prefixed routers", () => {
+  const duplicate = (path: string) => zc.get(path).mcp("duplicate", "duplicate");
+  for (const contract of [
+    { a: duplicate("/a"), b: duplicate("/b") },
+    { a: { nested: duplicate("/a") }, b: { nested: duplicate("/b") } },
+    {
+      a: prefix("/a", { nested: duplicate("/item") }),
+      b: prefix("/b", { nested: duplicate("/item") }),
+    },
+  ]) {
+    expect(() =>
+      createMcpServer({ app: new Zebra(), contract, schema: zodSchemaAdapter() }),
+    ).toThrow(/duplicate.*GET \/a.*GET \/b/);
+  }
+});
+
+test("distinct tool names sharing a route remain independently discoverable", async () => {
+  const contract = {
+    a: zc.get("/same").mcp("first", "first"),
+    nested: { b: zc.get("/same").mcp("second", "second") },
+  };
+  const mcp = createMcpServer({ app: new Zebra(), contract, schema: zodSchemaAdapter() });
+  try {
+    expect((await mcp.listTools()).tools.map((tool) => tool.name)).toEqual(["first", "second"]);
+  } finally {
+    await mcp.close();
+  }
+});
+
 test("callTool maps arguments → dispatch → JSON result with structured content", async () => {
   const app = buildApp();
   await app.dispatch(
@@ -317,6 +476,101 @@ test("headers option maps MCP context into HTTP headers (auth middleware sees it
   expect(denied.isError).toBe(true);
   const problem = JSON.parse((denied.content[0] as { text: string }).text);
   expect(problem.status).toBe(401);
+});
+
+test("header defaults and overrides are case-insensitive through authentication and body parsing", async () => {
+  const app = new Zebra();
+  app.use(async (req, next) => {
+    if (req.headers.get("authorization") !== "Bearer new") {
+      throw new HttpError(401, "unauthorized", "wrong token");
+    }
+    return next();
+  });
+  const contract = {
+    echo: zc
+      .post("/echo")
+      .body(z.object({ value: z.string() }))
+      .mcp("echo", "echo"),
+  };
+  app.implement(contract, {
+    echo: async (req) => ({
+      body: await req.body(),
+      authorization: req.headers.get("authorization"),
+      contentType: req.headers.get("content-type"),
+      extra: req.headers.get("x-default"),
+    }),
+  });
+  const mcp = createMcpServer({
+    app,
+    contract,
+    schema: zodSchemaAdapter(),
+    headers: {
+      Authorization: "Bearer old",
+      "Content-Type": "application/json; charset=utf-8",
+      "X-Default": "yes",
+    },
+  });
+  try {
+    for (const headers of [
+      { authorization: "Bearer new" },
+      { AUTHORIZATION: "Bearer new", "CONTENT-TYPE": "application/json; charset=utf-8" },
+    ]) {
+      const result = await mcp.callTool({
+        name: "echo",
+        arguments: { headers, body: { value: "ok" } },
+      });
+      expect(result.structuredContent).toEqual({
+        body: { value: "ok" },
+        authorization: "Bearer new",
+        contentType: "application/json; charset=utf-8",
+        extra: "yes",
+      });
+    }
+  } finally {
+    await mcp.close();
+  }
+});
+
+test("path insertion treats parameter values as data and preserves wildcard segments", async () => {
+  const app = new Zebra();
+  const contract = {
+    echo: zc
+      .post("/echo/:id/*rest")
+      .params(z.object({ id: z.string(), rest: z.string() }))
+      .query(z.object({ q: z.string() }))
+      .body(z.object({ value: z.string() }))
+      .mcp("echo", "echo"),
+  };
+  app.implement(contract, {
+    echo: async (req) => ({
+      params: req.params,
+      query: req.query,
+      body: await req.body(),
+      pathname: req.url.pathname,
+    }),
+  });
+  const mcp = createMcpServer({ app, contract, schema: zodSchemaAdapter() });
+  try {
+    const result = await mcp.callTool({
+      name: "echo",
+      arguments: {
+        params: { id: "*foo", rest: "space here/a?b/#value" },
+        query: { q: "a & b" },
+        body: { value: "ok" },
+      },
+    });
+    expect(result.structuredContent).toEqual({
+      params: { id: "*foo", rest: "space%20here/a%3Fb/%23value" },
+      query: { q: "a & b" },
+      body: { value: "ok" },
+      pathname: "/echo/*foo/space%20here/a%3Fb/%23value",
+    });
+    await expect(
+      mcp.callTool({ name: "echo", arguments: { params: { rest: "x" } } }),
+    ).rejects.toThrow('Missing required path parameter ":id"');
+  } finally {
+    await mcp.close();
+  }
 });
 
 test("output schema still validates after the handler returns", async () => {

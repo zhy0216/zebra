@@ -10,15 +10,12 @@ export interface McpArguments {
 }
 
 function substitutePath(path: string, params: Record<string, unknown>): string {
-  const withParams = path.replace(/:([A-Za-z0-9_]+)/g, (_match, name: string) => {
+  return path.replace(/([:*])([A-Za-z0-9_]+)/g, (_match, kind: string, name: string) => {
     const value = params[name];
-    if (value === undefined) throw new Error(`Missing required path parameter ":${name}"`);
-    return encodeURIComponent(String(value));
-  });
-  return withParams.replace(/\*([A-Za-z0-9_]+)/g, (_match, name: string) => {
-    const value = params[name];
-    if (value === undefined) throw new Error(`Missing required path parameter "*${name}"`);
-    return String(value).split("/").map(encodeURIComponent).join("/");
+    if (value === undefined) throw new Error(`Missing required path parameter "${kind}${name}"`);
+    return kind === "*"
+      ? String(value).split("/").map(encodeURIComponent).join("/")
+      : encodeURIComponent(String(value));
   });
 }
 
@@ -44,17 +41,18 @@ export function argumentsToRequest(
     url.searchParams.append(key, String(value));
   }
 
-  const mergedHeaders: Record<string, string> = { ...extraHeaders, ...headers };
-  const requestInit: RequestInit = { method: def.method };
+  const mergedHeaders = new Headers();
+  for (const source of [extraHeaders, headers]) {
+    for (const [name, value] of Object.entries(source)) mergedHeaders.set(name, value);
+  }
+  const requestInit: RequestInit = { method: def.method, headers: mergedHeaders };
   if (init?.signal !== undefined) requestInit.signal = init.signal;
   if (body !== undefined) {
-    if (mergedHeaders["content-type"] === undefined) {
-      mergedHeaders["content-type"] = "application/json";
+    if (!mergedHeaders.has("content-type")) {
+      mergedHeaders.set("content-type", "application/json");
     }
     requestInit.body = JSON.stringify(body);
   }
-  if (Object.keys(mergedHeaders).length > 0) requestInit.headers = mergedHeaders;
-
   return new Request(url.toString(), requestInit);
 }
 

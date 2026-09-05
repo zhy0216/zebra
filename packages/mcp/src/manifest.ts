@@ -28,18 +28,30 @@ export interface McpToolManifest {
  */
 export function collectTools(router: ContractRouter, schema: SchemaAdapter): McpToolManifest[] {
   const out: McpToolManifest[] = [];
-  walk(router, out, schema);
+  walk(router, out, schema, new Map());
   return out;
 }
 
-function walk(node: ContractRouter, out: McpToolManifest[], schema: SchemaAdapter): void {
+function walk(
+  node: ContractRouter,
+  out: McpToolManifest[],
+  schema: SchemaAdapter,
+  names: Map<string, ContractProcedureDef>,
+): void {
   for (const value of Object.values(node)) {
     if (isProcedure(value)) {
       const mcp = value.def.mcp;
       if (mcp === undefined) continue;
+      const previous = names.get(mcp.name);
+      if (previous !== undefined) {
+        throw new Error(
+          `mcp: duplicate tool name "${mcp.name}" for ${previous.method} ${previous.path} and ${value.def.method} ${value.def.path}`,
+        );
+      }
+      names.set(mcp.name, value.def);
       out.push(buildManifest(value.def, mcp, schema));
     } else if (typeof value === "object" && value !== null) {
-      walk(value as ContractRouter, out, schema);
+      walk(value as ContractRouter, out, schema, names);
     }
   }
 }
@@ -77,7 +89,8 @@ function buildManifest(
  * collisions between path/query/body. A part is present as a property only when
  * the contract declares it; `params` is required when declared (path parameters
  * are essential for URL construction), while `query`/`body` follow their own
- * schema's required fields so all-optional parts can be omitted.
+ * schema's shape so all-optional object parts can be omitted. Scalar/array
+ * parts still require a value, even without an object `required` keyword.
  */
 export function buildInputSchema(
   def: ContractProcedureDef,
@@ -93,12 +106,12 @@ export function buildInputSchema(
   if (def.query !== undefined) {
     const q = schema.toJsonSchema(def.query);
     properties.query = q;
-    if (hasRequiredRoot(q)) required.push("query");
+    if (requiresNamespace(q)) required.push("query");
   }
   if (def.body !== undefined) {
     const b = schema.toJsonSchema(def.body);
     properties.body = b;
-    if (hasRequiredRoot(b)) required.push("body");
+    if (requiresNamespace(b)) required.push("body");
   }
 
   const out: Record<string, unknown> = { type: "object", properties };
@@ -106,8 +119,22 @@ export function buildInputSchema(
   return out;
 }
 
-function hasRequiredRoot(schema: Record<string, unknown>): boolean {
-  return Array.isArray(schema.required) && schema.required.length > 0;
+/**
+ * Infer omission for the supported JSON Schema shapes without invoking user
+ * validation (which may be async or have side effects). This is deliberately
+ * not a full JSON Schema evaluator: custom refs/keywords remain adapter-owned.
+ */
+function requiresNamespace(schema: unknown): boolean {
+  if (schema === false) return true;
+  if (typeof schema !== "object" || schema === null) return false;
+  const shape = schema as Record<string, unknown>;
+  if (typeof shape.type === "string" && shape.type !== "object") return true;
+  if (Array.isArray(shape.type) && !shape.type.includes("object")) return true;
+  if (Array.isArray(shape.required) && shape.required.length > 0) return true;
+  if (typeof shape.minProperties === "number" && shape.minProperties > 0) return true;
+  if (Array.isArray(shape.allOf) && shape.allOf.some(requiresNamespace)) return true;
+  if (Array.isArray(shape.anyOf) && shape.anyOf.every(requiresNamespace)) return true;
+  return false;
 }
 
 /** Converts a collected manifest into the MCP `Tool` wire shape. */
