@@ -18,7 +18,7 @@ default_agent: codex
 | [02-session-scope-identity.md](02-session-scope-identity.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 旧请求不再释放同名新 session record（F03） |
 | [03-http-completion.md](03-http-completion.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 完成 hook 受错误/超时控制，HEAD 无正文且取消流（F04–F06） |
 | [04-session-record-keys.md](04-session-record-keys.md) | P1 | medium | codex（继承默认） | gpt-6-astra / xhigh | session 特殊键安全读写与落库（F07） |
-| [05-schema-await.md](05-schema-await.md) | P1 | medium | codex（继承默认） | gpt-6-astra / xhigh | 跨 realm Promise 的 schema 结果正确验证（F08） |
+| [05-schema-await.md](done/05-schema-await.md) | P1 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：跨 realm Promise 的 schema 结果正确验证（F08）；验收通过，待协调器合并 |
 | [06-app-boundaries.md](06-app-boundaries.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 快照隔离、循环处理与应用配置校验（F09–F12） |
 | [07-body-content-length.md](07-body-content-length.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 严格验证声明长度与巨大数值（F13） |
 | [08-session-option-validation.md](08-session-option-validation.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 拒绝非有限 TTL 和错误 cookie 时间（F14、F15） |
@@ -34,7 +34,7 @@ default_agent: codex
 2. [02-session-scope-identity.md](02-session-scope-identity.md) — 依赖：无。
 3. [03-http-completion.md](03-http-completion.md) — 依赖 01-event-listeners.md；依赖 02-session-scope-identity.md。
 4. [04-session-record-keys.md](04-session-record-keys.md) — 依赖：无。
-5. [05-schema-await.md](05-schema-await.md) — 依赖：无。
+5. [05-schema-await.md](done/05-schema-await.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
 6. [06-app-boundaries.md](06-app-boundaries.md) — 依赖：无。
 7. [07-body-content-length.md](07-body-content-length.md) — 依赖：无。
 8. [08-session-option-validation.md](08-session-option-validation.md) — 依赖：无。

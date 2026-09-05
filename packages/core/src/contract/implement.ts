@@ -41,8 +41,7 @@ export async function runStandardValidate(
   | { success: true; value: unknown }
   | { success: false; issues: ReadonlyArray<StandardSchemaV1.Issue> }
 > {
-  let result = schema["~standard"].validate(value);
-  if (result instanceof Promise) result = await result;
+  const result = await schema["~standard"].validate(value);
   if (result.issues !== undefined) return { success: false, issues: result.issues };
   return { success: true, value: result.value };
 }
