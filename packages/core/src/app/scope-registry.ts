@@ -22,6 +22,8 @@ export interface RequestScopes {
  */
 export class SessionScopeRegistry {
   private readonly sessions = new Map<string, SessionScopeRecord>();
+  private readonly pendingDisposals = new Set<Promise<void>>();
+  private disposingAll: Promise<void> | null = null;
 
   constructor(
     private readonly container: Container,
@@ -75,22 +77,23 @@ export class SessionScopeRegistry {
 
   /** Disposes the request scope and releases (or expires) the session. */
   async disposeScopes(scopes: RequestScopes): Promise<void> {
-    let cleanupError: unknown;
+    const errors: unknown[] = [];
     try {
       await scopes.request.dispose();
     } catch (error) {
-      cleanupError = error;
+      errors.push(error);
     }
     if (scopes.ephemeralSession) {
       try {
         await scopes.ephemeralSession.dispose();
       } catch (error) {
-        cleanupError ??= error;
+        errors.push(error);
       }
     } else if (scopes.sessionId !== undefined) {
       this.releaseSession(scopes.sessionId);
     }
-    if (cleanupError !== undefined) throw cleanupError;
+    if (errors.length === 1) throw errors[0];
+    if (errors.length > 1) throw new AggregateError(errors, "Failed to dispose request scopes");
   }
 
   /**
@@ -102,12 +105,54 @@ export class SessionScopeRegistry {
     if (!record) return;
     this.sessions.delete(id);
     if (record.timer) clearTimeout(record.timer);
-    await record.container.dispose();
+    await this.disposeRecord(record);
   }
 
   /** Reclaims every session container (shutdown). */
   async disposeAll(): Promise<void> {
-    for (const id of [...this.sessions.keys()]) await this.disposeSession(id);
+    if (this.disposingAll) return this.disposingAll;
+    this.disposingAll = Promise.resolve().then(() => this.performDisposeAll());
+    try {
+      await this.disposingAll;
+    } finally {
+      this.disposingAll = null;
+    }
+  }
+
+  private async performDisposeAll(): Promise<void> {
+    const records = [...this.sessions.values()];
+    this.sessions.clear();
+    // Cancel every timer before awaiting any resource: another session must
+    // not expire in the middle of this ordered shutdown.
+    for (const record of records) {
+      if (record.timer) clearTimeout(record.timer);
+    }
+    // Explicit disposal or expiry may already have removed a session from
+    // the map. Its cleanup still has to finish before shutdown can complete.
+    const pending = Promise.allSettled([...this.pendingDisposals]);
+    const errors: unknown[] = [];
+    for (const record of records) {
+      try {
+        await this.disposeRecord(record);
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+    for (const result of await pending) {
+      if (result.status === "rejected") errors.push(result.reason);
+    }
+    if (errors.length === 1) throw errors[0];
+    if (errors.length > 1) throw new AggregateError(errors, "Failed to dispose sessions");
+  }
+
+  private async disposeRecord(record: SessionScopeRecord): Promise<void> {
+    const disposal = Promise.resolve().then(() => record.container.dispose());
+    this.pendingDisposals.add(disposal);
+    try {
+      await disposal;
+    } finally {
+      this.pendingDisposals.delete(disposal);
+    }
   }
 
   private releaseSession(id: string): void {
@@ -127,7 +172,9 @@ export class SessionScopeRegistry {
 
   private scheduleSessionExpiry(id: string): ReturnType<typeof setTimeout> {
     const timer = setTimeout(() => {
-      void this.expireSession(id);
+      void this.expireSession(id).catch((error) => {
+        console.error("[zebra] session cleanup failed:", error);
+      });
     }, this.sessionTtl);
     timer.unref?.();
     return timer;

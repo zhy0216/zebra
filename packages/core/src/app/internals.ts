@@ -235,7 +235,9 @@ export class AppInternals {
   installSignalHandlers(): void {
     if (this.signalHandler) return;
     this.signalHandler = () => {
-      void this.stop();
+      void this.stop().catch((error) => {
+        console.error("[zebra] shutdown failed:", error);
+      });
     };
     process.on("SIGTERM", this.signalHandler);
     process.on("SIGINT", this.signalHandler);
@@ -254,24 +256,53 @@ export class AppInternals {
     const server = this.server;
     this.server = null;
 
-    const gracefulStop = Promise.all([
-      server?.stop(false) ?? Promise.resolve(),
-      this.waitForDrain(),
-    ]).then(() => undefined);
+    const errors: unknown[] = [];
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const timedOut = await Promise.race([
-      gracefulStop.then(() => false),
-      new Promise<boolean>((resolve) => {
-        timer = setTimeout(() => resolve(true), this.gracePeriod);
-        timer.unref?.();
-      }),
-    ]);
-    if (timer) clearTimeout(timer);
-    if (timedOut && server) await server.stop(true);
+    let forceStop = false;
+    try {
+      const gracefulStop = Promise.all([
+        Promise.resolve().then(() => server?.stop(false)),
+        this.waitForDrain(),
+      ]);
+      forceStop = await Promise.race([
+        gracefulStop.then(() => false),
+        new Promise<boolean>((resolve) => {
+          timer = setTimeout(() => resolve(true), this.gracePeriod);
+          timer.unref?.();
+        }),
+      ]);
+    } catch (error) {
+      errors.push(error);
+      forceStop = true;
+    } finally {
+      if (timer) clearTimeout(timer);
+      this.drainWaiters.clear();
+    }
+    if (forceStop && server) {
+      try {
+        await server.stop(true);
+      } catch (error) {
+        errors.push(error);
+      }
+    }
 
-    await this.sessions.disposeAll();
-    await this.container.dispose();
-    await this.events.emit("shutdown");
+    try {
+      await this.sessions.disposeAll();
+    } catch (error) {
+      errors.push(error);
+    }
+    try {
+      await this.container.dispose();
+    } catch (error) {
+      errors.push(error);
+    }
+    try {
+      await this.events.emit("shutdown");
+    } catch (error) {
+      errors.push(error);
+    }
+    if (errors.length === 1) throw errors[0];
+    if (errors.length > 1) throw new AggregateError(errors, "Failed to stop Zebra");
   }
 
   private waitForDrain(): Promise<void> {

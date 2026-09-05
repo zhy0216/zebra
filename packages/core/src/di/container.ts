@@ -17,6 +17,8 @@ export class Container {
   protected scopeKind: ScopeKind = ScopeKind.Singleton;
   protected parent: Container | null = null;
   private frozen = false;
+  private disposing: Promise<void> | null = null;
+  private readonly disposedInstances = new WeakSet<object>();
   private snapshots: Array<{
     bindings: Map<BindingKey, Binding<any>>;
     instances: Map<BindingKey, any>;
@@ -103,23 +105,49 @@ export class Container {
   }
 
   async dispose(): Promise<void> {
+    if (this.disposing) return this.disposing;
+    // Install the shared operation before invoking user cleanup callbacks.
+    this.disposing = Promise.resolve().then(() => this.performDispose());
+    try {
+      await this.disposing;
+    } finally {
+      this.disposing = null;
+    }
+  }
+
+  private async performDispose(): Promise<void> {
     const seen = new Set<unknown>();
-    const disposables: unknown[] = [];
+    const disposables: object[] = [];
     const collect = (value: unknown): void => {
       if (value === null || (typeof value !== "object" && typeof value !== "function")) return;
-      if (seen.has(value)) return;
+      if (seen.has(value) || this.disposedInstances.has(value)) return;
       seen.add(value);
       disposables.push(value);
     };
+    const instances = [...this.instances];
     // LIFO over instantiation order: dependents are disposed before dependencies.
-    for (const instance of [...this.instances.values()].reverse()) collect(instance);
+    for (const [, instance] of instances.toReversed()) collect(instance);
     for (const binding of this.bindings.values()) {
       if (binding.kind === "value") collect(binding.target);
     }
+    const errors: unknown[] = [];
     for (const instance of disposables) {
-      if (isDisposable(instance)) await instance.dispose();
+      // Keep value bindings (and aliases restored by a snapshot) from invoking
+      // an already-attempted cleanup again, even when it rejected.
+      this.disposedInstances.add(instance);
+      try {
+        if (isDisposable(instance)) await instance.dispose();
+      } catch (error) {
+        errors.push(error);
+      }
     }
-    this.instances.clear();
+    for (const [key, instance] of instances) {
+      // Preserve resources newly bound/resolved while an async cleanup ran.
+      if (this.instances.get(key) === instance) this.instances.delete(key);
+    }
+    if (errors.length === 1) throw errors[0];
+    if (errors.length > 1)
+      throw new AggregateError(errors, "Failed to dispose container resources");
   }
 
   protected instantiate<T>(binding: Binding<T>, stack: ResolutionFrame[]): T {
