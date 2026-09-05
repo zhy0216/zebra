@@ -14,35 +14,35 @@ default_agent: codex
 
 | 文件 | 优先级 | 难度 | agent | 模型 / Codex 推理强度 | 一句话说明 |
 | --- | --- | --- | --- | --- | --- |
-| [01-event-listeners.md](done/01-event-listeners.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：回收 once 注册并恢复 emit 快照语义（F01、F02）；验收通过，待协调器合并 |
-| [02-session-scope-identity.md](done/02-session-scope-identity.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：旧请求不再释放同名新 session record（F03）；验收通过，待协调器合并 |
-| [03-http-completion.md](done/03-http-completion.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：完成 hook 受错误/超时控制，HEAD 无正文且取消流（F04–F06）；验收通过，待协调器合并 |
-| [04-session-record-keys.md](done/04-session-record-keys.md) | P1 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：session 特殊键安全读写与落库（F07）；验收通过，待协调器合并 |
-| [05-schema-await.md](done/05-schema-await.md) | P1 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：跨 realm Promise 的 schema 结果正确验证（F08）；验收通过，待协调器合并 |
-| [06-app-boundaries.md](done/06-app-boundaries.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：快照隔离、循环处理与应用配置校验（F09–F12）；验收通过，待协调器合并 |
-| [07-body-content-length.md](done/07-body-content-length.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：严格验证声明长度与巨大数值（F13）；验收通过，待协调器合并 |
-| [08-session-option-validation.md](done/08-session-option-validation.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：拒绝非有限 TTL 并规范化 cookie 时间（F14、F15）；验收通过，待协调器合并 |
-| [09-contract-paths.md](done/09-contract-paths.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：client/MCP 只插值完整参数片段（F16）；验收通过，待协调器合并 |
-| [10-mcp-call-isolation.md](done/10-mcp-call-isolation.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：隔离日志故障并建立工具名称索引（F17、F21）；验收通过，待协调器合并 |
-| [11-docs-pr-check.md](done/11-docs-pr-check.md) | P2 | easy | codex（继承默认） | gpt-6-astra / high | 已完成：PR 校验双语文档与 Pages 路径（F18）；验收通过，待协调器合并 |
-| [12-compatible-dependencies.md](12-compatible-dependencies.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 部分完成：Bun类型更新已验证；Zod4.5.4因冻结JSON Schema输出变化延后，原验收未全部通过 |
-| [13-metrics-sample-window.md](done/13-metrics-sample-window.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：环形采样窗口与精确分位数缓存（F20）；行为及性能验收通过，待协调器合并 |
+| [01-event-listeners.md](done/01-event-listeners.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：回收 once 注册并恢复 emit 快照语义（F01、F02）；验收通过，已合并并清理 |
+| [02-session-scope-identity.md](done/02-session-scope-identity.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：旧请求不再释放同名新 session record（F03）；验收通过，已合并并清理 |
+| [03-http-completion.md](done/03-http-completion.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：完成 hook 受错误/超时控制，HEAD 无正文且取消流（F04–F06）；验收通过，已合并并清理 |
+| [04-session-record-keys.md](done/04-session-record-keys.md) | P1 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：session 特殊键安全读写与落库（F07）；验收通过，已合并并清理 |
+| [05-schema-await.md](done/05-schema-await.md) | P1 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：跨 realm Promise 的 schema 结果正确验证（F08）；验收通过，已合并并清理 |
+| [06-app-boundaries.md](done/06-app-boundaries.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：快照隔离、循环处理与应用配置校验（F09–F12）；验收通过，已合并并清理 |
+| [07-body-content-length.md](done/07-body-content-length.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：严格验证声明长度与巨大数值（F13）；验收通过，已合并并清理 |
+| [08-session-option-validation.md](done/08-session-option-validation.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：拒绝非有限 TTL 并规范化 cookie 时间（F14、F15）；验收通过，已合并并清理 |
+| [09-contract-paths.md](done/09-contract-paths.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：client/MCP 只插值完整参数片段（F16）；验收通过，已合并并清理 |
+| [10-mcp-call-isolation.md](done/10-mcp-call-isolation.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：隔离日志故障并建立工具名称索引（F17、F21）；验收通过，已合并并清理 |
+| [11-docs-pr-check.md](done/11-docs-pr-check.md) | P2 | easy | codex（继承默认） | gpt-6-astra / high | 已完成：PR 校验双语文档与 Pages 路径（F18）；验收通过，已合并并清理 |
+| [12-compatible-dependencies.md](12-compatible-dependencies.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 部分完成：Bun 类型更新已合并并验证；Zod 4.5.4 因冻结 JSON Schema 输出变化延后，原验收未全部通过 |
+| [13-metrics-sample-window.md](done/13-metrics-sample-window.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：环形采样窗口与精确分位数缓存（F20）；行为及性能验收通过，已合并并清理 |
 
 ## 文件
 
-1. [01-event-listeners.md](done/01-event-listeners.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
-2. [02-session-scope-identity.md](done/02-session-scope-identity.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
-3. [03-http-completion.md](done/03-http-completion.md) — 已完成并归档，验收通过，待协调器合并；依赖 01-event-listeners.md；依赖 02-session-scope-identity.md。
-4. [04-session-record-keys.md](done/04-session-record-keys.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
-5. [05-schema-await.md](done/05-schema-await.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
-6. [06-app-boundaries.md](done/06-app-boundaries.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
-7. [07-body-content-length.md](done/07-body-content-length.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
-8. [08-session-option-validation.md](done/08-session-option-validation.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
-9. [09-contract-paths.md](done/09-contract-paths.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
-10. [10-mcp-call-isolation.md](done/10-mcp-call-isolation.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
-11. [11-docs-pr-check.md](done/11-docs-pr-check.md) — 已完成并归档，验收通过，待协调器合并；依赖：无。
-12. [12-compatible-dependencies.md](12-compatible-dependencies.md) — 部分完成：Bun类型更新已验证；Zod4.5.4因冻结JSON Schema输出变化延后，原验收未全部通过；依赖：无。
-13. [13-metrics-sample-window.md](done/13-metrics-sample-window.md) — 已完成并归档，行为及性能验收通过，待协调器合并；依赖：无。
+1. [01-event-listeners.md](done/01-event-listeners.md) — 已完成并归档，验收通过，已合并并清理；依赖：无。
+2. [02-session-scope-identity.md](done/02-session-scope-identity.md) — 已完成并归档，验收通过，已合并并清理；依赖：无。
+3. [03-http-completion.md](done/03-http-completion.md) — 已完成并归档，验收通过，已合并并清理；依赖 01-event-listeners.md；依赖 02-session-scope-identity.md。
+4. [04-session-record-keys.md](done/04-session-record-keys.md) — 已完成并归档，验收通过，已合并并清理；依赖：无。
+5. [05-schema-await.md](done/05-schema-await.md) — 已完成并归档，验收通过，已合并并清理；依赖：无。
+6. [06-app-boundaries.md](done/06-app-boundaries.md) — 已完成并归档，验收通过，已合并并清理；依赖：无。
+7. [07-body-content-length.md](done/07-body-content-length.md) — 已完成并归档，验收通过，已合并并清理；依赖：无。
+8. [08-session-option-validation.md](done/08-session-option-validation.md) — 已完成并归档，验收通过，已合并并清理；依赖：无。
+9. [09-contract-paths.md](done/09-contract-paths.md) — 已完成并归档，验收通过，已合并并清理；依赖：无。
+10. [10-mcp-call-isolation.md](done/10-mcp-call-isolation.md) — 已完成并归档，验收通过，已合并并清理；依赖：无。
+11. [11-docs-pr-check.md](done/11-docs-pr-check.md) — 已完成并归档，验收通过，已合并并清理；依赖：无。
+12. [12-compatible-dependencies.md](12-compatible-dependencies.md) — 部分完成：Bun 类型更新已合并并验证；Zod 4.5.4 因冻结 JSON Schema 输出变化延后，原验收未全部通过；依赖：无。
+13. [13-metrics-sample-window.md](done/13-metrics-sample-window.md) — 已完成并归档，行为及性能验收通过，已合并并清理；依赖：无。
 
 ## 依赖与并行
 
