@@ -81,7 +81,7 @@ export function createSession(options: CreateSessionOptions): RequestSessionInte
       const stored = await options.store.get(options.id);
       return stored !== null && typeof stored === "object"
         ? cloneRecord(stored as Record<string, unknown>)
-        : {};
+        : Object.create(null);
     })().catch((error) => {
       loaded = undefined;
       throw error;
@@ -112,7 +112,7 @@ export function createSession(options: CreateSessionOptions): RequestSessionInte
       revision++;
     },
     async has(key: string): Promise<boolean> {
-      return key in (await load());
+      return Object.hasOwn(await load(), key);
     },
     // Returns a shallow copy: mutating the returned object must not silently
     // bypass the dirty tracking (only `set`/`delete` are persisted).
@@ -124,7 +124,7 @@ export function createSession(options: CreateSessionOptions): RequestSessionInte
         const record = await load();
         if (!isDirty()) return;
         const writingRevision = revision;
-        await options.store.set(options.id, cloneRecord(record));
+        await options.store.set(options.id, { ...record });
         persistedRevision = writingRevision;
       });
       // Return the failure to this caller, while allowing subsequent queued
@@ -165,7 +165,9 @@ export function createSession(options: CreateSessionOptions): RequestSessionInte
  * replace them wholesale via `set`/`delete` (only those are persisted).
  */
 function cloneRecord(record: Record<string, unknown>): Record<string, unknown> {
-  return { ...record };
+  // Internal records have no inherited keys or setters, including __proto__.
+  // Public data and store snapshots remain ordinary objects via object spread.
+  return Object.assign(Object.create(null), record);
 }
 
 /**
