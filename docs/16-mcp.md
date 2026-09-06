@@ -97,6 +97,8 @@ MCP arguments are **namespaced** (`{ params, query, body }`) so path/query/body 
 
 The `inputSchema` is generated from the contract schemas: `params` is required when declared, `query`/`body` follow their own schema's required fields (all-optional parts can be omitted).
 
+The adapter uses Zod 4.5's draft-7 output: object intersections combine their fields into one object, and simple unions/nullable types use a `type` array such as `{ "type": ["string", "null"] }`. Constrained union branches retain `anyOf`. Ordinary and merged objects reject extra fields in the advertised schema; catchall value constraints are retained. Intersections that Zod leaves as `allOf` keep their native assertions without additional object closure.
+
 ## Mapping results
 
 | HTTP response | MCP result |

@@ -207,7 +207,9 @@ F20 性能验证增加同机、相同容量/调用次数、预热后多轮的 be
 HTTP HEAD 与 Content-Length 规则依据 [RFC 9110 §9.3.2](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.3.2) 和 [§8.6](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6)；跨 realm 探针是本地推断，Standard Schema 的返回值合同见 [Standard Schema V1](https://standardschema.dev/)。R01 的 Vite 高等级告警经 [Vite 维护者安全公告](https://github.com/vitejs/vite/security/advisories/GHSA-fx2h-pf6j-xcff)核对。本轮未从旧公告推断其他未审计的漏洞。
 
 
-## 执行结果（2026-09-05 至 2026-09-06）
+## 首轮执行结果（2026-09-05 至 2026-09-06）
+
+以下保留首轮交付的历史结果。任务 12 在后续用户解除向后兼容限制后已完成，见本文末尾的续作完成记录。
 
 本轮从 `master` / `13eddf766ba68a30f1c87449a1d52911773cbb9c` 开始，按独立 Herdr worktree 实现、协调器独立复核、串行 rebase、仓库校验和 fast-forward 合并完成集成。共合入 13 个任务 commit：**12 项完整完成，任务 12 部分交付，Zod 升级延后**。最终实现提交为 `ee387aabe04ca314365ad03a8e78b705ecb03b72`；后续仅提交本执行记录和队列状态。
 
@@ -228,16 +230,16 @@ HTTP HEAD 与 Content-Length 规则依据 [RFC 9110 §9.3.2](https://www.rfc-edi
 | [09 · contract-paths](todos/done/09-contract-paths.md) | `fbb28c1796faf93959a703d5e97d56c53603f4bc` | `zebra-0905-09` / `max` | 1154 / 0 | `gates-09-1788622077` | 完成、归档、已清理 |
 | [10 · mcp-call-isolation](todos/done/10-mcp-call-isolation.md) | `11bf45306f6a8ae1bb391949ecf946588d791442` | `zebra-0905-10` / `xhigh` | 1134 / 0 | `gates-10-1788621642` | 完成、归档、已清理 |
 | [11 · docs-pr-check](todos/done/11-docs-pr-check.md) | `2b8ea7970b862cf0d96f53de8ea72f31a7bdaa0b` | `zebra-0905-11` / `high` | 1154 / 0 | `gates-11-1788622580` | 完成、归档、已清理 |
-| [12 · compatible-dependencies](todos/12-compatible-dependencies.md) | `36caf808155120a0692dab94784f897e205a197d` | `zebra-0905-12` / `xhigh` | 1154 / 0 | `gates-12-1788623405` | 部分交付，Zod 延后 |
+| [12 · compatible-dependencies](todos/done/12-compatible-dependencies.md) | `36caf808155120a0692dab94784f897e205a197d` | `zebra-0905-12` / `xhigh` | 1154 / 0 | `gates-12-1788623405` | 首轮部分交付，Zod 当时延后 |
 | [13 · metrics-sample-window](todos/done/13-metrics-sample-window.md) | `ee387aabe04ca314365ad03a8e78b705ecb03b72` | `zebra-0905-13` / `xhigh` | 1219 / 0 | `gates-13-1788625247` | 完成、归档、已清理 |
 
 合入顺序：05 → 04 → 01 → 02 → 06 → 08 → 07 → 10 → 09 → 11 → 12（部分）→ 03 → 13。03 在 01、02 合入后才启动；03、13 的性能测试使用协调器分配的独占测量时段。每项仅保留一个 commit，均无冲突完成 rebase，没有 merge commit。
 
-已归档的文件是上表链接到 `todos/done/` 的 01–11 和 13，共 12 个；`todos/12-compatible-dependencies.md` 保持原路径与原验收要求。README 中完整完成项已统一标记为已合并并清理，12 保持 partial/deferred。
+首轮归档了 01–11 和 13，共 12 个；当时 `todos/12-compatible-dependencies.md` 保持原路径与原验收要求，状态为 partial/deferred。该任务后续完成并归档，现有链接已指向归档位置。
 
 ### 验收中发现的问题与延后范围
 
-- **任务 12 未全部完成。** `@types/bun` 和必需的 `bun-types` 已从 1.4.0 更新到 1.4.1。Zod 4.5.4 候选导致三个既有 JSON Schema 输出断言失败：交集的 `allOf` 被折叠，简单 union/nullable 改为 `type` 数组。候选全量结果为 1151 pass / 3 fail；恢复 Zod 4.4.3 且不改源码或测试期望后为 1154 pass / 0 fail。两版本同输入 HTTP 探针状态相同，证据只确认 Schema 文档结构差异。按冻结要求接受 Bun 类型部分交付；Zod 保留 4.4.3，不能宣称原任务验收全部通过。详见[任务 12 的候选对照与官方依据](todos/12-compatible-dependencies.md)。
+- **首轮任务 12 未全部完成。** `@types/bun` 和必需的 `bun-types` 已从 1.4.0 更新到 1.4.1。Zod 4.5.4 候选导致三个既有 JSON Schema 输出断言失败：交集的 `allOf` 被折叠，简单 union/nullable 改为 `type` 数组。候选全量结果为 1151 pass / 3 fail；恢复 Zod 4.4.3 且不改源码或测试期望后为 1154 pass / 0 fail。两版本同输入 HTTP 探针状态相同，证据只确认 Schema 文档结构差异。首轮按冻结要求接受 Bun 类型部分交付，Zod 当时保留 4.4.3，原任务验收并未全部通过。详见[任务 12 的候选对照与官方依据](todos/done/12-compatible-dependencies.md)。
 - **任务 02 的首次协调器全量检查失败并已修复。** 989 pass / 1 fail 暴露既有 WebSocket 测试 helper：测试覆盖 `onclose` 后，原 `closed` Promise 的 3000 ms 定时器没有清理，异步拒绝泄漏到后续测试。额外等待 3200 ms 的临时探针确定复现。协调器授权同一任务 agent 修复 `packages/core/test/ws.test.ts` 的 Promise/定时器及 socket/server 清理，未改 WebSocket 运行时；修复后同一探针 5 pass，集成全量 990 pass / 0 fail。修复包含在任务 02 唯一提交中。原失败与修复日志均保留，没有以重排测试掩盖问题。
 - 07、09 各遇到一次明确的模型 capacity 错误；原 agent 在同一 worktree、同一模型和 effort 上继续完成，没有将错误状态当作完成。
 - R01–R04 仍为 roadmap：文档工具链告警、Redis 原子性与真实服务验证、Biome 大版本迁移、timeout/inFlight/errors 观测口径均未在本轮扩展执行。
@@ -295,3 +297,13 @@ HTTP HEAD 与 Content-Length 规则依据 [RFC 9110 §9.3.2](https://www.rfc-edi
 本轮创建的 13 个 Herdr workspace、13 个 worktree 路径及 13 个本地任务分支均已清理；12 的已合入部分也已安全清理，其未完成需求保留在原 todo。`git worktree list` 仅余原 checkout；本轮分支查询为空，所有任务 commit 均为 master 祖先。没有清理本轮之外的资源。
 
 `bench/baseline.json`、中英文 API freeze 文档和全部 package.json 相对起始 HEAD 均未变化；baseline SHA-256 为 `1e37941b73db6daae50170b62e220dcc5ccefe17f1452806eaddf73bd6e394ba`。所有 Zebra 包仍为 1.0.0，依赖范围和源码发布策略不变。没有 push、PR、发布或部署，也没有创建持久检索索引。最终记录提交后，以 `git status --short` 为空作为收尾条件。
+
+## 任务 12 续作完成（2026-09-06）
+
+用户明确要求完成任务 12 并说明「不需要考虑向后兼容」，覆盖本计划对该任务的锁文件专属修改范围和冻结 JSON Schema 输出限制。续作基线为 `ecc31151aba0069633474f9ece7819bd44d9a4d8`，在独立 worktree 内完成。
+
+Zod 已升级到 `4.5.4`；适配器采用原生交集合并和简单 union/nullable 的 `type` 数组，移除重复合并逻辑，保留 catchall 和未合并 `allOf` 的有效约束。格式断言、Ajv/MCP 行为测试、可选 namespace 回归和双语文档已同步。首轮交付的 Bun 类型 `1.4.1`、Bun runtime `1.4.0`、全部包版本与依赖范围保持原样。
+
+完整验证结果：定向 245 pass / 0 fail；全量 1,244 pass / 0 fail；core 覆盖率 98.63%；独立 benchmark 8/8 通过；frozen install、typecheck、lint、build、12 包打包验证、双语 docs build 和 diff 检查均通过。audit **exit 1**，仍仅 R01 的相同 4 条工具链告警（1 high、3 moderate）。日志位于 `/tmp/zebra-todo12-finish.b1udPG/`，逐项结果和性能数值见[任务 12 完成记录](todos/done/12-compatible-dependencies.md)。
+
+任务 12 已归档至 `todos/done/`，本轮 13 项现已全部完成；R01–R04 继续保留为 roadmap。

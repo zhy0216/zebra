@@ -25,7 +25,7 @@ default_agent: codex
 | [09-contract-paths.md](done/09-contract-paths.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 已完成：client/MCP 只插值完整参数片段（F16）；验收通过，已合并并清理 |
 | [10-mcp-call-isolation.md](done/10-mcp-call-isolation.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：隔离日志故障并建立工具名称索引（F17、F21）；验收通过，已合并并清理 |
 | [11-docs-pr-check.md](done/11-docs-pr-check.md) | P2 | easy | codex（继承默认） | gpt-6-astra / high | 已完成：PR 校验双语文档与 Pages 路径（F18）；验收通过，已合并并清理 |
-| [12-compatible-dependencies.md](12-compatible-dependencies.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 部分完成：Bun 类型更新已合并并验证；Zod 4.5.4 因冻结 JSON Schema 输出变化延后，原验收未全部通过 |
+| [12-compatible-dependencies.md](done/12-compatible-dependencies.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：Bun 类型 1.4.1、Zod 4.5.4；按用户授权采用新版 JSON Schema，完整验收通过（audit 仍为已知 4 条告警） |
 | [13-metrics-sample-window.md](done/13-metrics-sample-window.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 已完成：环形采样窗口与精确分位数缓存（F20）；行为及性能验收通过，已合并并清理 |
 
 ## 文件
@@ -41,7 +41,7 @@ default_agent: codex
 9. [09-contract-paths.md](done/09-contract-paths.md) — 已完成并归档，验收通过，已合并并清理；依赖：无。
 10. [10-mcp-call-isolation.md](done/10-mcp-call-isolation.md) — 已完成并归档，验收通过，已合并并清理；依赖：无。
 11. [11-docs-pr-check.md](done/11-docs-pr-check.md) — 已完成并归档，验收通过，已合并并清理；依赖：无。
-12. [12-compatible-dependencies.md](12-compatible-dependencies.md) — 部分完成：Bun 类型更新已合并并验证；Zod 4.5.4 因冻结 JSON Schema 输出变化延后，原验收未全部通过；依赖：无。
+12. [12-compatible-dependencies.md](done/12-compatible-dependencies.md) — 已完成并归档：Bun 类型 1.4.1、Zod 4.5.4 及新版 JSON Schema 适配；验收通过，audit 仅余已知告警；依赖：无。
 13. [13-metrics-sample-window.md](done/13-metrics-sample-window.md) — 已完成并归档，行为及性能验收通过，已合并并清理；依赖：无。
 
 ## 依赖与并行
@@ -77,3 +77,9 @@ default_agent: codex
 ## 初始状态
 
 13 个任务均未启动、未完成。本文件不复用上一轮完成状态。执行偏好已保存，协调器必须按每个 todo 的 difficulty/agent 逐项解析。
+
+## 续作完成（2026-09-06）
+
+用户明确要求完成任务 12 且「不需要考虑向后兼容」，覆盖该任务原先只改锁文件及保持冻结 JSON Schema 输出的限制。Zod 4.5.4 升级、适配器简化、行为测试和双语文档现已完成；定向 245 tests、全量 1,244 tests、core 覆盖率 98.63%、8/8 benchmark 及其余仓库门禁均通过。audit 仍为 R01 的原有 4 条告警、exit 1。
+
+任务 12 已归档至 `done/12-compatible-dependencies.md`，本队列 13 项现已全部完成。首轮 partial/deferred 的候选与失败证据保留在该任务和 plan 的历史记录中。

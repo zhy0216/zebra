@@ -97,6 +97,8 @@ MCP arguments 是**命名空间化**的（`{ params, query, body }`），避免 
 
 `inputSchema` 由契约 schema 生成：声明了 `params` 即 required，`query`/`body` 跟随其自身 schema 的 required（全 optional 的部分可以省略）。
 
+适配器采用 Zod 4.5 的 draft-7 输出：对象交集合并为一个包含各成员字段的对象，简单 union/nullable 使用 `type` 数组，例如 `{ "type": ["string", "null"] }`；带额外约束的 union 分支保留 `anyOf`。普通对象和合并后的对象在公布的 schema 中拒绝额外字段，catchall 值约束予以保留。Zod 仍以 `allOf` 表达的交集保留原生断言，不额外封闭其中的对象。
+
 ## 结果映射
 
 | HTTP 响应 | MCP result |

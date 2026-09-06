@@ -187,6 +187,8 @@ test("body namespaces reflect scalar, array, union and intersection omission beh
     { schema: z.object({ value: z.string() }), body: { value: "ok" }, required: true },
     { schema: z.object({ value: z.string().optional() }), body: {}, required: false },
     { schema: z.union([z.string(), z.array(z.number())]), body: "ok", required: true },
+    { schema: z.union([z.string(), z.number()]), body: 42, required: true },
+    { schema: z.string().nullable(), body: null, required: true },
     {
       schema: z.union([z.string(), z.object({ value: z.string().optional() })]),
       body: {},
@@ -234,7 +236,7 @@ test("body namespaces reflect scalar, array, union and intersection omission beh
   }
 });
 
-test("query namespaces preserve optional objects across anyOf and allOf", async () => {
+test("query namespaces preserve optional objects across unions and intersections", async () => {
   const cases = [
     { schema: z.object({ value: z.string().optional() }), required: false },
     {

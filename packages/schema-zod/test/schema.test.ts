@@ -40,7 +40,7 @@ test("optional and default fall out of required", () => {
 test("arrays and nested objects are expressed", () => {
   const Topic = z.object({ id: z.number(), title: z.string().min(1) });
   const out = adapter.toJsonSchema(z.object({ list: z.array(Topic) }));
-  // Nested zod objects are also closed, matching the old converter's output.
+  // Nested objects also reject invented MCP argument fields.
   expect(out).toEqual({
     type: "object",
     properties: {
@@ -62,7 +62,7 @@ test("arrays and nested objects are expressed", () => {
   });
 });
 
-test("object intersections close the combined shape and retain member assertions", () => {
+test("object intersections close Zod's merged shape", () => {
   const out = adapter.toJsonSchema(
     z.intersection(z.object({ a: z.string() }), z.object({ b: z.string() })),
   );
@@ -71,10 +71,6 @@ test("object intersections close the combined shape and retain member assertions
     properties: { a: { type: "string" }, b: { type: "string" } },
     required: ["a", "b"],
     additionalProperties: false,
-    allOf: [
-      { type: "object", properties: { a: { type: "string" } }, required: ["a"] },
-      { type: "object", properties: { b: { type: "string" } }, required: ["b"] },
-    ],
   });
 });
 
@@ -116,26 +112,61 @@ test("intersections preserve optional, default and transform input schemas", () 
   });
 });
 
-test("mixed intersections preserve explicit strict and catchall constraints", () => {
-  const strict = z.strictObject({ a: z.string() });
-  const catchall = z.object({ a: z.string() }).catchall(z.number());
-  for (const schema of [strict, catchall]) {
+test("merged intersections retain closed objects and catchall constraints", () => {
+  for (const { schema, additionalProperties } of [
+    { schema: z.strictObject({ a: z.string() }), additionalProperties: false },
+    {
+      schema: z.object({ a: z.string() }).catchall(z.number()),
+      additionalProperties: { type: "number" },
+    },
+  ]) {
     const out = adapter.toJsonSchema(z.intersection(schema, z.object({ b: z.number() })));
-    expect(out.allOf).toEqual([
-      adapter.toJsonSchema(schema),
-      { type: "object", properties: { b: { type: "number" } }, required: ["b"] },
-    ]);
-    expect(out.additionalProperties).toBeUndefined();
+    expect(out).toEqual({
+      type: "object",
+      properties: { a: { type: "string" }, b: { type: "number" } },
+      required: ["a", "b"],
+      additionalProperties,
+    });
   }
 });
 
-test("unions, enums, literals, records and nullable are expressed", () => {
-  // Zod 4 expresses unions and nullables via anyOf (old converter collapsed
-  // them into a type array) and records via propertyNames — re-asserted per
-  // the new contract.
-  expect(adapter.toJsonSchema(z.union([z.string(), z.number()]))).toEqual({
-    anyOf: [{ type: "string" }, { type: "number" }],
+test("a catchall still constrains fields declared by another intersection member", () => {
+  const out = adapter.toJsonSchema(
+    z.intersection(z.object({ a: z.string() }).catchall(z.number()), z.object({ b: z.string() })),
+  );
+  expect(out).toEqual({
+    type: "object",
+    properties: {
+      a: { type: "string" },
+      b: { allOf: [{ type: "number" }, { type: "string" }] },
+    },
+    required: ["a", "b"],
+    additionalProperties: { type: "number" },
   });
+});
+
+test("simple unions and nullable use type arrays", () => {
+  expect(adapter.toJsonSchema(z.union([z.string(), z.number()]))).toEqual({
+    type: ["string", "number"],
+  });
+  expect(adapter.toJsonSchema(z.string().nullable())).toEqual({
+    type: ["string", "null"],
+  });
+});
+
+test("constrained unions and nullable keep per-branch assertions", () => {
+  expect(adapter.toJsonSchema(z.union([z.string().min(2), z.number().min(1)]))).toEqual({
+    anyOf: [
+      { type: "string", minLength: 2 },
+      { type: "number", minimum: 1 },
+    ],
+  });
+  expect(adapter.toJsonSchema(z.string().min(2).nullable())).toEqual({
+    anyOf: [{ type: "string", minLength: 2 }, { type: "null" }],
+  });
+});
+
+test("enums, literals and records are expressed", () => {
   expect(adapter.toJsonSchema(z.enum(["a", "b"]))).toEqual({ type: "string", enum: ["a", "b"] });
   expect(adapter.toJsonSchema(z.literal("x"))).toEqual({ type: "string", const: "x" });
   expect(adapter.toJsonSchema(z.record(z.string(), z.number()))).toEqual({
@@ -147,9 +178,6 @@ test("unions, enums, literals, records and nullable are expressed", () => {
   // post-process must not overwrite it.
   expect(adapter.toJsonSchema(z.record(z.string(), z.number())).additionalProperties).toEqual({
     type: "number",
-  });
-  expect(adapter.toJsonSchema(z.string().nullable())).toEqual({
-    anyOf: [{ type: "string" }, { type: "null" }],
   });
 });
 

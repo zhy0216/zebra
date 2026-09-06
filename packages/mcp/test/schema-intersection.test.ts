@@ -53,6 +53,15 @@ const cases: Array<{
     invalid: [{}, { value: "a" }, { value: "abcde" }, { value: 3 }],
   },
   {
+    name: "annotated intersections left as allOf",
+    schema: z.intersection(
+      z.object({ nested: z.object({ a: z.string() }) }).describe("First member"),
+      z.object({ nested: z.object({ b: z.number() }) }),
+    ),
+    valid: [{ nested: { a: "a", b: 2 } }],
+    invalid: [{ nested: { a: "a" } }, { nested: { a: "a", b: "bad" } }],
+  },
+  {
     name: "object intersected with a union of objects",
     schema: z.intersection(
       z.object({ a: z.string() }),
@@ -95,13 +104,19 @@ const cases: Array<{
     invalid: [{ a: "a" }, { a: "a", b: 2, extra: "bad" }],
   },
   {
-    name: "explicit strict object inside an intersection",
+    name: "catchall constraints conflicting with another member's field",
     schema: z.intersection(
-      z.strictObject({ a: z.string(), b: z.number().optional() }),
-      z.object({ b: z.number() }),
+      z.object({ a: z.string() }).catchall(z.number()),
+      z.object({ b: z.string() }),
     ),
+    valid: [],
+    invalid: [{ a: "a", b: "bad" }, { a: "a", b: 2 }, { a: "a" }],
+  },
+  {
+    name: "strict intersections sharing their declared fields",
+    schema: z.intersection(z.strictObject({ a: z.string() }), z.strictObject({ b: z.number() })),
     valid: [{ a: "a", b: 2 }],
-    invalid: [{ a: "a" }, { a: "a", b: "bad" }],
+    invalid: [{ a: "a" }, { a: "a", b: "bad" }, { a: "a", b: 2, extra: true }],
   },
   {
     name: "optional/default fields and transform input",
@@ -111,6 +126,30 @@ const cases: Array<{
     ),
     valid: [{ value: "ok" }, { value: "ok", page: 2, tags: ["tag"] }],
     invalid: [{ page: 2 }, { value: 2 }, { value: "ok", page: "bad" }],
+  },
+  {
+    name: "simple union type arrays",
+    schema: z.union([z.string(), z.number()]),
+    valid: ["value", 42],
+    invalid: [null, {}, true, []],
+  },
+  {
+    name: "nullable type arrays",
+    schema: z.string().nullable(),
+    valid: ["value", null],
+    invalid: [42, {}, false],
+  },
+  {
+    name: "constrained union branches",
+    schema: z.union([z.string().min(2), z.number().min(1)]),
+    valid: ["ok", 1],
+    invalid: ["x", 0, null, {}],
+  },
+  {
+    name: "nullable objects",
+    schema: z.object({ a: z.string() }).nullable(),
+    valid: [null, { a: "a" }],
+    invalid: [{}, { a: 42 }],
   },
   {
     name: "ordinary record and union behavior",
@@ -158,6 +197,7 @@ test("combined intersections and ordinary objects/unions still reject invented f
       schema: z.union([z.object({ a: z.string() }), z.object({ b: z.string() })]),
       input: { a: "a", extra: true },
     },
+    { schema: z.object({ a: z.string() }).nullable(), input: { a: "a", extra: true } },
   ]) {
     // Zod strips extra fields; the adapter intentionally advertises closed inputs.
     expect(schema.safeParse(input).success).toBe(true);
@@ -165,7 +205,7 @@ test("combined intersections and ordinary objects/unions still reject invented f
   }
 });
 
-test("intersection fallback retains an explicit strict member's extra-field rejection", () => {
+test("merged intersections retain extra-field rejection with a strict member", () => {
   const schema = z.intersection(
     z.strictObject({ a: z.string(), b: z.number().optional() }),
     z.object({ b: z.number() }),
@@ -175,23 +215,31 @@ test("intersection fallback retains an explicit strict member's extra-field reje
   expect(validate({ a: "a", b: 2, extra: true }).valid).toBe(false);
 });
 
-test("MCP discovery advertises a satisfiable intersection accepted by dispatch", async () => {
-  const app = new Zebra();
-  const contract = { echo: zc.post("/echo").body(pair).mcp("echo", "echo") };
-  app.implement(contract, { echo: async (req) => await req.body() });
-  const mcp = createMcpServer({ app, contract, schema: adapter });
-  try {
-    const { tools } = await mcp.listTools();
-    const inputSchema: Record<string, unknown> = tools[0]!.inputSchema;
-    const validate = validator.getValidator(inputSchema);
-    for (const body of [{ a: "a", b: "b" }, { a: "a" }, { a: "a", b: 2 }]) {
-      const valid = pair.safeParse(body).success;
-      expect(validate({ body }).valid).toBe(valid);
-      const result = await mcp.callTool({ name: "echo", arguments: { body } });
-      expect(result.isError ?? false).toBe(!valid);
-      if (valid) expect(result.structuredContent).toEqual(body);
+for (const { name, schema, valid, invalid } of cases) {
+  test(`MCP discovery and dispatch agree for ${name}`, async () => {
+    const app = new Zebra();
+    const contract = { echo: zc.post("/echo").body(schema).mcp("echo", "echo") };
+    app.implement(contract, { echo: async (req) => ({ value: await req.body() }) });
+    const mcp = createMcpServer({ app, contract, schema: adapter });
+    try {
+      const { tools } = await mcp.listTools();
+      const inputSchema: Record<string, unknown> = tools[0]!.inputSchema;
+      const validate = validator.getValidator(inputSchema);
+      for (const body of [...valid, ...invalid]) {
+        const parsed = schema.safeParse(body);
+        expect(validate({ body }).valid).toBe(parsed.success);
+        const result = await mcp.callTool({ name: "echo", arguments: { body } });
+        expect(result.isError ?? false).toBe(!parsed.success);
+        if (parsed.success) {
+          expect(result.structuredContent).toEqual({ value: parsed.data });
+        } else {
+          expect(JSON.parse((result.content[0] as { text: string }).text)).toMatchObject({
+            status: 422,
+          });
+        }
+      }
+    } finally {
+      await mcp.close();
     }
-  } finally {
-    await mcp.close();
-  }
-});
+  });
+}
