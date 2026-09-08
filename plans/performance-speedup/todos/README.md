@@ -18,7 +18,7 @@ Resolved difficulty mapping: hard = `codex / gpt-6-astra / max`; medium = `codex
 | [02-router-lookup.md](done/02-router-lookup.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Evaluated; static index excluded because minimum-runtime performance evidence is inconclusive |
 | [03-request-metadata.md](done/03-request-metadata.md) | P2 | medium | codex (inherits default) | gpt-6-astra / xhigh | Completed inconclusive evaluation; production candidate excluded, compatibility tests retained |
 | [04-di-cache-hits.md](done/04-di-cache-hits.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Evaluated; candidate excluded after bounded quiet-window failures |
-| [05-dispatch-pipeline.md](05-dispatch-pipeline.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Reduce forwarding promises and closures in dispatch/middleware |
+| [05-dispatch-pipeline.md](done/05-dispatch-pipeline.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Evaluated; compatibility rejection / inconclusive controls, no production change |
 | [06-results-and-validation.md](06-results-and-validation.md) | P1 | medium | codex (inherits default) | gpt-6-astra / xhigh | Validate merged behavior and document actual performance results |
 
 ## 文件
@@ -27,7 +27,7 @@ Resolved difficulty mapping: hard = `codex / gpt-6-astra / max`; medium = `codex
 2. [02-router-lookup.md](done/02-router-lookup.md) — completed evaluation; production candidate excluded, compatibility tests and evidence retained.
 3. [03-request-metadata.md](done/03-request-metadata.md) — completed evaluation; no production optimization adopted.
 4. [04-di-cache-hits.md](done/04-di-cache-hits.md) — completed evaluation; no production optimization retained.
-5. [05-dispatch-pipeline.md](05-dispatch-pipeline.md) — 依赖 01-hot-path-baseline.md.
+5. [05-dispatch-pipeline.md](done/05-dispatch-pipeline.md) — evaluation complete; rejected/inconclusive, awaiting coordinator integration.
 6. [06-results-and-validation.md](06-results-and-validation.md) — 依赖 02-router-lookup.md、03-request-metadata.md、04-di-cache-hits.md、05-dispatch-pipeline.md.
 
 ## Parallel execution and ownership
@@ -90,3 +90,13 @@ Final focused/harness/type/style checks pass on both runtimes. The report retain
 the unrelated current-runtime store-test failures and passing unchanged-baseline
 focused reproduction without claiming a confirmed baseline failure. Integration
 is coordinator-triggered; all other task states and saved routing are unchanged.
+
+## Task 05 status
+
+05 is evaluated and archived under `done/`; coordinator integration is pending.
+[Results/05](../results/05/README.md) records the middleware compatibility rejection,
+two exhausted minimum-runtime dispatch quiet-window attempts, restored production
+source, 27 added regression tests, and passing final gates on Bun 1.4.2 / 1.4.0.
+No dispatch or HTTP speedup is claimed; candidate/HTTP timing remains unmeasured.
+This documented rejection satisfies the evaluation dependency for 06 after
+coordinator integration. Other task statuses and saved Codex routing are unchanged.

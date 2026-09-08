@@ -1,0 +1,1 @@
+{"at": "2026-09-08T07:25:18.261443+00:00", "action": "Replaced the unstarted batch driver with one control attempt per lock hold", "defaultAttempt": "aa-140-dispatch-1", "recorderStarted": false, "reason": "Coordinator fairness adjustment; fixed recorder, workloads, eligibility and attempt limits are unchanged."}
