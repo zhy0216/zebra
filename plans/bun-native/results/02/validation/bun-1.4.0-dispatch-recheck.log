@@ -1,0 +1,32 @@
+bun test v1.4.0 (34cbb9a40)
+
+packages/core/test/app/dispatch.test.ts:
+(pass) registers a GET route and dispatches it [2.85ms]
+(pass) dispatch without a server leaves req.ip undefined [0.26ms]
+(pass) dispatch forwards the socket ip to handlers (trustProxy never turns it into XFF) [0.18ms]
+(pass) non-JSON-serializable handler results become a structured 500 [6.18ms]
+69 |     });
+70 |   } finally {
+71 |     await app.stop();
+72 |   }
+73 |   // The real socket peer address (loopback, v4 or v6), never the spoofed header.
+74 |   expect(seen === "127.0.0.1" || seen === "::1").toBe(true);
+                                                      ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-bun-native-02-native-body/packages/core/test/app/dispatch.test.ts:74:50)
+(fail) listen() plumbs the real peer address into req.ip [5.71ms]
+(pass) handler returning non-Response gets JSON-wrapped [0.24ms]
+(pass) unmatched path returns 404 Problem+Json [0.26ms]
+(pass) request and response helpers round-trip through dispatch [0.82ms]
+(pass) redirect() and html() responses pass through dispatch [0.29ms]
+(pass) value returns stay JSON-encoded; text() is the escape hatch [0.22ms]
+(pass) request helpers honor app body limits through dispatch [6.79ms]
+
+ 10 pass
+ 1 fail
+ 26 expect() calls
+Ran 11 tests across 1 file. [59.00ms]

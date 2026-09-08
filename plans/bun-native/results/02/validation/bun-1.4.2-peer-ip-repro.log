@@ -1,0 +1,2 @@
+{"bun":"1.4.2","host":"localhost","zebraAddress":"::1","nativeAddress":"::1"}
+{"bun":"1.4.2","host":"127.0.0.1","zebraAddress":"::ffff:127.0.0.1","nativeAddress":"::ffff:127.0.0.1"}

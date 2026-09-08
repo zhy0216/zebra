@@ -1,0 +1,115 @@
+bun test v1.4.2 (744846f84)
+
+packages/core/test/http/body.test.ts:
+(pass) readBody copies empty stream without exposing or changing backing bytes [1.30ms]
+(pass) readBody copies empty chunks without exposing or changing backing bytes [0.30ms]
+(pass) readBody copies single chunk without exposing or changing backing bytes [0.07ms]
+(pass) readBody copies multiple chunks without exposing or changing backing bytes [0.06ms]
+(pass) readBody copies interspersed empty chunks without exposing or changing backing bytes [0.08ms]
+(pass) readBody copies offset Uint8Array without exposing or changing backing bytes [0.05ms]
+(pass) readBody copies offset Buffer without exposing or changing backing bytes [0.28ms]
+(pass) readBody copies mixed offset views sharing a backing buffer without exposing or changing backing bytes [0.09ms]
+(pass) readBody returns independent empty bytes for bodyless requests [0.11ms]
+(pass) readBody accepts the exact byte limit and rejects one extra byte with declaration  [0.75ms]
+(pass) readBody accepts the exact byte limit and rejects one extra byte with declaration "0" [0.20ms]
+(pass) readBody accepts the exact byte limit and rejects one extra byte with declaration "3" [0.06ms]
+(pass) readBody does not report declaration failures or reader conflicts as read errors [0.35ms]
+(pass) readBody releases failed readers and calls onReadError once with the original error [0.26ms]
+(pass) readBody promptly rejects with 413 when the source cancel throws [0.50ms]
+(pass) readBody promptly rejects with 413 when the source cancel rejects [0.06ms]
+(pass) readBody promptly rejects with 413 when the source cancel pending [0.04ms]
+(pass) parses JSON body [0.43ms]
+(pass) parses urlencoded form body [0.23ms]
+(pass) over-size throws 413 HttpError [0.14ms]
+(pass) invalid JSON throws 400 HttpError [0.15ms]
+(pass) unknown content-type returns Uint8Array [0.29ms]
+(pass) enforces limits while streaming when Content-Length is absent [0.16ms]
+(pass) body limits count bytes rather than JavaScript characters [0.14ms]
+(pass) multipart enforces maxFiles and maxFileSize [0.49ms]
+(pass) multipart over the total size limit rejects with 413 (streaming path) [0.17ms]
+(pass) multipart size-limit errors survive a rejected stream cancellation [0.16ms]
+(pass) multipart stream failures retain invalid_multipart while HttpErrors pass through [0.26ms]
+(pass) multipart parse errors retain 400 for missing boundaries and empty payloads [0.33ms]
+
+packages/core/test/http/request-helpers.test.ts:
+(pass) req.json parses the body as JSON regardless of content-type [0.39ms]
+(pass) req.json is memoized: two calls share one parse [0.06ms]
+(pass) req.json on invalid JSON throws 400 invalid_json [0.13ms]
+(pass) req.json on empty body returns null [0.06ms]
+(pass) req.text returns the raw body text [0.11ms]
+(pass) req.text is memoized; empty body is an empty string [0.11ms]
+(pass) helpers are lazy: nothing reads the body until invoked [0.05ms]
+(pass) json() and text() share one buffered read [0.09ms]
+(pass) text then body and body then json preserve the JSON payload [0.26ms]
+(pass) concurrent body/json/text/form calls acquire the raw reader once [0.32ms]
+(pass) body/text/form compose for urlencoded bodies without losing repeated fields [0.39ms]
+(pass) body/text/form compose for multipart while preserving boundary case and files [0.50ms]
+(pass) a JSON parse failure preserves buffered text and is memoized [0.22ms]
+(pass) a shared size-limit failure rejects every buffering helper and cancels once [0.26ms]
+(pass) shared multipart size-limit errors do not wait for stream cancellation [0.26ms]
+(pass) multipart body maps shared read failures without changing the other helpers' errors [0.25ms]
+(pass) req.form parses multipart with File entries [0.17ms]
+(pass) req.form parses urlencoded into string entries [0.13ms]
+(pass) req.form on non-form body returns an empty FormData [0.09ms]
+(pass) req.form is memoized [1.08ms]
+(pass) req.form enforces multipart maxFiles [1.08ms]
+(pass) req.form enforces multipart maxFileSize [0.17ms]
+(pass) reading multipart text first cannot bypass file count or file size limits [0.38ms]
+(pass) helpers enforce body limits [0.12ms]
+(pass) req.json respects the json.limit for json content-type [0.12ms]
+(pass) req.stream pipes the raw body without buffering [0.41ms]
+(pass) req.stream enforces the limit while piping [0.13ms]
+(pass) req.stream on a bodyless request yields an empty stream [0.13ms]
+(pass) stream rejects buffering and repeated streaming both before and after consumption [0.32ms]
+(pass) stream rejects after buffering starts or completes [0.12ms]
+(pass) buffering an externally consumed raw request rejects instead of returning an empty body [0.11ms]
+(pass) multipart reader conflicts remain TypeErrors rather than invalid_multipart [0.34ms]
+
+packages/core/test/http/content-length.test.ts:
+(pass) rejects non-decimal Content-Length "1.5" with 400 [0.12ms]
+(pass) rejects non-decimal Content-Length "1." with 400 [0.03ms]
+(pass) rejects non-decimal Content-Length ".1" with 400 [0.02ms]
+(pass) rejects non-decimal Content-Length "0x10" with 400 [0.02ms]
+(pass) rejects non-decimal Content-Length "0b10" with 400 [0.01ms]
+(pass) rejects non-decimal Content-Length "0o10" with 400
+(pass) rejects non-decimal Content-Length "1e1" with 400 [0.01ms]
+(pass) rejects non-decimal Content-Length "1E1" with 400
+(pass) rejects non-decimal Content-Length "+1" with 400
+(pass) rejects non-decimal Content-Length "" with 400
+(pass) rejects non-decimal Content-Length "-1" with 400
+(pass) rejects non-decimal Content-Length "-0" with 400
+(pass) rejects non-decimal Content-Length " " with 400
+(pass) rejects non-decimal Content-Length "\t" with 400
+(pass) rejects non-decimal Content-Length "1 0" with 400 [0.02ms]
+(pass) rejects non-decimal Content-Length "1\t0" with 400 [0.01ms]
+(pass) rejects non-decimal Content-Length "1 " with 400 [0.02ms]
+(pass) rejects non-decimal Content-Length "1a" with 400 [0.01ms]
+(pass) rejects non-decimal Content-Length "NaN" with 400
+(pass) rejects non-decimal Content-Length "Infinity" with 400 [0.01ms]
+(pass) rejects non-decimal Content-Length "1, 1" with 400 [0.02ms]
+(pass) validates the entire declaration before reporting a size error [0.12ms]
+(pass) accepts decimal zero, small values and arbitrarily many leading zeros [0.41ms]
+(pass) rejects oversized decimal declarations before acquiring a reader, without rounding [0.66ms]
+(pass) large in-limit declarations buffer only actual bytes [0.18ms]
+(pass) counts actual streamed bytes with missing or understated Content-Length null [0.22ms]
+(pass) counts actual streamed bytes with missing or understated Content-Length "0" [0.03ms]
+(pass) counts actual streamed bytes with missing or understated Content-Length "1" [0.02ms]
+(pass) counts actual streamed bytes with missing or understated Content-Length "0001" [0.02ms]
+(pass) buffering helpers share declaration errors for application/json [0.54ms]
+(pass) buffering helpers share declaration errors for application/x-www-form-urlencoded [0.13ms]
+(pass) buffering helpers share declaration errors for multipart/form-data; boundary=X [0.10ms]
+(pass) buffering helpers share declaration errors for application/octet-stream [0.11ms]
+(pass) legal declared lengths preserve JSON, urlencoded and multipart helper composition [0.59ms]
+
+packages/core/test/contract/body-read-composition.test.ts:
+(pass) middleware text and handler json reads preserve the validated contract body [8.99ms]
+(pass) middleware pre-reading text preserves malformed JSON and contract validation errors [2.00ms]
+
+packages/core/test/fuzz/body.test.ts:
+(pass) fuzz: parseBody never throws a non-HttpError on random payloads [40.34ms]
+(pass) fuzz: deep JSON nesting and pathological multipart never escape as non-HttpError [1.17ms]
+
+ 99 pass
+ 0 fail
+ 1229 expect() calls
+Ran 99 tests across 5 files. [120.00ms]

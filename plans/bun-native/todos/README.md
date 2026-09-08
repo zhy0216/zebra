@@ -15,13 +15,13 @@ default_agent: codex
 | 文件 | 优先级 | 难度 | agent | 模型 / Codex 推理强度 | 一句话说明 |
 | --- | --- | --- | --- | --- | --- |
 | [01-native-json.md](01-native-json.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 验证并优化 JSON/Problem+Json 原生构造，保持调用点行为 |
-| [02-native-body.md](02-native-body.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 评估原生字节合并，保持请求体限额、取消和复制语义 |
+| [02-native-body.md](done/02-native-body.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 评估原生字节合并，保持请求体限额、取消和复制语义 |
 | [03-docs-and-validation.md](03-docs-and-validation.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 汇总采用决定、实测结果及 Bun 文档，完成整体验收 |
 
 ## 文件
 
 1. [01-native-json.md](01-native-json.md) — 依赖：无。
-2. [02-native-body.md](02-native-body.md) — 依赖：无。
+2. [02-native-body.md](done/02-native-body.md) — 依赖：无。
 3. [03-docs-and-validation.md](03-docs-and-validation.md)。
    依赖 01-native-json.md。
    依赖 02-native-body.md。
@@ -51,6 +51,12 @@ default_agent: codex
 
 ## 初始状态与启动条件
 
-三个任务均待执行。规划阶段 typecheck/lint 与 416 项定向测试通过；这是既有工作区基线，不是任务完成结果。
+初始时三个任务均待执行。规划阶段 typecheck/lint 与 416 项定向测试通过；这是既有工作区基线，不是任务完成结果。
 
 起草时存在 plan 外 6 个用户改动文件，清单见 plan，初次运行因此停止。用户随后明确要求提交并继续；这些文件已完整提交为 `4466df7a74864ffde5d83ab0dcb6824f473bbd50`，再次检查工作区只剩本目录。原阻塞已解决，单独提交本计划后自动启动，执行器从包含计划的干净 HEAD 开始。当前默认值与每个 todo 的 agent/difficulty 已保存，协调器不得重新猜测。
+
+## 当前执行状态
+
+- 01：实现与测量准备完成，等待独占测量。
+- 02：评估完成并归档；候选未采用，保留原实现。最低 Bun 的既有 peer-IP 全量测试问题由 01/03 与协调器继续处理。
+- 03：等待 01、02 集成。

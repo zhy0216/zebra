@@ -1,0 +1,194 @@
+{
+  "validatedHead": "f09288298b0bc895624aad49f159b959c168ec31",
+  "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-bun-native-02-native-body",
+  "sourceState": "Production body.ts and benchmark unchanged from the measured HEAD; only results and task records added.",
+  "checks": [
+    {
+      "version": "1.4.2",
+      "name": "targeted",
+      "runtime": "/home/ubuntu/.bun/bin/bun",
+      "command": "bun test packages/core/test/http/body.test.ts packages/core/test/http/content-length.test.ts packages/core/test/http/request-helpers.test.ts packages/core/test/contract/body-read-composition.test.ts packages/core/test/fuzz/body.test.ts",
+      "startedAtUtc": "2026-09-08T01:06:14.361784+00:00",
+      "finishedAtUtc": "2026-09-08T01:06:14.470887+00:00",
+      "exitCode": 0,
+      "log": "validation/bun-1.4.2-targeted.log",
+      "sha256": "5eff411b48a23562773c1223677ac9243656d42ef0f09b7434923baf15b3f91a"
+    },
+    {
+      "version": "1.4.2",
+      "name": "typecheck",
+      "runtime": "/home/ubuntu/.bun/bin/bun",
+      "command": "bun run typecheck",
+      "startedAtUtc": "2026-09-08T01:06:14.471660+00:00",
+      "finishedAtUtc": "2026-09-08T01:06:15.491229+00:00",
+      "exitCode": 0,
+      "log": "validation/bun-1.4.2-typecheck.log",
+      "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+    },
+    {
+      "version": "1.4.2",
+      "name": "lint",
+      "runtime": "/home/ubuntu/.bun/bin/bun",
+      "command": "bun run lint",
+      "startedAtUtc": "2026-09-08T01:06:15.491911+00:00",
+      "finishedAtUtc": "2026-09-08T01:06:15.718129+00:00",
+      "exitCode": 0,
+      "log": "validation/bun-1.4.2-lint.log",
+      "sha256": "478aaef1b943faa4b0ae1cd774ad9b7e6975bfbea99e6fad516e7dc175482296"
+    },
+    {
+      "version": "1.4.2",
+      "name": "build",
+      "runtime": "/home/ubuntu/.bun/bin/bun",
+      "command": "bun run build",
+      "startedAtUtc": "2026-09-08T01:06:15.718745+00:00",
+      "finishedAtUtc": "2026-09-08T01:06:15.756051+00:00",
+      "exitCode": 0,
+      "log": "validation/bun-1.4.2-build.log.gz",
+      "sha256": "f01f8292c89725fb35fe376f3c7c8e4e9c7e38cc92ee3fbdb7a52751871992b0",
+      "uncompressedSha256": "bd3f54b6c4fe8e295a4894529144954c27b27ba3ea9d2150afe0b24e4f1e119d",
+      "encoding": "gzip; preserves raw output bytes including trailing whitespace"
+    },
+    {
+      "version": "1.4.2",
+      "name": "test",
+      "runtime": "/home/ubuntu/.bun/bin/bun",
+      "command": "bun run test",
+      "startedAtUtc": "2026-09-08T01:06:15.756574+00:00",
+      "finishedAtUtc": "2026-09-08T01:06:31.269104+00:00",
+      "exitCode": 0,
+      "log": "validation/bun-1.4.2-test.log.gz",
+      "sha256": "211b4a82391f8120d4411650035525bbf48e290ea32cef7a20cc2845f4681955",
+      "uncompressedSha256": "e48246e3eda0be7a21048e70bdeeb5ce7b23390a85e5948285ab715c49f10d57",
+      "encoding": "gzip; preserves raw output bytes including trailing whitespace"
+    },
+    {
+      "version": "1.4.0",
+      "name": "targeted",
+      "runtime": "/tmp/zebra-bun-native-run/runtime/bun-linux-x64/bun",
+      "command": "PATH=/tmp/zebra-bun-native-run/runtime/bun-linux-x64:$PATH bun test packages/core/test/http/body.test.ts packages/core/test/http/content-length.test.ts packages/core/test/http/request-helpers.test.ts packages/core/test/contract/body-read-composition.test.ts packages/core/test/fuzz/body.test.ts",
+      "startedAtUtc": "2026-09-08T01:06:31.272748+00:00",
+      "finishedAtUtc": "2026-09-08T01:06:31.420840+00:00",
+      "exitCode": 0,
+      "log": "validation/bun-1.4.0-targeted.log",
+      "sha256": "1f154b75f3d25b71a6d0e2c00969624c6d997bd37575fb3ce96b512481acd453"
+    },
+    {
+      "version": "1.4.0",
+      "name": "typecheck",
+      "runtime": "/tmp/zebra-bun-native-run/runtime/bun-linux-x64/bun",
+      "command": "PATH=/tmp/zebra-bun-native-run/runtime/bun-linux-x64:$PATH bun run typecheck",
+      "startedAtUtc": "2026-09-08T01:06:31.421387+00:00",
+      "finishedAtUtc": "2026-09-08T01:06:32.327803+00:00",
+      "exitCode": 0,
+      "log": "validation/bun-1.4.0-typecheck.log",
+      "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+    },
+    {
+      "version": "1.4.0",
+      "name": "lint",
+      "runtime": "/tmp/zebra-bun-native-run/runtime/bun-linux-x64/bun",
+      "command": "PATH=/tmp/zebra-bun-native-run/runtime/bun-linux-x64:$PATH bun run lint",
+      "startedAtUtc": "2026-09-08T01:06:32.328312+00:00",
+      "finishedAtUtc": "2026-09-08T01:06:32.545704+00:00",
+      "exitCode": 0,
+      "log": "validation/bun-1.4.0-lint.log",
+      "sha256": "d427895f0c3d74fc6fae1c82fe9a6bad27b3c6fb22cd92d03c285362f767fea8"
+    },
+    {
+      "version": "1.4.0",
+      "name": "build",
+      "runtime": "/tmp/zebra-bun-native-run/runtime/bun-linux-x64/bun",
+      "command": "PATH=/tmp/zebra-bun-native-run/runtime/bun-linux-x64:$PATH bun run build",
+      "startedAtUtc": "2026-09-08T01:06:32.546228+00:00",
+      "finishedAtUtc": "2026-09-08T01:06:32.581839+00:00",
+      "exitCode": 0,
+      "log": "validation/bun-1.4.0-build.log.gz",
+      "sha256": "ccf7fb4c62b186ba8716686ec0e52027d606090d278a1d8b496edde4b6d745e7",
+      "uncompressedSha256": "127c3d9bfebac1005447f16347a0faf8feb71d1ea64b62e363c134f633850da7",
+      "encoding": "gzip; preserves raw output bytes including trailing whitespace"
+    },
+    {
+      "version": "1.4.0",
+      "name": "test",
+      "runtime": "/tmp/zebra-bun-native-run/runtime/bun-linux-x64/bun",
+      "command": "PATH=/tmp/zebra-bun-native-run/runtime/bun-linux-x64:$PATH bun run test",
+      "startedAtUtc": "2026-09-08T01:06:32.582324+00:00",
+      "finishedAtUtc": "2026-09-08T01:06:48.818582+00:00",
+      "exitCode": 1,
+      "log": "validation/bun-1.4.0-test.log.gz",
+      "sha256": "da0e92ee58335e167fb4685f98ea7af9fd5ec410343c71a9bf5559672471213d",
+      "uncompressedSha256": "14b306732839767ad34625a2e2bc18e2ca40939ea5d2487ba9486e9dfd92b55a",
+      "encoding": "gzip; preserves raw output bytes including trailing whitespace"
+    },
+    {
+      "version": "1.4.0",
+      "name": "dispatch-recheck",
+      "runtime": "/tmp/zebra-bun-native-run/runtime/bun-linux-x64/bun",
+      "command": "PATH=/tmp/zebra-bun-native-run/runtime/bun-linux-x64:$PATH bun test packages/core/test/app/dispatch.test.ts",
+      "startedAtUtc": "2026-09-08T01:07:17.931834+00:00",
+      "finishedAtUtc": "2026-09-08T01:07:18.000205+00:00",
+      "exitCode": 1,
+      "log": "validation/bun-1.4.0-dispatch-recheck.log",
+      "sha256": "54a266ce62d07e64eaedd510ab2eace3a3fe1cac862cb56b6bb16224c1d13017",
+      "reason": "Investigate initial full-suite peer-IP assertion failure; no source edits."
+    },
+    {
+      "version": "1.4.2",
+      "name": "peer-ip-repro",
+      "command": "bun run plans/bun-native/results/02/peer-ip-repro.ts",
+      "startedAtUtc": "2026-09-08T01:08:36.960466+00:00",
+      "finishedAtUtc": "2026-09-08T01:08:36.994150+00:00",
+      "exitCode": 0,
+      "log": "validation/bun-1.4.2-peer-ip-repro.log",
+      "sha256": "b182fd4d928de3e6422d26f677e7c21f7a803f808573405aab0810ea0aa9b943",
+      "reason": "Read-only behavior diagnostic for unchanged peer-IP failure; not a performance probe."
+    },
+    {
+      "version": "1.4.0",
+      "name": "peer-ip-repro",
+      "command": "PATH=/tmp/zebra-bun-native-run/runtime/bun-linux-x64:$PATH bun run plans/bun-native/results/02/peer-ip-repro.ts",
+      "startedAtUtc": "2026-09-08T01:08:36.994563+00:00",
+      "finishedAtUtc": "2026-09-08T01:08:37.038127+00:00",
+      "exitCode": 0,
+      "log": "validation/bun-1.4.0-peer-ip-repro.log",
+      "sha256": "b9a84868a8130cca09eefd5a61bbf243a4ec9571e01967f998ad73ef14599366",
+      "reason": "Read-only behavior diagnostic for unchanged peer-IP failure; not a performance probe."
+    }
+  ],
+  "preSlotChecks": [
+    {
+      "version": "1.4.2",
+      "name": "candidate-1.4.2",
+      "headAtExecution": "1418a2f",
+      "sourceState": "Uncommitted task tests and benchmark; only production readBody final merge temporarily replaced with Bun.concatArrayBuffers(chunks, size, true), then restored before f092882 commit.",
+      "command": "bun test packages/core/test/http/body.test.ts packages/core/test/http/content-length.test.ts packages/core/test/http/request-helpers.test.ts packages/core/test/contract/body-read-composition.test.ts packages/core/test/fuzz/body.test.ts",
+      "exitCode": 0,
+      "result": "99 pass / 0 fail; 1229 assertions",
+      "log": "validation/pre-slot-candidate-1.4.2.log",
+      "sha256": "8dcfbda2526b0cbc8573edf5578662b2e91afaab3c43d2a33821301b7d753db1"
+    },
+    {
+      "version": "1.4.0",
+      "name": "candidate-1.4.0",
+      "headAtExecution": "1418a2f",
+      "sourceState": "Uncommitted task tests and benchmark; only production readBody final merge temporarily replaced with Bun.concatArrayBuffers(chunks, size, true), then restored before f092882 commit.",
+      "command": "PATH=/tmp/zebra-bun-native-run/runtime/bun-linux-x64:$PATH bun test packages/core/test/http/body.test.ts packages/core/test/http/content-length.test.ts packages/core/test/http/request-helpers.test.ts packages/core/test/contract/body-read-composition.test.ts packages/core/test/fuzz/body.test.ts",
+      "exitCode": 0,
+      "result": "99 pass / 0 fail; 1229 assertions",
+      "log": "validation/pre-slot-candidate-1.4.0.log",
+      "sha256": "782e1cf3aad1be5205b8664ac3160117be7a6f38efe2b056863e4a24c1c9191a"
+    },
+    {
+      "version": "1.4.2",
+      "name": "candidate-typecheck",
+      "headAtExecution": "1418a2f",
+      "sourceState": "Uncommitted task tests and benchmark; only production readBody final merge temporarily replaced with Bun.concatArrayBuffers(chunks, size, true), then restored before f092882 commit.",
+      "command": "bun run typecheck",
+      "exitCode": 0,
+      "result": "typecheck passed",
+      "log": "validation/pre-slot-candidate-typecheck.log",
+      "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+    }
+  ]
+}

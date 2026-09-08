@@ -1,0 +1,62 @@
+{
+  "measuredHead": "f09288298b0bc895624aad49f159b959c168ec31",
+  "baselineHead": "1418a2f",
+  "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-bun-native-02-native-body",
+  "exclusiveSlot": "User authorized; task 01 stopped builds/tests; runs sequential without other validation workloads.",
+  "benchmarkSha256": "f627c017cf6fd574537622542cce3e99c0f7bdb7e4e73e19713edaa78b12cf88",
+  "bodySourceSha256": "52863e599fb9e2c04a89c7bab7ebc429e88db58c104c3978e9bab5dd5edad6b5",
+  "runs": [
+    {
+      "version": "1.4.2",
+      "repetition": 1,
+      "runtime": "/home/ubuntu/.bun/bin/bun",
+      "command": "NATIVE_BODY_ROUNDS=9 NATIVE_BODY_SCALE=1 bun run bench/native-body.ts > plans/bun-native/results/02/bun-1.4.2-run-1.jsonl 2> plans/bun-native/results/02/bun-1.4.2-run-1.stderr.log",
+      "startedAtUtc": "2026-09-08T01:01:35.385149+00:00",
+      "finishedAtUtc": "2026-09-08T01:01:53.274700+00:00",
+      "exitCode": 0,
+      "stdout": "bun-1.4.2-run-1.jsonl",
+      "stderr": "bun-1.4.2-run-1.stderr.log",
+      "stdoutSha256": "a11c5e97b8b0af2b764f28c8128968c103fcc3d0e2b62c383572bbd22a9cd18d",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "version": "1.4.2",
+      "repetition": 2,
+      "runtime": "/home/ubuntu/.bun/bin/bun",
+      "command": "NATIVE_BODY_ROUNDS=9 NATIVE_BODY_SCALE=1 bun run bench/native-body.ts > plans/bun-native/results/02/bun-1.4.2-run-2.jsonl 2> plans/bun-native/results/02/bun-1.4.2-run-2.stderr.log",
+      "startedAtUtc": "2026-09-08T01:01:53.277176+00:00",
+      "finishedAtUtc": "2026-09-08T01:02:10.603863+00:00",
+      "exitCode": 0,
+      "stdout": "bun-1.4.2-run-2.jsonl",
+      "stderr": "bun-1.4.2-run-2.stderr.log",
+      "stdoutSha256": "ca50c6d1f8a873af60d8caf57e114d5ffa7f0b670d00a106e52c1b3fa2152c50",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "version": "1.4.0",
+      "repetition": 1,
+      "runtime": "/tmp/zebra-bun-native-run/runtime/bun-linux-x64/bun",
+      "command": "PATH=/tmp/zebra-bun-native-run/runtime/bun-linux-x64:$PATH NATIVE_BODY_ROUNDS=9 NATIVE_BODY_SCALE=1 bun run bench/native-body.ts > plans/bun-native/results/02/bun-1.4.0-run-1.jsonl 2> plans/bun-native/results/02/bun-1.4.0-run-1.stderr.log",
+      "startedAtUtc": "2026-09-08T01:02:10.606616+00:00",
+      "finishedAtUtc": "2026-09-08T01:02:30.586534+00:00",
+      "exitCode": 0,
+      "stdout": "bun-1.4.0-run-1.jsonl",
+      "stderr": "bun-1.4.0-run-1.stderr.log",
+      "stdoutSha256": "4ee2b2007a4484b5c3a7be5854f43edb841802d5feadf9998246bc136afb4c4b",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "version": "1.4.0",
+      "repetition": 2,
+      "runtime": "/tmp/zebra-bun-native-run/runtime/bun-linux-x64/bun",
+      "command": "PATH=/tmp/zebra-bun-native-run/runtime/bun-linux-x64:$PATH NATIVE_BODY_ROUNDS=9 NATIVE_BODY_SCALE=1 bun run bench/native-body.ts > plans/bun-native/results/02/bun-1.4.0-run-2.jsonl 2> plans/bun-native/results/02/bun-1.4.0-run-2.stderr.log",
+      "startedAtUtc": "2026-09-08T01:02:30.589885+00:00",
+      "finishedAtUtc": "2026-09-08T01:02:48.500321+00:00",
+      "exitCode": 0,
+      "stdout": "bun-1.4.0-run-2.jsonl",
+      "stderr": "bun-1.4.0-run-2.stderr.log",
+      "stdoutSha256": "8c7676104848bb2292192d3c090f3301e37b0ee90dea3bfaf6e35c1f1e8810a3",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}
