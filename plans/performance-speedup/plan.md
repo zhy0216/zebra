@@ -146,3 +146,60 @@ Run the existing `bun run bench:check` unchanged and record its actual result. A
 - A cached DI fast path can hide a cycle, stale binding or cached falsy value if placed incorrectly. Cover cold/cached/mutable/disposal states explicitly.
 - Shared-host load and the existing machine-specific HTTP baseline limit numerical certainty. Keep all rounds, identify noise, and distinguish local component gains from HTTP gains.
 - Plan/queue commit and local executor integration are authorized by the selected workflow. User-owned changes, if they appear before launch, must be left untouched and reported under auto-dev's clean-worktree rule.
+
+## 执行结果
+
+The queue is complete as a rejected/inconclusive evaluation. **No speedup was
+achieved and no production optimization was retained.** All 80 production files
+remain byte-identical to `a856cab47d4fd3102e976ce7a70166837837eea2`. The new absolute
+source harness, 66 compatibility regressions, candidate patches and complete
+measurement/check evidence are retained.
+
+| Todo / archived file | Integrated commit | Agent / model / effort |
+| --- | --- | --- |
+| [01-hot-path-baseline.md](todos/done/01-hot-path-baseline.md) | `609c1d298393c49b49e6c11537e55437c5f6a89f` | Codex / gpt-6-astra / max |
+| [02-router-lookup.md](todos/done/02-router-lookup.md) | `3b63455bb6a122203f5c4ec1596f46258312f706` | Codex / gpt-6-astra / max |
+| [03-request-metadata.md](todos/done/03-request-metadata.md) | `01a5ca69330aa0f52dbd7f7d1513a9b77fb7e1d6` | Codex / gpt-6-astra / xhigh |
+| [04-di-cache-hits.md](todos/done/04-di-cache-hits.md) | `d04aeafda1a3379e5ad5e06c742d0e3923c03034` | Codex / gpt-6-astra / max |
+| [05-dispatch-pipeline.md](todos/done/05-dispatch-pipeline.md) | `5530f7678a9df0c92fcdf9e99c268408c913a439` | Codex / gpt-6-astra / max |
+| [06-results-and-validation.md](todos/done/06-results-and-validation.md) | `534b9d1a0ae1eacd1f7e66de9c75d059b8a74285` | Codex / gpt-6-astra / xhigh |
+
+Execution started from committed plan/queue `f3263289dd02131ed92751e72fb914df7d8f62ac`.
+01 was integrated first; 02–05 used separate Herdr worktrees and disjoint file
+ownership, then integrated serially in README order; 06 followed all four.
+Original workers rebased and resolved queue README conflicts, then the coordinator
+independently checked and fast-forward merged each one-commit task. Actual routing
+above preserves the saved Codex defaults. All six todos are archived under `done/`.
+
+The integrated suite passed **1382/1382 on both Bun 1.4.2 and isolated Bun 1.4.0**;
+core coverage is **98.84%**. Build, package verification, harness correctness,
+browser bundles and final documentation/type/style checks passed. Independent
+coordinator evidence, including one store-test failure and its justified passing
+retry, is in [results/coordinator](results/coordinator/README.md). Earlier task
+store failures remain recorded; baseline-focused runs passed and the exact cause
+remains unconfirmed. No unrelated store code or test was changed.
+
+The Promise.resolve compose shortcut failed two compatibility cases on both
+runtimes and was rejected. Router, metadata, guarded DI and dispatch-wrapper
+candidates were excluded because their bounded controls could not obtain eligible
+minimum-runtime evidence. Candidate and final attempts produced zero timed rows;
+there is no component/HTTP/allocation gain or measured nonregression claim.
+Task 01's eligible current-runtime A/A is a control, not a speedup. Its historical
+`bench:check` actually failed 8/8 scenarios (exit 1, noisy); final historical
+windows timed out before launch and are **NOT RUN**. Baseline/thresholds, original
+scenarios, dependencies and minimum runtime are unchanged.
+
+[Final results and limitations](results/06/REPORT.md) and
+[reproduction instructions](results/06/REPRODUCE.md) distinguish rejected,
+inconclusive and unmeasured cases. No implementation todo remains blocked;
+performance adoption and numerical benefit remain unsupported and require a
+future evaluation with eligible measurements. No favorable-round selection or
+unbounded retries were used. Queue measurements were serialized against its
+checks/builds; unrelated outside work was left untouched.
+
+All six task agents/workspaces/worktrees/local branches were removed after safe
+integration. The coordinator retained the shared baseline archive and isolated
+Bun 1.4.0 through task 06, archived integration evidence, then removed those
+resources. Cleanup and per-task validation records are committed under
+`results/coordinator/`. A separate Conventional Commit records this closeout on
+`master`; it introduces no production change or remote operation.

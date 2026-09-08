@@ -1,0 +1,55 @@
+{
+  "at": "2026-09-08T08:59:06.345453+00:00",
+  "removed_temporary_directories": [
+    "/tmp/zebra-performance-speedup-01",
+    "/tmp/zebra-performance-speedup-02-integration-20260908T075647Z-30i3guze",
+    "/tmp/zebra-performance-speedup-03-integration-3b63455-l9taxrrq",
+    "/tmp/zebra-performance-speedup-04-integration-r8dmmrsf",
+    "/tmp/zebra-performance-speedup-05-integration-d04aeaf",
+    "/tmp/zebra-performance-speedup-06-integration-5530f767-m4_qge9r",
+    "/tmp/zebra-performance-speedup-f3263289"
+  ],
+  "task_resources_removed": [
+    {
+      "task": "01",
+      "workspace": "wF",
+      "worktree": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+      "branch": "herdr/plan-performance-speedup-01-baseline"
+    },
+    {
+      "task": "02",
+      "workspace": "wK",
+      "worktree": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-02-router",
+      "branch": "herdr/plan-performance-speedup-02-router"
+    },
+    {
+      "task": "03",
+      "workspace": "wM",
+      "worktree": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-03-metadata",
+      "branch": "herdr/plan-performance-speedup-03-metadata"
+    },
+    {
+      "task": "04",
+      "workspace": "wN",
+      "worktree": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-04-di",
+      "branch": "herdr/plan-performance-speedup-04-di"
+    },
+    {
+      "task": "05",
+      "workspace": "wP",
+      "worktree": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-05-dispatch",
+      "branch": "herdr/plan-performance-speedup-05-dispatch"
+    },
+    {
+      "task": "06",
+      "workspace": "w1A",
+      "worktree": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-06-results",
+      "branch": "herdr/plan-performance-speedup-06-results"
+    }
+  ],
+  "remaining_worktrees": "/home/ubuntu/workspace/zebra  534b9d1 [master]\n",
+  "remaining_task_branches": "",
+  "coordinator_temporary_directory": "/tmp/zebra-performance-speedup-f3263289",
+  "coordinator_temporary_cleanup": "completed after closeout checks and evidence archival",
+  "completed_at": "2026-09-08T09:03:36.681874+00:00"
+}

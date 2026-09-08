@@ -14,7 +14,7 @@ Resolved difficulty mapping: hard = `codex / gpt-6-astra / max`; medium = `codex
 
 | File | Priority | Difficulty | Agent | Model / Codex reasoning effort | Purpose |
 | --- | --- | --- | --- | --- | --- |
-| [01-hot-path-baseline.md](done/01-hot-path-baseline.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Completed harness/baseline; awaiting coordinator integration |
+| [01-hot-path-baseline.md](done/01-hot-path-baseline.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Integrated harness/baseline; original gate failure retained |
 | [02-router-lookup.md](done/02-router-lookup.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Evaluated; static index excluded because minimum-runtime performance evidence is inconclusive |
 | [03-request-metadata.md](done/03-request-metadata.md) | P2 | medium | codex (inherits default) | gpt-6-astra / xhigh | Completed inconclusive evaluation; production candidate excluded, compatibility tests retained |
 | [04-di-cache-hits.md](done/04-di-cache-hits.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Evaluated; candidate excluded after bounded quiet-window failures |
@@ -23,12 +23,12 @@ Resolved difficulty mapping: hard = `codex / gpt-6-astra / max`; medium = `codex
 
 ## 文件
 
-1. [01-hot-path-baseline.md](done/01-hot-path-baseline.md) — completed; coordinator must integrate before 02–05 start.
+1. [01-hot-path-baseline.md](done/01-hot-path-baseline.md) — integrated before 02–05 launched; harness and baseline evaluation complete.
 2. [02-router-lookup.md](done/02-router-lookup.md) — completed evaluation; production candidate excluded, compatibility tests and evidence retained.
 3. [03-request-metadata.md](done/03-request-metadata.md) — completed evaluation; no production optimization adopted.
 4. [04-di-cache-hits.md](done/04-di-cache-hits.md) — completed evaluation; no production optimization retained.
-5. [05-dispatch-pipeline.md](done/05-dispatch-pipeline.md) — evaluation complete; rejected/inconclusive, awaiting coordinator integration.
-6. [06-results-and-validation.md](done/06-results-and-validation.md) — completed integrated validation and outcome documentation; coordinator review/integration pending.
+5. [05-dispatch-pipeline.md](done/05-dispatch-pipeline.md) — integrated evaluation; rejected/inconclusive, no production change.
+6. [06-results-and-validation.md](done/06-results-and-validation.md) — integrated final validation and outcome documentation; resources cleaned.
 
 ## Parallel execution and ownership
 
@@ -47,74 +47,25 @@ Use task 01's same-machine A/A and paired before/after protocol. Adoption requir
 
 Run each todo's focused checks plus typecheck/lint/diff checks. Run the plan's full integrated gates after final code changes; do not repeat passing gates without new changes, failures, or unresolved concerns. No deployment, publication, dependency upgrade, or remote push is part of this queue.
 
-## Task 01 status
+## Final execution status
 
-01 is complete in its dedicated branch and archived under `done/`; coordinator
-integration is pending. [Results/01](../results/01/README.md) records the committed
-harness, all raw controls/checks, observed variability and the explicit missing
-minimum-runtime envelope. A bounded prospective minimum-runtime A/A allowance
-applies before candidate timing; noisy samples are never adopted as an envelope.
-The unchanged historical gate failed all eight scenarios and remains unchanged.
-02–05 may start only after 01 is integrated. Default and task preferences above
-persist across session changes; other task statuses are unchanged.
+All six tasks are reviewed, integrated into local `master` and archived under
+`done/`. All task agents, workspaces, worktrees and local branches are cleaned up.
+The shared baseline archive and isolated Bun 1.4.0 were retained through task 06,
+then removed after durable evidence archival. Saved routing above is unchanged.
 
-## Task 02 status
+**No speedup was achieved.** All production source matches the original baseline.
+02–05 retain 66 regression tests and exact evaluation evidence. Compose was rejected
+for behavior; the other candidates are performance-inconclusive. Both final paired
+comparisons and both final historical windows timed out before launching work.
+The original task-01 historical gate remains an actual 8/8 failure, not a pass.
 
-02 is evaluated and archived under `done/`; the static index is **excluded**.
-Both bounded Bun 1.4.0 router controls timed out without any timed rounds, so
-minimum-runtime adoption remains unsupported. Production is restored to the
-planning baseline. Five compatibility/fuzz tests and all check/load/patch evidence
-are retained in [results/02](../results/02/README.md). Both-runtime candidate full
-gates and final-source focused/harness/type/lint checks passed. No speedup is
-claimed. Coordinator integration is pending; all other task states and saved
-agent/model preferences are unchanged.
+Integrated tests pass 1382/1382 on both runtimes, with 98.84% core coverage and
+passing build/package/harness/browser/documentation/type/style gates. Known store
+assertion failures and subsequent passes are retained without claiming a reproduced
+baseline failure or confirmed cause. There are no pending implementation todos;
+performance evidence remains an explicit limitation.
 
-## Task 03 status
-
-03 is complete under the plan's inconclusive-candidate fallback and archived in
-`done/`. [Results/03](../results/03/README.md) retains nine compatibility tests,
-the exact rejected candidate patch/source, all bounded quiet-window attempts,
-and validation on both Bun runtimes. Required performance evidence could not be
-collected under outside load; production is unchanged and no speedup is claimed.
-Coordinator integration remains pending and explicitly coordinator-triggered.
-Other task states and saved agent routing are unchanged.
-
-## Task 04 status
-
-04 is complete as a rejected evaluation; [results/04](../results/04/README.md)
-retains the guarded candidate patch, 25 behavioral tests and all evidence.
-Both allowed minimum-runtime DI controls and the already-active current-runtime
-attempt ended normally as quiet timeouts. Performance adoption is inconclusive;
-production is restored to the baseline and remaining comparisons are unmeasured.
-Final focused/harness/type/style checks pass on both runtimes. The report retains
-the unrelated current-runtime store-test failures and passing unchanged-baseline
-focused reproduction without claiming a confirmed baseline failure. Integration
-is coordinator-triggered; all other task states and saved routing are unchanged.
-
-## Task 05 status
-
-05 is evaluated and archived under `done/`; coordinator integration is pending.
-[Results/05](../results/05/README.md) records the middleware compatibility rejection,
-two exhausted minimum-runtime dispatch quiet-window attempts, restored production
-source, 27 added regression tests, and passing final gates on Bun 1.4.2 / 1.4.0.
-No dispatch or HTTP speedup is claimed; candidate/HTTP timing remains unmeasured.
-This documented rejection satisfies the evaluation dependency for 06 after
-coordinator integration. Other task statuses and saved Codex routing are unchanged.
-
-
-## Task 06 status
-
-06 is complete under the documented rejected/inconclusive outcome and archived
-under `done/`. [Results/06](../results/06/REPORT.md) verifies all 80 production
-files equal `a856cab`; no speedup was achieved. Full integrated tests passed
-1382/1382 on both runtimes, including all 66 retained regressions (current
-coordinator run reused; minimum full suite actually run here). Remaining
-repository, coverage, browser, final documentation and style checks pass.
-Each runtime's one final all-suite comparison and separate historical window
-timed out with no workload launch; performance is unmeasured and both final
-historical gates are NOT RUN. Task 01's actual 8/8 historical failure, task 05's
-both-runtime compose rejection, and the intermittent unchanged-store failures
-remain recorded; a baseline store failure was not reproduced and its cause is
-unconfirmed. Only 06's status is changed. Other historical pending snapshots and
-saved Codex routing remain for coordinator reconciliation; final integration and
-resource cleanup remain coordinator-owned.
+See [execution commits and actual routing](../plan.md#执行结果),
+[independent coordinator validation and cleanup](../results/coordinator/README.md),
+and [final outcomes and reproduction](../results/06/REPORT.md).

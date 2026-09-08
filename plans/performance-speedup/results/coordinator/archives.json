@@ -1,0 +1,821 @@
+[
+  {
+    "archive": "integration-609c1d2.tar.gz",
+    "source": "/tmp/zebra-performance-speedup-01/integration-609c1d2",
+    "sha256": "b81254a6c93dcd8490db716f5ee255883f1c3990135990914282f7c68a9ca6c0",
+    "files": [
+      {
+        "path": "140-00.log",
+        "sha256": "9c0b3b4b1ae99b99ee31e1ab9b5b6d514bc481ba43fdd1dc4eaeb32027b0c63f"
+      },
+      {
+        "path": "140-01.log",
+        "sha256": "969d09fa89a0e5589801ed3da28e44d350269eb61a69dced67c9e5b170a36cb2"
+      },
+      {
+        "path": "140-02.log",
+        "sha256": "682ac84ddcb339ee74c145764ecdad01ec83989d5744472a9f5f9e014908e0a6"
+      },
+      {
+        "path": "140-03.log",
+        "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+      },
+      {
+        "path": "140-04.log",
+        "sha256": "d37b0ec7f071d0430ce54cc96d3dc7d2a8ea1d19d188e03767ef22e1672eac6e"
+      },
+      {
+        "path": "140-05.log",
+        "sha256": "882d7fdf96b11f5aeaeeb82bd3c847e2ad34f39d94c64f891ba93e705695e413"
+      },
+      {
+        "path": "142-00.log",
+        "sha256": "379502d6dfbe9e441b0d9100bb32ba6518818711dcc9c041b19e375bf45cfd46"
+      },
+      {
+        "path": "142-01.log",
+        "sha256": "6fdbf12e4740b489c03df7c047939b6818e4a96534df398d0d6b014d4578f823"
+      },
+      {
+        "path": "142-02.log",
+        "sha256": "c6c20876954a927bcc0d9cfba06c48ce43c912840fe42cb0d28710e4c854dd72"
+      },
+      {
+        "path": "142-03.log",
+        "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+      },
+      {
+        "path": "142-04.log",
+        "sha256": "191bd8733136323d298f3770edca2037aebe570709dda4d16c413da344c95cf5"
+      },
+      {
+        "path": "142-05.log",
+        "sha256": "87411e812dc59403896bfbb421adcefcf121b11e4aae3c1dad64cf6b611d194d"
+      },
+      {
+        "path": "checks.jsonl",
+        "sha256": "ceb6428bc421a087af5280502b081a8e26c9ba1fd09a7227440f1353c399592e"
+      },
+      {
+        "path": "git-00.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "git-01.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "git-02.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "validate.py",
+        "sha256": "4374ddc281659a525ba331d5d366efd37188a1a2acd1f1d794b5c625260e6989"
+      }
+    ]
+  },
+  {
+    "archive": "zebra-performance-speedup-02-integration-20260908T075647Z-30i3guze.tar.gz",
+    "source": "/tmp/zebra-performance-speedup-02-integration-20260908T075647Z-30i3guze",
+    "sha256": "5af8fde6f7599579affd560b705413f2848979c60816a844a408eced1a52604c",
+    "files": [
+      {
+        "path": "1.4.0-commit-diff-check.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "1.4.0-diff-check.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "1.4.0-focused.log",
+        "sha256": "3784fab8eca22ad975779b9107ce0f85d6d6925984cb4db99649528c623264b5"
+      },
+      {
+        "path": "1.4.0-harness-check.log",
+        "sha256": "e1f34884e9edc4022a2dc7096c15d959ccb4ef5bec564d633b0fee179fdcdf1a"
+      },
+      {
+        "path": "1.4.0-lint.log",
+        "sha256": "75d074a415503bba4023775b857d4dae28b2c4b19498c82e52ebc52961a1746f"
+      },
+      {
+        "path": "1.4.0-runtime.log",
+        "sha256": "34dfcafc0c18cc0e01e83f2d9535e581c8b814a3e5c6c1ee167c446019e5016e"
+      },
+      {
+        "path": "1.4.0-typecheck.log",
+        "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+      },
+      {
+        "path": "1.4.2-commit-diff-check.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "1.4.2-diff-check.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "1.4.2-focused.log",
+        "sha256": "aaf91d0f7d300ffeed2613804f1df4d1923af5ba7923e3a5e7a7da3a1acbe5ae"
+      },
+      {
+        "path": "1.4.2-harness-check.log",
+        "sha256": "250bd0b0e222f748f18ddd1bf0d97171429c2f86c52b5fa8879e69bb36384bfc"
+      },
+      {
+        "path": "1.4.2-lint.log",
+        "sha256": "398af9d037bdb941fb9e2e282f0f0982f618c7df8ac6002d00af6fe9167b44ac"
+      },
+      {
+        "path": "1.4.2-runtime.log",
+        "sha256": "0144f95436c279b9ee612aeb90377c5ada54a734f021bebc45229827634e0a17"
+      },
+      {
+        "path": "1.4.2-typecheck.log",
+        "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+      },
+      {
+        "path": "checks.jsonl",
+        "sha256": "c73255bbe374c16280b97eeb72ea46068e503ab3169938e1ab1ba0bd9fee361b"
+      },
+      {
+        "path": "checks.py",
+        "sha256": "d58bc6945c5e9d51eabbe9c0e359b71a12a3a1e8a1b17eddfb411734044eed46"
+      },
+      {
+        "path": "coordinator-message.log",
+        "sha256": "26df25c490eacf750530a04cc44571a20b5bd222f872e9cec3883b2f3413df5c"
+      },
+      {
+        "path": "coordinator-message.txt",
+        "sha256": "9cae18b126fc19c4304d5be5d62a68b760e4328bb358c1f4d7ece9bb27998c14"
+      },
+      {
+        "path": "harness-summary.json",
+        "sha256": "d4200d993301c39d90ff7923a8fae53ee1bdaae4d4a7d5d831478b53c35a987c"
+      },
+      {
+        "path": "initial-state.json",
+        "sha256": "7d41eb2d4dae14742b23bc49d40baeaa45e83d2623e190febf7b572679c9d888"
+      },
+      {
+        "path": "integration-result.json",
+        "sha256": "2a6cda0d0bb1d627ccae3d4b4f1d97a60ef356d2e4feea3978788c74e2042b28"
+      },
+      {
+        "path": "rebase-result.json",
+        "sha256": "7f7467304e17c6f4e0815d52f6d13069c18dbe12ddf34f5f596b00d6c90c0d66"
+      },
+      {
+        "path": "rebase.log",
+        "sha256": "aa668b66615b436c94d3b4f31d0b155f39611e18af7655f4512ad9355fad7de1"
+      },
+      {
+        "path": "source-baseline-equality.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  },
+  {
+    "archive": "zebra-performance-speedup-03-integration-3b63455-l9taxrrq.tar.gz",
+    "source": "/tmp/zebra-performance-speedup-03-integration-3b63455-l9taxrrq",
+    "sha256": "bf12b5da1217ae23f241774e383688970a51f9259eee6ade714cf45e589abd95",
+    "files": [
+      {
+        "path": "README-conflict.diff",
+        "sha256": "9f8f6ceaf2061aa7b51e2143054cac2420928366e82f90a3b68596111ea93d81"
+      },
+      {
+        "path": "REPORT.md",
+        "sha256": "42c06a22d9e91d95c9b3e874de1191ac8fb03fd4a7bc5b3045fc5f5835deeff1"
+      },
+      {
+        "path": "before.json",
+        "sha256": "2529a15ff9b77cc43ff45b2fe70ad5f7519f5beddcbce463d5a09cd67691ace6"
+      },
+      {
+        "path": "check-exits.json",
+        "sha256": "30507d9cbd41dc353e334d5b1df367ffc14f92b303a3ab81c28ca21cbeb6220f"
+      },
+      {
+        "path": "committed-diff.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "integration-140-00.log.gz",
+        "sha256": "445a72c36e641c1fb208add933d7f2c8e2b1fd7a132253af12a242daed60eda8"
+      },
+      {
+        "path": "integration-140-01.log.gz",
+        "sha256": "3f8dea3ae7b3a74e97174de28b20fb612ba3b0eecd7e05be93f8388f8963919f"
+      },
+      {
+        "path": "integration-140-02.log.gz",
+        "sha256": "95709dd8dc50a061ba6deca428761b3be62d87f4376afdbce728af908feadc9e"
+      },
+      {
+        "path": "integration-140-03.log.gz",
+        "sha256": "9aebaeedf15677a26326e8a286ccf044aa8b2c94956bc27ed2c0b3b1e789c071"
+      },
+      {
+        "path": "integration-140-04.log.gz",
+        "sha256": "847e0a6c3af99fe5faff16528956ac707b306dc4eb005a50802e10765be4108f"
+      },
+      {
+        "path": "integration-140-05.log.gz",
+        "sha256": "c3ec4bc30b8420268b4428238d493f0abf8b72993aa729754a0a95210c436f7f"
+      },
+      {
+        "path": "integration-140-06.log.gz",
+        "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+      },
+      {
+        "path": "integration-140-commands.jsonl",
+        "sha256": "df684864d37d5353586f693a487677424dfb977f7d16292bc1ba38cc2a806bb6"
+      },
+      {
+        "path": "integration-142-00.log.gz",
+        "sha256": "f39dd625e9db5957e52e2c5a610a4266e586b673a4baeaa01d42771b9231482d"
+      },
+      {
+        "path": "integration-142-01.log.gz",
+        "sha256": "b286c1a5dadab246c93a4a4114198400b631728d1ec5a5a5ebb2bd3ca5796cda"
+      },
+      {
+        "path": "integration-142-02.log.gz",
+        "sha256": "c322a4b2f1330454963dd9be4d3e7df55690f125dd8e2df69736cbdab52cb9f9"
+      },
+      {
+        "path": "integration-142-03.log.gz",
+        "sha256": "04bd84ce863b19cfacb089f40412a71fa3d62c146b4f4a9a86ec115b2357b499"
+      },
+      {
+        "path": "integration-142-04.log.gz",
+        "sha256": "847e0a6c3af99fe5faff16528956ac707b306dc4eb005a50802e10765be4108f"
+      },
+      {
+        "path": "integration-142-05.log.gz",
+        "sha256": "e3de1545f475de0aeb9545ede65f33c715228deddf012ac289fd9f3f1dc7de9a"
+      },
+      {
+        "path": "integration-142-06.log.gz",
+        "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+      },
+      {
+        "path": "integration-142-commands.jsonl",
+        "sha256": "692fcef2a8ba9c20e798046995d97cf69a8dd553ccab6f0a57e7be8c9bf47d90"
+      },
+      {
+        "path": "rebase-audit.json",
+        "sha256": "1341657095f8949a2a07356305aa3c42f0383ce5083be44f640a7792b6333aa6"
+      },
+      {
+        "path": "rebase-continue.log",
+        "sha256": "61ca423f7236e33c7b7c3e287e0cd07951193b23d7d6342d8fdacf21fdf59f6b"
+      },
+      {
+        "path": "run-checks.py",
+        "sha256": "371ea2e920dfb6413a5a1db25f49fdfd39d8771aec151999c1f54f2c299259f0"
+      },
+      {
+        "path": "runner.log",
+        "sha256": "0878b33326eb7d9d382b3392cb1a0fda48e6f5ea6b7203908947d4f7e2e1ff5d"
+      },
+      {
+        "path": "store-failure/REPORT.md",
+        "sha256": "c40e8d712c012bd5327a6428b43935ede41c3bd77471088ea459f5fc8bb51514"
+      },
+      {
+        "path": "store-failure/baseline-store.log",
+        "sha256": "819bfd7de26cd5a710b5264345974a48e6fcb8c2878ce989bee9abb81e3ee520"
+      },
+      {
+        "path": "store-failure/byte-audit.json",
+        "sha256": "6e7be7acadb4bd07f573d32494260269d08bc06b8e93c678f9f2971adceee1d0"
+      },
+      {
+        "path": "store-failure/commands.json",
+        "sha256": "bc9449e8fddbee103bc010fbd7c3e4ab4cacc972bce0822abb5bed653b22791c"
+      },
+      {
+        "path": "store-failure/coordinator-full-test.log",
+        "sha256": "ac91a0deecb203b16d68aad47a2cd6a86e8e3911a05f471bec73c2b99d01e2d6"
+      },
+      {
+        "path": "store-failure/final-audit.json",
+        "sha256": "6e573c5fb8e180c62fc74e6a454edb8e36b4e6f606bcc515370fdfbb1de2adcb"
+      },
+      {
+        "path": "store-failure/run-store.py",
+        "sha256": "3f21dd0ae6eddeb3a9949234a07589acf2ad521f9c77f8acf91d74dfe1b162b8"
+      },
+      {
+        "path": "store-failure/runner.log",
+        "sha256": "1c579adb55a80a7ca047d76b45ccc750e0a2be6775c9a4daf9245be1cf063137"
+      },
+      {
+        "path": "store-failure/task-store.log",
+        "sha256": "8f443d1c91800a62a463f7397c09a9e2f11ab3537b3a5451b2dc3ab397d677bf"
+      },
+      {
+        "path": "store-failure/wrapper.json",
+        "sha256": "4487ac563035a10c8e612623d1d5e2fb2f93cff41f186d12cc8202d88f42722d"
+      }
+    ]
+  },
+  {
+    "archive": "zebra-performance-speedup-04-integration-r8dmmrsf.tar.gz",
+    "source": "/tmp/zebra-performance-speedup-04-integration-r8dmmrsf",
+    "sha256": "8bc2dc8c6ad9f09f55c9a348e5b7e193d7b2a0643b5a711a13b362cee9ffa4ef",
+    "files": [
+      {
+        "path": "README.md",
+        "sha256": "d3015f4ff432050bd7ee063a33aa2b0be99968d0acf33e4ec1efc5b97a8be014"
+      },
+      {
+        "path": "allocation-result.json",
+        "sha256": "77a47ef1c81ea3b13d1ec1b0b86e87b9ad150dc9367699288940a1a35a8827fa"
+      },
+      {
+        "path": "allocation-start.json",
+        "sha256": "40185d00146240eff6f46efe59b3851ff42c826daa5224d9b6c465d786604f30"
+      },
+      {
+        "path": "allocation.log",
+        "sha256": "207190809b15145d23f3d8d6fe6bb8893eca4bba01e7670071fe43eb74ed89ee"
+      },
+      {
+        "path": "before.json",
+        "sha256": "29d4084425669e91d6e3ccb59b5ff239f75bda5827c772733976bc10a46ce1eb"
+      },
+      {
+        "path": "check-result.json",
+        "sha256": "ae367b7129b19ec1e4103f17e007fa5b82336a235647bb90540e8cd298eb15ee"
+      },
+      {
+        "path": "commit-diff.log.gz",
+        "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+      },
+      {
+        "path": "final-audit.json",
+        "sha256": "49a28b3884bd08b4c22a9106dc8d972f9254a34fde6f66e4362250e96a1b232f"
+      },
+      {
+        "path": "integration-140-01.log.gz",
+        "sha256": "b81b5bc84d031f5b6bb220837516390fa34e9456d4780aaacb246c8d6fdd7510"
+      },
+      {
+        "path": "integration-140-02.log.gz",
+        "sha256": "3a9c0b9b1f5e597ed8a8b967741941e81758e5ba5d875b07396b960e2c3c84d5"
+      },
+      {
+        "path": "integration-140-03.log.gz",
+        "sha256": "847e0a6c3af99fe5faff16528956ac707b306dc4eb005a50802e10765be4108f"
+      },
+      {
+        "path": "integration-140-04.log.gz",
+        "sha256": "4dd3cb208eb240b996fffdeae761b50c723b9d0676dad2f65857daaba98f751e"
+      },
+      {
+        "path": "integration-140-05.log.gz",
+        "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+      },
+      {
+        "path": "integration-140.jsonl",
+        "sha256": "b3eb0fa2d918cf86fca10c244abaadf3834c6a6d0157b8dbac6b82bc47252114"
+      },
+      {
+        "path": "integration-142-01.log.gz",
+        "sha256": "25d6516bd78c4dc647e55c637c20a15dc771c19b7d4c9f0afc15542d5d439614"
+      },
+      {
+        "path": "integration-142-02.log.gz",
+        "sha256": "0313909e1590d150b4fdf44178d61fab6d82b1301a89b64727b1c838313ccd9b"
+      },
+      {
+        "path": "integration-142-03.log.gz",
+        "sha256": "847e0a6c3af99fe5faff16528956ac707b306dc4eb005a50802e10765be4108f"
+      },
+      {
+        "path": "integration-142-04.log.gz",
+        "sha256": "fd40888841090f21e6da191bafdec33869195d8907de21678bc4786f4f2f266c"
+      },
+      {
+        "path": "integration-142-05.log.gz",
+        "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+      },
+      {
+        "path": "integration-142.jsonl",
+        "sha256": "4a1ad69c55cf7fd2105550085d3e6a4a66cfc7066849ffa8478d4dec3b7e5c8c"
+      },
+      {
+        "path": "readme-conflicted.md",
+        "sha256": "5201c2da69b2ebb707af6661f72147a69c9a94ead0746cfa16ad51991572e282"
+      },
+      {
+        "path": "readme-original.md",
+        "sha256": "ddaf1580b418db1e3efd2eae0162ff5eddfee92c76607f6acabc48f1b729bcd5"
+      },
+      {
+        "path": "readme-resolved.md",
+        "sha256": "1c41b27c24f36552327cdd84d9509fbaee8cf7bf4a850843c8c4143f4e4a0776"
+      },
+      {
+        "path": "readme-target.md",
+        "sha256": "5fc8244214a532d8981c5663bd51aca3655f761228cadca899dd44e1eff9a7d7"
+      },
+      {
+        "path": "rebase-continue.json",
+        "sha256": "f23547ad2b5873a526db47185bd359a095fc0297a8645be95ec17af8f7221907"
+      },
+      {
+        "path": "rebase-continue.log",
+        "sha256": "dbcb75ac71381a24c94f899d00dc7ebb26ecaa4b220892424485c1c8ac1899da"
+      },
+      {
+        "path": "rebase-start.json",
+        "sha256": "1a99f9d7fc107f7b15ee30921e89a95dc1c18aeef3cb57275a2fd41be315fba0"
+      },
+      {
+        "path": "rebase-start.log",
+        "sha256": "9cc31ef8651e8a2c45ff93d16036e848198a953d86d9e3869c746904b39d624c"
+      },
+      {
+        "path": "run-checks.py",
+        "sha256": "ea80693f9b10cb7d662e160a9aabcf238e0ddf175057c1b4b8b7e6b3a7ec6790"
+      }
+    ]
+  },
+  {
+    "archive": "zebra-performance-speedup-05-integration-d04aeaf.tar.gz",
+    "source": "/tmp/zebra-performance-speedup-05-integration-d04aeaf",
+    "sha256": "9d4ec7bb9d31cc101331bac36e219f61913662d5e1e14bc8c43b345ed83eab71",
+    "files": [
+      {
+        "path": "checks.jsonl",
+        "sha256": "31d085da86570c0ac4c737d2af913d08af715dbb1db2cc757d97878585b321c0"
+      },
+      {
+        "path": "checks.py",
+        "sha256": "2f8db391e74ddd3e2fbb48cbc7767d6d0115e05fc6b675f3abe280d7950003f1"
+      },
+      {
+        "path": "diff-140.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "diff-142.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "focused-140.log",
+        "sha256": "46974314becd6380c716b451669d787dea646c07af9bb3537ff6069dc37b739a"
+      },
+      {
+        "path": "focused-142.log",
+        "sha256": "3105e9d0a1f0d92ec5bcade2ba8fe76039417600c0e6631571e7bb288d6c2ea0"
+      },
+      {
+        "path": "harness-140.log",
+        "sha256": "6dfcf16c6fdc6ef17b73479fe3d276811d530d61fac2ba37673af1a00fc2fd0c"
+      },
+      {
+        "path": "harness-142.log",
+        "sha256": "0ccbb2275c86b48db9e78ff2cd514f6012ae907018befd3dc20ec106ac021692"
+      },
+      {
+        "path": "lint-140.log",
+        "sha256": "8fa7dffbc4920d5bbfcfc99d283bd44654d2fc452df4f9ff871f0a21302fa951"
+      },
+      {
+        "path": "lint-142.log",
+        "sha256": "8cc0c7921bbd82db5036f4850681aeb4022b0ad8bcafbf812c3a6868eb73a806"
+      },
+      {
+        "path": "preservation.json",
+        "sha256": "f7e6f7fa41fe936dd28c3482cbc14c09c54f17d07d32cbf0ce6e583431c221f5"
+      },
+      {
+        "path": "readme-integrated.md",
+        "sha256": "1c41b27c24f36552327cdd84d9509fbaee8cf7bf4a850843c8c4143f4e4a0776"
+      },
+      {
+        "path": "readme-resolution.json",
+        "sha256": "38009eb6fa4c1f1e4493a3706dba5d182b4018797dd62eff4a5223e587e888aa"
+      },
+      {
+        "path": "readme-task05.md",
+        "sha256": "5aa93325e4d978b558ae8d104d216e47b0a47e9aad57bd1dbd1269331a23b3fb"
+      },
+      {
+        "path": "rebase-continue.json",
+        "sha256": "ff27ca341ce0a066b595f91925510f0318004b069d4aee7471bbfd0dd21801ea"
+      },
+      {
+        "path": "rebase-continue.log",
+        "sha256": "257612680d52b1691f368941888e30113dddcf290b86c8c86644bac6e52d2dce"
+      },
+      {
+        "path": "rebase.json",
+        "sha256": "839034a0f766e36203275b27277b01f867fcfa8f325679957b9006fd988358a4"
+      },
+      {
+        "path": "rebase.log",
+        "sha256": "07e342c6a7bbd095b0dc258e8feb284760d83b913a3fa7f7ce3e59362f6e145c"
+      },
+      {
+        "path": "reviewed-task-tree.txt",
+        "sha256": "f3a3b16b8ca367b62ba5c270eb585a3265535d9aec614f59fa611deab7ac4089"
+      },
+      {
+        "path": "summary.json",
+        "sha256": "ae64adfc0013d8a684d36b47781ea9c2c59f1f6471cd5201d54770d31e3ad491"
+      },
+      {
+        "path": "typecheck-140.log",
+        "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+      },
+      {
+        "path": "typecheck-142.log",
+        "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+      }
+    ]
+  },
+  {
+    "archive": "verify-01-609c1d29.tar.gz",
+    "source": "/tmp/zebra-performance-speedup-f3263289/verify-01-609c1d29",
+    "sha256": "e1d01501030233f62576a70054dc5bd815b9014560b119100f3ccc3f1804a3da",
+    "files": [
+      {
+        "path": "diff.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "lint.log",
+        "sha256": "65daeb3aff49d6c8303dfed53be5c9a94965411eee0b068e1cfcd9827053b558"
+      },
+      {
+        "path": "manifest.json",
+        "sha256": "a11a18f166a9963cf6559eb8c4fec18da4018b42702315f7a47674266365a9a6"
+      },
+      {
+        "path": "test.log",
+        "sha256": "82d76def609168019ecf26a245bbd45da492f3f80eb3e475fc71374a2cc91eb0"
+      },
+      {
+        "path": "typecheck.log",
+        "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+      }
+    ]
+  },
+  {
+    "archive": "verify-02-3b63455b.tar.gz",
+    "source": "/tmp/zebra-performance-speedup-f3263289/verify-02-3b63455b",
+    "sha256": "d38c0150eaac2b8aefe1fb70228c9ba525c4bee15941574d62af3db8f6a7aec6",
+    "files": [
+      {
+        "path": "diff.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "lint.log",
+        "sha256": "2d9f12d5fd988787209e20e8683f6901380ec8391cf6341994c593dd4fe662c2"
+      },
+      {
+        "path": "manifest.json",
+        "sha256": "f0c3224f19b572ac3d75c325e9da009841049b3dd7d68771853ba2842fb03e28"
+      },
+      {
+        "path": "test.log",
+        "sha256": "5a9372c91c78dbd8bf614052ce851f757f6f8cd2997c543ba3218c3edfdacf8a"
+      },
+      {
+        "path": "typecheck.log",
+        "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+      }
+    ]
+  },
+  {
+    "archive": "verify-03-01a5ca69.tar.gz",
+    "source": "/tmp/zebra-performance-speedup-f3263289/verify-03-01a5ca69",
+    "sha256": "53290261fc9bf67467be54ce3146be83b53caf7b5355cebfe68f8f9a005c91e4",
+    "files": [
+      {
+        "path": "diff.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "lint.log",
+        "sha256": "a6a3faf7034be128443f9669e6a282d73c45b95758e2fde2a412dfe57afbdc22"
+      },
+      {
+        "path": "manifest.json",
+        "sha256": "54893f27339145d576252343b5c8829274ea9a321f4fb9e1ee42eb2daad32b3b"
+      },
+      {
+        "path": "test.log",
+        "sha256": "ac91a0deecb203b16d68aad47a2cd6a86e8e3911a05f471bec73c2b99d01e2d6"
+      },
+      {
+        "path": "typecheck.log",
+        "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+      }
+    ]
+  },
+  {
+    "archive": "verify-03-01a5ca69-test-retry.tar.gz",
+    "source": "/tmp/zebra-performance-speedup-f3263289/verify-03-01a5ca69-test-retry",
+    "sha256": "5de0f75762dfafa98c29caa77b664d98195251e10890bb9b732933880019c197",
+    "files": [
+      {
+        "path": "manifest.json",
+        "sha256": "e65778d1605a312ba2397ec9ca3b60a80492fb04beb711c5cbf232a9d49b022d"
+      },
+      {
+        "path": "test.log",
+        "sha256": "0d9b74f49dcd48863be8ba2270391e8dd69e4f3dc4941fc2103ee1fe44920246"
+      }
+    ]
+  },
+  {
+    "archive": "verify-04-d04aeafd.tar.gz",
+    "source": "/tmp/zebra-performance-speedup-f3263289/verify-04-d04aeafd",
+    "sha256": "4a5c32b4433193eb496d47227389f615c828160e003678a830b7a3723188a006",
+    "files": [
+      {
+        "path": "diff.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "lint.log",
+        "sha256": "51f401ba56dea4c76a833a58f0fadddb0f2bb8487628b809f414469323790bde"
+      },
+      {
+        "path": "manifest.json",
+        "sha256": "b53ef771f086f3d10066f7ba9aa0363c24824ac04d556228e2ad69a2b5b47d0a"
+      },
+      {
+        "path": "test.log",
+        "sha256": "2e6b8ed5d850ec9c8c2a735c3a0f302d741fbed6f7d4623d7f73375ce7123848"
+      },
+      {
+        "path": "typecheck.log",
+        "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+      }
+    ]
+  },
+  {
+    "archive": "verify-05-5530f767.tar.gz",
+    "source": "/tmp/zebra-performance-speedup-f3263289/verify-05-5530f767",
+    "sha256": "6ff2887906f2ebbc61d08eef1d8d5a11adb77e6596deb270cb3c0c08430c422c",
+    "files": [
+      {
+        "path": "diff.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "lint.log",
+        "sha256": "f3acec27f4bbd014e126603f078fd9cd0112dc3a77e4ec5d8670c7d2330187f6"
+      },
+      {
+        "path": "manifest.json",
+        "sha256": "8830943dda0b3c2cea768f1a45002dd354bce784f231de5931e8965535277012"
+      },
+      {
+        "path": "test.log",
+        "sha256": "d49e872e261c2e4f7f5d892c892804c58f83138cde30b10f07d07dc3c6c43ed2"
+      },
+      {
+        "path": "typecheck.log",
+        "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+      }
+    ]
+  },
+  {
+    "archive": "zebra-performance-speedup-06-integration-5530f767-m4_qge9r.tar.gz",
+    "source": "/tmp/zebra-performance-speedup-06-integration-5530f767-m4_qge9r",
+    "sha256": "0480f9927daae50269183b0f4e584e4abf633c3d42411841597feb11f2710548",
+    "files": [
+      {
+        "path": "checks-140.jsonl",
+        "sha256": "4e13c4b6aafc00610da2b3ad531cf9a10a98bdd3063c9d50fb8a856620ba1a62"
+      },
+      {
+        "path": "checks-142.jsonl",
+        "sha256": "f72329a3d2bad33aba69f77d2369974a45d8f4bd80bdcf2284f32341c0839a90"
+      },
+      {
+        "path": "checks.py",
+        "sha256": "ef8632768d9db57024035b6a49d04de7c623ed5833d30ffa59dde2e8cfe6fce1"
+      },
+      {
+        "path": "diff-140.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "diff-142.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "docs-140.log",
+        "sha256": "e8a2fdfa9a6de41c9c0d8e6405eb463765968886227155b10abb49f16684027f"
+      },
+      {
+        "path": "docs-142.log",
+        "sha256": "ddec751269b29a9a4cccaaaa2dd254b2eb7fe79268bf7e7fa4c5fe1adccb2e59"
+      },
+      {
+        "path": "lint-140.log",
+        "sha256": "e5cb094f8679d635c9841a8e51cfdb5017ca0afdb09c7bfb8bf2849612c16d94"
+      },
+      {
+        "path": "lint-142.log",
+        "sha256": "894351435dbed01f67c3d3d52ca5469a066ff55b6a85f90d5b321ed94a4c5160"
+      },
+      {
+        "path": "preservation-140.json",
+        "sha256": "549d2bb20c4e18add3311327bb12c94b13d7b0984da0854d8d7e81374872df74"
+      },
+      {
+        "path": "preservation-142.json",
+        "sha256": "549d2bb20c4e18add3311327bb12c94b13d7b0984da0854d8d7e81374872df74"
+      },
+      {
+        "path": "rebase.json",
+        "sha256": "8ab44e54da99d60620a34d63626bc695820543806799c02797c03803bb24e72f"
+      },
+      {
+        "path": "rebase.log",
+        "sha256": "cfa6be2bc2d48dbcee2a320c487fe2f363f30910fc3d53663bf53fa145dc3b14"
+      },
+      {
+        "path": "reviewed-files.json",
+        "sha256": "ec84fbb3117fbca834640a78c01b6e36e4549e1b2e86e8c581db3562a22c30b9"
+      },
+      {
+        "path": "revision-140.log",
+        "sha256": "8b447e9dcaedd024555a3b284c51c7acfc17253165b90e27eb9dacb556a9de3c"
+      },
+      {
+        "path": "revision-142.log",
+        "sha256": "9be88dde8b69dbe59e415265fef0e6afa91607e6ef3e0de5ed3d0886844f52e2"
+      },
+      {
+        "path": "summary.json",
+        "sha256": "ca179998981784ab9eb818b956a8bcd046b4fe6263ee9b2b347388f041fb8f97"
+      },
+      {
+        "path": "typecheck-140.log",
+        "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+      },
+      {
+        "path": "typecheck-142.log",
+        "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+      },
+      {
+        "path": "version-140.log",
+        "sha256": "78b591400c56b7b67b8cb3b2b8a8e65e9093897f02ce0878e6b5405c68620fa7"
+      },
+      {
+        "path": "version-142.log",
+        "sha256": "b99b4c7cdf236f59bc9f65d963deaecae3b16a7dad87939cacb9057f7664daee"
+      },
+      {
+        "path": "working-diff-140.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "working-diff-142.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  },
+  {
+    "archive": "verify-06-534b9d1a.tar.gz",
+    "source": "/tmp/zebra-performance-speedup-f3263289/verify-06-534b9d1a",
+    "sha256": "e841b92a8c408ebb4a1ab43f8d5503e74dd3b139fdbbb5a62dc86addbffd7945",
+    "files": [
+      {
+        "path": "diff.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "docs.log",
+        "sha256": "e74cdc0b6fda1d6c920f7419fca909cd83935dd9c5d55562b70e6e724e74d84b"
+      },
+      {
+        "path": "lint.log",
+        "sha256": "2c37b4beb0d084ac89eae2104d5b3ee2d30c5b81896f93ef866a7bfdc0abe1f6"
+      },
+      {
+        "path": "manifest.json",
+        "sha256": "af6cdc3028e11de001c3a0915abb51a6a35a4c09ebf8ce1a41f44b35e6f6fd5c"
+      },
+      {
+        "path": "typecheck.log",
+        "sha256": "793b3289aad460c12104600252941dc521578230c52a1216a8d6668b76629cc3"
+      }
+    ]
+  }
+]
