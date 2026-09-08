@@ -274,3 +274,69 @@ HTTP gate 继续使用原来的 Apple Silicon 基线、80% rps / 125% p95 门槛
 两次均没有记录到测量期外部干扰。最终生产代码与 `1418a2f` 相同；同机原始源码
 HTTP 对照、每场景 rps/p95、全部失败输出及测量限制均列于 03 报告。功能门禁
 通过不代表该跨机器性能门槛通过，局部 helper 的收益也不能抵消这个失败记录。
+
+## Request hot-path evaluation（2026-09-08 UTC）
+
+**本轮没有实现生产性能提升。** 集成源码 `5530f7678a9df0c92fcdf9e99c268408c913a439`
+的全部 80 个 `packages/*/src/` 文件与规划基线
+`a856cab47d4fd3102e976ce7a70166837837eea2` 逐字节相同。新增 harness、66 个
+兼容性回归测试和评估证据保留；原有 Apple Silicon 数据和 Bun native 结论仍适用
+于各自历史评估，不作为本轮收益。完整命令、实际退出码及失败历史见
+[集成报告](../plans/performance-speedup/results/06/REPORT.md)。
+
+| 候选 | 最终决定 | 性能结论 / 证据 |
+| --- | --- | --- |
+| Router static index | 未采用 | 最低版本两次有界控制均 quiet-timeout；[02](../plans/performance-speedup/results/02/README.md) |
+| Lazy content-type metadata | 未采用 | 最低版本 request / HTTP 控制均耗尽；[03](../plans/performance-speedup/results/03/README.md) |
+| Guarded DI cache return | 未采用 | 最低版本两次 DI 控制均 quiet-timeout；[04](../plans/performance-speedup/results/04/README.md) |
+| Dispatch forwarding wrappers | 未采用 | 最低版本两次 dispatch 控制均 quiet-timeout；[05](../plans/performance-speedup/results/05/README.md) |
+| `Promise.resolve` compose shortcut | 行为不兼容，拒绝 | 两个 native-promise 自定义 `then` getter 测试在两版 Bun 均失败；[05](../plans/performance-speedup/results/05/README.md) |
+
+前四项性能证据不足，不能说已经证明更快、更慢或无效。所有候选均无计时行，
+行为通过也不代替性能确认。最终原源码配对在两版 Bun 均 quiet-timeout、零计时行：组件成本及全部
+16 个 HTTP 场景的 req/s、p50/p95/p99 均未测得。两版最终历史 gate 窗口也均
+quiet-timeout，gate **NOT RUN**，不是通过或失败。Task 01 的历史 Bun 1.4.2
+`bench:check` 实际 **8/8 场景 FAIL、exit 1**，仍完整保留于
+[historical-142](../plans/performance-speedup/results/01/historical-142/)。
+
+### 新 harness 与复现
+
+新 harness 的 `router|request|di|dispatch|http|all` suites 区分组件成本与完整请求。
+HTTP 包含全部原有八场景，另加 async、query、metadata、warmed class/factory、
+20 层 middleware、static/middleware listeners 八场景；真实 loopback sockets，
+每次计时请求都读取并核对完整 body，记录 req/s 和 p50/p95/p99。
+`--check` 仅校验行为，不产生计时行。
+
+环境：Linux x64 / AMD EPYC / 8 logical CPUs / 16,760,184,832 bytes RAM；
+Bun 1.4.2 `744846f844374847c902b5e7fd59b4342a51ef99` 和隔离 Bun 1.4.0
+`34cbb9a40b4bd1bd767d134a7065e66c2432a676`。固定 task-01 commit
+`609c1d298393c49b49e6c11537e55437c5f6a89f` 的 harness/fixture aggregate SHA-256：
+`b4a3feb23f5d26c8b6121d35e1b121b2b5ab6221b45a62ae4ddf42dd8a31a976`。
+这是组合指纹，不是单个 `hot-path.ts` 的文件哈希。
+
+先按 [独立复现步骤](../plans/performance-speedup/results/06/REPRODUCE.md) 从 Git
+重建冻结安装的 baseline、集成源码和固定 harness，准备每个版本独立的 Bun bin
+目录及串行锁。下面变量均为该步骤创建的绝对路径，不依赖本轮临时目录存活：
+
+```sh
+# 每个运行时均把其 bin 目录放在 PATH 首位，包括子进程。
+export PATH="$BUN_BIN:$PATH"
+python3 "$LOCK" check bun "$HARNESS" --source-root "$BEFORE" --suite all --check
+python3 "$LOCK" check bun "$HARNESS" --source-root "$AFTER" --suite all --check
+
+# 一次完整 all-suite 配对；不得把两次窗口合并成一个锁持有。
+python3 "$LOCK" measure python3 "$PROTO/measure.py" --output "$OUT/paired" \
+  python3 "$PROTO/series.py" --harness "$HARNESS" --before "$BEFORE" --after "$AFTER" --suite all
+
+# 历史门槛使用原默认值，单独窗口；不更新 baseline 或 thresholds。
+unset BENCH_DURATION_MS BENCH_CONCURRENCY
+python3 "$LOCK" measure python3 "$PROTO/measure.py" --output "$OUT/historical" bun run bench:check
+```
+
+固定设置为 5 个 AB/BA/AB/BA/AB 配对、每方独立进程、组件 100000 iterations /
+20000 warmup，HTTP 1000 ms / 500 ms warmup / concurrency 32。
+[Task-01 protocol](../plans/performance-speedup/results/01/README.md) 规定连续
+30 秒安静、最长等待 300 秒；测量时任何外部进程达到单核 15% CPU 或检测到竞争
+workload，整次结果排除并保留。原有 1.4.2 variability envelopes 不放宽，1.4.0
+没有有效 envelope。只有未来获准的生产候选评估才需要每版两次完整确认；本次
+最终生产未改变，每版只允许一次配对尝试，不据此宣称 repeatability 或收益。

@@ -19,7 +19,7 @@ Resolved difficulty mapping: hard = `codex / gpt-6-astra / max`; medium = `codex
 | [03-request-metadata.md](done/03-request-metadata.md) | P2 | medium | codex (inherits default) | gpt-6-astra / xhigh | Completed inconclusive evaluation; production candidate excluded, compatibility tests retained |
 | [04-di-cache-hits.md](done/04-di-cache-hits.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Evaluated; candidate excluded after bounded quiet-window failures |
 | [05-dispatch-pipeline.md](done/05-dispatch-pipeline.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Evaluated; compatibility rejection / inconclusive controls, no production change |
-| [06-results-and-validation.md](06-results-and-validation.md) | P1 | medium | codex (inherits default) | gpt-6-astra / xhigh | Validate merged behavior and document actual performance results |
+| [06-results-and-validation.md](done/06-results-and-validation.md) | P1 | medium | codex (inherits default) | gpt-6-astra / xhigh | Integrated validation complete; unchanged production, no achieved speedup |
 
 ## 文件
 
@@ -28,7 +28,7 @@ Resolved difficulty mapping: hard = `codex / gpt-6-astra / max`; medium = `codex
 3. [03-request-metadata.md](done/03-request-metadata.md) — completed evaluation; no production optimization adopted.
 4. [04-di-cache-hits.md](done/04-di-cache-hits.md) — completed evaluation; no production optimization retained.
 5. [05-dispatch-pipeline.md](done/05-dispatch-pipeline.md) — evaluation complete; rejected/inconclusive, awaiting coordinator integration.
-6. [06-results-and-validation.md](06-results-and-validation.md) — 依赖 02-router-lookup.md、03-request-metadata.md、04-di-cache-hits.md、05-dispatch-pipeline.md.
+6. [06-results-and-validation.md](done/06-results-and-validation.md) — completed integrated validation and outcome documentation; coordinator review/integration pending.
 
 ## Parallel execution and ownership
 
@@ -100,3 +100,21 @@ source, 27 added regression tests, and passing final gates on Bun 1.4.2 / 1.4.0.
 No dispatch or HTTP speedup is claimed; candidate/HTTP timing remains unmeasured.
 This documented rejection satisfies the evaluation dependency for 06 after
 coordinator integration. Other task statuses and saved Codex routing are unchanged.
+
+
+## Task 06 status
+
+06 is complete under the documented rejected/inconclusive outcome and archived
+under `done/`. [Results/06](../results/06/REPORT.md) verifies all 80 production
+files equal `a856cab`; no speedup was achieved. Full integrated tests passed
+1382/1382 on both runtimes, including all 66 retained regressions (current
+coordinator run reused; minimum full suite actually run here). Remaining
+repository, coverage, browser, final documentation and style checks pass.
+Each runtime's one final all-suite comparison and separate historical window
+timed out with no workload launch; performance is unmeasured and both final
+historical gates are NOT RUN. Task 01's actual 8/8 historical failure, task 05's
+both-runtime compose rejection, and the intermittent unchanged-store failures
+remain recorded; a baseline store failure was not reproduced and its cause is
+unconfirmed. Only 06's status is changed. Other historical pending snapshots and
+saved Codex routing remain for coordinator reconciliation; final integration and
+resource cleanup remain coordinator-owned.
