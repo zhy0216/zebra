@@ -1,0 +1,222 @@
+// packages/contract/src/builder.ts
+class ContractProcedureImpl {
+  def;
+  constructor(def) {
+    this.def = def;
+    Object.freeze(this.def);
+    Object.freeze(this);
+  }
+  static create(method, path) {
+    return new ContractProcedureImpl({
+      version: 1,
+      method,
+      path,
+      params: undefined,
+      query: undefined,
+      body: undefined,
+      output: undefined,
+      status: 200,
+      errors: {},
+      meta: undefined,
+      mcp: undefined
+    });
+  }
+  static fromDef(def) {
+    return new ContractProcedureImpl(def);
+  }
+  params(schema) {
+    const next = {
+      version: 1,
+      method: this.def.method,
+      path: this.def.path,
+      params: schema,
+      query: this.def.query,
+      body: this.def.body,
+      output: this.def.output,
+      status: this.def.status,
+      errors: this.def.errors,
+      meta: this.def.meta,
+      mcp: this.def.mcp
+    };
+    return new ContractProcedureImpl(next);
+  }
+  query(schema) {
+    const next = {
+      version: 1,
+      method: this.def.method,
+      path: this.def.path,
+      params: this.def.params,
+      query: schema,
+      body: this.def.body,
+      output: this.def.output,
+      status: this.def.status,
+      errors: this.def.errors,
+      meta: this.def.meta,
+      mcp: this.def.mcp
+    };
+    return new ContractProcedureImpl(next);
+  }
+  body(schema) {
+    if (this.def.method === "GET" || this.def.method === "HEAD") {
+      throw new Error("Contract .body() is not allowed on GET/HEAD procedures");
+    }
+    const next = {
+      version: 1,
+      method: this.def.method,
+      path: this.def.path,
+      params: this.def.params,
+      query: this.def.query,
+      body: schema,
+      output: this.def.output,
+      status: this.def.status,
+      errors: this.def.errors,
+      meta: this.def.meta,
+      mcp: this.def.mcp
+    };
+    return new ContractProcedureImpl(next);
+  }
+  output(schema) {
+    const next = {
+      version: 1,
+      method: this.def.method,
+      path: this.def.path,
+      params: this.def.params,
+      query: this.def.query,
+      body: this.def.body,
+      output: schema,
+      status: this.def.status,
+      errors: this.def.errors,
+      meta: this.def.meta,
+      mcp: this.def.mcp
+    };
+    return new ContractProcedureImpl(next);
+  }
+  status(status) {
+    if (!Number.isInteger(status) || status < 100 || status > 599) {
+      throw new Error(`contract: status must be an integer between 100 and 599, got ${status}`);
+    }
+    const next = {
+      version: 1,
+      method: this.def.method,
+      path: this.def.path,
+      params: this.def.params,
+      query: this.def.query,
+      body: this.def.body,
+      output: this.def.output,
+      status,
+      errors: this.def.errors,
+      meta: this.def.meta,
+      mcp: this.def.mcp
+    };
+    return new ContractProcedureImpl(next);
+  }
+  errors(es) {
+    const next = {
+      version: 1,
+      method: this.def.method,
+      path: this.def.path,
+      params: this.def.params,
+      query: this.def.query,
+      body: this.def.body,
+      output: this.def.output,
+      status: this.def.status,
+      errors: { ...this.def.errors, ...es },
+      meta: this.def.meta,
+      mcp: this.def.mcp
+    };
+    return new ContractProcedureImpl(next);
+  }
+  meta(meta) {
+    const next = {
+      version: 1,
+      method: this.def.method,
+      path: this.def.path,
+      params: this.def.params,
+      query: this.def.query,
+      body: this.def.body,
+      output: this.def.output,
+      status: this.def.status,
+      errors: this.def.errors,
+      meta,
+      mcp: this.def.mcp
+    };
+    return new ContractProcedureImpl(next);
+  }
+  mcp(nameOrDecl, description, options) {
+    let decl;
+    if (typeof nameOrDecl === "string") {
+      if (typeof description !== "string") {
+        throw new Error("contract: .mcp() requires a name and a description string");
+      }
+      decl = { name: nameOrDecl, description, ...options ?? {} };
+    } else {
+      decl = nameOrDecl;
+    }
+    if (typeof decl.name !== "string" || decl.name.trim() === "") {
+      throw new Error("contract: .mcp() name must be a non-empty string");
+    }
+    if (typeof decl.description !== "string" || decl.description.trim() === "") {
+      throw new Error("contract: .mcp() description must be a non-empty string");
+    }
+    const next = {
+      version: 1,
+      method: this.def.method,
+      path: this.def.path,
+      params: this.def.params,
+      query: this.def.query,
+      body: this.def.body,
+      output: this.def.output,
+      status: this.def.status,
+      errors: this.def.errors,
+      meta: this.def.meta,
+      mcp: decl
+    };
+    return new ContractProcedureImpl(next);
+  }
+}
+function procedureFromDef(def) {
+  return ContractProcedureImpl.fromDef(def);
+}
+var zc = {
+  get: (path) => ContractProcedureImpl.create("GET", path),
+  post: (path) => ContractProcedureImpl.create("POST", path),
+  put: (path) => ContractProcedureImpl.create("PUT", path),
+  patch: (path) => ContractProcedureImpl.create("PATCH", path),
+  delete: (path) => ContractProcedureImpl.create("DELETE", path),
+  head: (path) => ContractProcedureImpl.create("HEAD", path),
+  options: (path) => ContractProcedureImpl.create("OPTIONS", path)
+};
+// packages/contract/src/prefix.ts
+function isProcedure(value) {
+  if (typeof value !== "object" || value === null)
+    return false;
+  const def = value.def;
+  if (typeof def !== "object" || def === null)
+    return false;
+  return typeof def.path === "string";
+}
+function joinPath(prefix, path) {
+  return path.startsWith("/") ? `${prefix}${path}` : `${prefix}/${path}`;
+}
+function walk(prefix, router) {
+  const out = {};
+  for (const [key, value] of Object.entries(router)) {
+    if (isProcedure(value)) {
+      const def = value.def;
+      out[key] = procedureFromDef({ ...def, path: joinPath(prefix, def.path) });
+    } else {
+      out[key] = walk(prefix, value);
+    }
+  }
+  return out;
+}
+function prefix(prefix, router) {
+  return walk(prefix, router);
+}
+// packages/contract/src/types.ts
+var METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
+export {
+  METHODS,
+  prefix,
+  zc
+};

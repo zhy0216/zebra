@@ -1,0 +1,20 @@
+diff --git a/packages/core/src/di/container.ts b/packages/core/src/di/container.ts
+index c70615c..f3ec2e1 100644
+--- a/packages/core/src/di/container.ts
++++ b/packages/core/src/di/container.ts
+@@ -75,6 +75,15 @@ export class Container {
+     // Fast path: value bindings are terminal — no cycle risk, no stack
+     // bookkeeping, no frame allocation (hot for toValue route deps).
+     if (binding?.kind === "value") return binding.target as T;
++    // An active factory can restore a cached instance for its own frame.
++    // Keep cycle diagnostics ahead of cache hits whenever a stack is active.
++    if (binding && stack.length === 0) {
++      const cacheContainer = this.cacheContainerFor(binding.scope);
++      const cacheKey = keyOf(binding.identifier);
++      if (cacheContainer?.instances.has(cacheKey)) {
++        return cacheContainer.instances.get(cacheKey);
++      }
++    }
+     const key = keyOf(id);
+     const name = displayName(id);
+     const cycleStart = stack.findIndex((frame) => frame.key === key);

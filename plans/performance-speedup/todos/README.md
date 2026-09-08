@@ -17,7 +17,7 @@ Resolved difficulty mapping: hard = `codex / gpt-6-astra / max`; medium = `codex
 | [01-hot-path-baseline.md](done/01-hot-path-baseline.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Completed harness/baseline; awaiting coordinator integration |
 | [02-router-lookup.md](done/02-router-lookup.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Evaluated; static index excluded because minimum-runtime performance evidence is inconclusive |
 | [03-request-metadata.md](done/03-request-metadata.md) | P2 | medium | codex (inherits default) | gpt-6-astra / xhigh | Completed inconclusive evaluation; production candidate excluded, compatibility tests retained |
-| [04-di-cache-hits.md](04-di-cache-hits.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Avoid diagnostic stack allocation on valid DI cache hits |
+| [04-di-cache-hits.md](done/04-di-cache-hits.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Evaluated; candidate excluded after bounded quiet-window failures |
 | [05-dispatch-pipeline.md](05-dispatch-pipeline.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Reduce forwarding promises and closures in dispatch/middleware |
 | [06-results-and-validation.md](06-results-and-validation.md) | P1 | medium | codex (inherits default) | gpt-6-astra / xhigh | Validate merged behavior and document actual performance results |
 
@@ -26,7 +26,7 @@ Resolved difficulty mapping: hard = `codex / gpt-6-astra / max`; medium = `codex
 1. [01-hot-path-baseline.md](done/01-hot-path-baseline.md) — completed; coordinator must integrate before 02–05 start.
 2. [02-router-lookup.md](done/02-router-lookup.md) — completed evaluation; production candidate excluded, compatibility tests and evidence retained.
 3. [03-request-metadata.md](done/03-request-metadata.md) — completed evaluation; no production optimization adopted.
-4. [04-di-cache-hits.md](04-di-cache-hits.md) — 依赖 01-hot-path-baseline.md.
+4. [04-di-cache-hits.md](done/04-di-cache-hits.md) — completed evaluation; no production optimization retained.
 5. [05-dispatch-pipeline.md](05-dispatch-pipeline.md) — 依赖 01-hot-path-baseline.md.
 6. [06-results-and-validation.md](06-results-and-validation.md) — 依赖 02-router-lookup.md、03-request-metadata.md、04-di-cache-hits.md、05-dispatch-pipeline.md.
 
@@ -78,3 +78,15 @@ and validation on both Bun runtimes. Required performance evidence could not be
 collected under outside load; production is unchanged and no speedup is claimed.
 Coordinator integration remains pending and explicitly coordinator-triggered.
 Other task states and saved agent routing are unchanged.
+
+## Task 04 status
+
+04 is complete as a rejected evaluation; [results/04](../results/04/README.md)
+retains the guarded candidate patch, 25 behavioral tests and all evidence.
+Both allowed minimum-runtime DI controls and the already-active current-runtime
+attempt ended normally as quiet timeouts. Performance adoption is inconclusive;
+production is restored to the baseline and remaining comparisons are unmeasured.
+Final focused/harness/type/style checks pass on both runtimes. The report retains
+the unrelated current-runtime store-test failures and passing unchanged-baseline
+focused reproduction without claiming a confirmed baseline failure. Integration
+is coordinator-triggered; all other task states and saved routing are unchanged.

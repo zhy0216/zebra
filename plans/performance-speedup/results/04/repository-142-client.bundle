@@ -1,0 +1,162 @@
+// packages/client/src/error.ts
+class ClientError extends Error {
+  status;
+  code;
+  problem;
+  response;
+  constructor(status, code, problem, response) {
+    super(problem.title);
+    this.status = status;
+    this.code = code;
+    this.problem = problem;
+    this.response = response;
+    this.name = "ClientError";
+  }
+}
+
+// packages/client/src/protocol.ts
+function isProcedure(value) {
+  if (typeof value !== "object" || value === null)
+    return false;
+  const def = value.def;
+  if (typeof def !== "object" || def === null)
+    return false;
+  const d = def;
+  return d.version === 1 && typeof d.path === "string" && typeof d.method === "string";
+}
+
+// packages/client/src/client.ts
+function substitutePath(path, params) {
+  const segments = path.split("/");
+  const lastSegment = segments.findLastIndex((segment) => segment !== "");
+  return segments.map((segment, index) => {
+    if (!/^[:*][A-Za-z0-9_]+$/.test(segment) || segment[0] === "*" && index !== lastSegment) {
+      return segment;
+    }
+    const kind = segment[0];
+    const name = segment.slice(1);
+    const value = params[name];
+    if (value === undefined)
+      throw new Error(`Missing required path parameter "${kind}${name}"`);
+    return kind === "*" ? String(value).split("/").map(encodeURIComponent).join("/") : encodeURIComponent(String(value));
+  }).join("/");
+}
+async function problemFrom(res) {
+  try {
+    const body = await res.json();
+    if (body !== null && typeof body === "object" && typeof body.type === "string") {
+      return body;
+    }
+  } catch {}
+  return {
+    type: "https://errors.zebra.dev/request_failed",
+    status: res.status,
+    title: `Request failed with status ${res.status}`,
+    instance: res.url !== "" ? new URL(res.url).pathname : "/"
+  };
+}
+function makeCall(def, doFetch, baseUrl, resolveHeaders) {
+  return async (args) => {
+    const {
+      params = {},
+      query = {},
+      body,
+      headers = {},
+      signal
+    } = args ?? {};
+    const url = new URL(baseUrl);
+    url.pathname = `${url.pathname.replace(/\/+$/, "")}/${substitutePath(def.path, params).replace(/^\/+/, "")}`;
+    for (const [key, value] of Object.entries(query)) {
+      if (value === undefined || value === null)
+        continue;
+      url.searchParams.append(key, String(value));
+    }
+    const init = {
+      method: def.method,
+      ...signal !== undefined ? { signal } : {}
+    };
+    const mergedHeaders = new Headers;
+    for (const source of [resolveHeaders(), headers]) {
+      for (const [name, value] of Object.entries(source))
+        mergedHeaders.set(name, value);
+    }
+    if (body !== undefined) {
+      if (body instanceof FormData || body instanceof Blob) {
+        init.body = body;
+      } else {
+        if (!mergedHeaders.has("content-type")) {
+          mergedHeaders.set("content-type", "application/json");
+        }
+        init.body = JSON.stringify(body);
+      }
+    }
+    const headerValues = Object.fromEntries(mergedHeaders);
+    if (Object.keys(headerValues).length > 0)
+      init.headers = headerValues;
+    const res = await doFetch(url.toString(), init);
+    if (!res.ok) {
+      const problem = await problemFrom(res);
+      throw new ClientError(res.status, deriveCode(problem, res.status), problem, res);
+    }
+    if (res.status === 204 || def.status === 204)
+      return;
+    const text = await res.text();
+    if (text === "")
+      return;
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new ClientError(res.status, "invalid_response", {
+        type: "https://errors.zebra.dev/invalid_response",
+        status: res.status,
+        title: "Response body was not valid JSON",
+        instance: res.url !== "" ? new URL(res.url).pathname : "/"
+      }, res);
+    }
+  };
+}
+function deriveCode(problem, status) {
+  const PREFIX = "https://errors.zebra.dev/";
+  if (typeof problem.type === "string" && problem.type.startsWith(PREFIX)) {
+    const code = problem.type.slice(PREFIX.length);
+    if (code !== "request_failed")
+      return code;
+  }
+  return codeFrom(status);
+}
+function codeFrom(status) {
+  switch (status) {
+    case 400:
+      return "bad_request";
+    case 401:
+      return "unauthorized";
+    case 403:
+      return "forbidden";
+    case 404:
+      return "not_found";
+    case 422:
+      return "validation_failed";
+    default:
+      return `http_${status}`;
+  }
+}
+function createClient(router, opts) {
+  const doFetch = opts.fetch ?? ((url, init) => fetch(url, init));
+  const resolveHeaders = () => typeof opts.headers === "function" ? opts.headers() : opts.headers ?? {};
+  const build = (node) => {
+    const out = {};
+    for (const [key, value] of Object.entries(node)) {
+      if (isProcedure(value))
+        out[key] = makeCall(value.def, doFetch, opts.baseUrl, resolveHeaders);
+      else
+        out[key] = build(value);
+    }
+    return out;
+  };
+  return build(router);
+}
+export {
+  ClientError,
+  createClient,
+  isProcedure
+};
