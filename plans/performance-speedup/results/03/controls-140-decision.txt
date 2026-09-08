@@ -1,0 +1,4 @@
+{
+  "request": "inconclusive: no eligible control within two attempts",
+  "http": "inconclusive: no eligible control within two attempts"
+}

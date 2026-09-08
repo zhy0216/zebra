@@ -1,0 +1,16 @@
+{
+  "branch": "herdr/plan-performance-speedup-03-metadata",
+  "baseCommit": "609c1d298393c49b49e6c11537e55437c5f6a89f",
+  "recordedCheckCommands": 55,
+  "allCheckExitsZero": true,
+  "compressedArtifacts": 77,
+  "finalProductionSha256": "7a9eb1077326654812aabcad8519086ce61b28350a6160582ec01cbce90c9b73",
+  "harnessSha256": "b4a3feb23f5d26c8b6121d35e1b121b2b5ab6221b45a62ae4ddf42dd8a31a976",
+  "protectedPathsDiff": "empty",
+  "existing142Envelopes": "byte-identical",
+  "archivedTodo": "byte-identical",
+  "timedRows": 0,
+  "startedRecorderAttempts": 8,
+  "completedPairedConfirmations": 0,
+  "decision": "Exclude candidate as inconclusive; original production restored"
+}

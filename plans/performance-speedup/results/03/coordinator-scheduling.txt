@@ -1,0 +1,17 @@
+{
+  "at": 1788852088.8091767,
+  "instruction": "Let active recorder finish normally; no more unsupported minimum diagnostics or historical gates.",
+  "schedulerPid": 1160362,
+  "activeRecorderPid": 1194234,
+  "activeAttempt": "candidate-140-1",
+  "action": "Paused only scheduler while its active recorder continues normally; terminate scheduler after child completion to prevent additional launches.",
+  "finishedAt": 1788852251.7757118,
+  "recorderFinalStatus": "quiet-timeout",
+  "recorderWasInterrupted": false,
+  "schedulerStoppedAfterRecorderExit": true,
+  "unscheduled": [
+    "candidate-140-2",
+    "historical-140"
+  ],
+  "futureAllocationRule": "One complete comparison or quiet-window attempt per measurement lock hold"
+}

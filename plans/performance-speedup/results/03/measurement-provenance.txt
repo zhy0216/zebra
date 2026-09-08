@@ -1,0 +1,253 @@
+[
+  {
+    "run": "aa-140-http-1",
+    "status": {
+      "command": [
+        "python3",
+        "/home/ubuntu/workspace/zebra/plans/performance-speedup/results/01/series.py",
+        "--harness",
+        "/home/ubuntu/workspace/zebra/bench/hot-path.ts",
+        "--before",
+        "/tmp/zebra-performance-speedup-01/baseline-a856cab",
+        "--after",
+        "/tmp/zebra-performance-speedup-01/baseline-a856cab",
+        "--suite",
+        "http"
+      ],
+      "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-03-metadata",
+      "started": "2026-09-08T06:47:54.660990+00:00",
+      "rule": {
+        "sampleSeconds": 2,
+        "quietSamples": 15,
+        "maxQuietSeconds": 300,
+        "outsideCpuPercentOfOneCore": 15,
+        "exclusion": "Any measured outside CPU >=15% or detected competing workload excludes the entire comparison; retain all rows."
+      },
+      "status": "quiet-timeout",
+      "interferenceSamples": 0,
+      "quietSamples": 0,
+      "finished": "2026-09-08T06:52:55.243757+00:00"
+    },
+    "processes": 0,
+    "completedProcesses": 0,
+    "rounds": 0,
+    "sources": [],
+    "runtime": null,
+    "harness": null
+  },
+  {
+    "run": "aa-140-http-2",
+    "status": {
+      "command": [
+        "python3",
+        "/home/ubuntu/workspace/zebra/plans/performance-speedup/results/01/series.py",
+        "--harness",
+        "/home/ubuntu/workspace/zebra/bench/hot-path.ts",
+        "--before",
+        "/tmp/zebra-performance-speedup-01/baseline-a856cab",
+        "--after",
+        "/tmp/zebra-performance-speedup-01/baseline-a856cab",
+        "--suite",
+        "http"
+      ],
+      "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-03-metadata",
+      "started": "2026-09-08T06:52:55.352217+00:00",
+      "rule": {
+        "sampleSeconds": 2,
+        "quietSamples": 15,
+        "maxQuietSeconds": 300,
+        "outsideCpuPercentOfOneCore": 15,
+        "exclusion": "Any measured outside CPU >=15% or detected competing workload excludes the entire comparison; retain all rows."
+      },
+      "status": "quiet-timeout",
+      "interferenceSamples": 0,
+      "quietSamples": 0,
+      "finished": "2026-09-08T06:57:55.564755+00:00"
+    },
+    "processes": 0,
+    "completedProcesses": 0,
+    "rounds": 0,
+    "sources": [],
+    "runtime": null,
+    "harness": null
+  },
+  {
+    "run": "aa-140-request-1",
+    "status": {
+      "command": [
+        "python3",
+        "/home/ubuntu/workspace/zebra/plans/performance-speedup/results/01/series.py",
+        "--harness",
+        "/home/ubuntu/workspace/zebra/bench/hot-path.ts",
+        "--before",
+        "/tmp/zebra-performance-speedup-01/baseline-a856cab",
+        "--after",
+        "/tmp/zebra-performance-speedup-01/baseline-a856cab",
+        "--suite",
+        "request"
+      ],
+      "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-03-metadata",
+      "started": "2026-09-08T06:37:53.285353+00:00",
+      "rule": {
+        "sampleSeconds": 2,
+        "quietSamples": 15,
+        "maxQuietSeconds": 300,
+        "outsideCpuPercentOfOneCore": 15,
+        "exclusion": "Any measured outside CPU >=15% or detected competing workload excludes the entire comparison; retain all rows."
+      },
+      "status": "quiet-timeout",
+      "interferenceSamples": 0,
+      "quietSamples": 0,
+      "finished": "2026-09-08T06:42:53.338944+00:00"
+    },
+    "processes": 0,
+    "completedProcesses": 0,
+    "rounds": 0,
+    "sources": [],
+    "runtime": null,
+    "harness": null
+  },
+  {
+    "run": "aa-140-request-2",
+    "status": {
+      "command": [
+        "python3",
+        "/home/ubuntu/workspace/zebra/plans/performance-speedup/results/01/series.py",
+        "--harness",
+        "/home/ubuntu/workspace/zebra/bench/hot-path.ts",
+        "--before",
+        "/tmp/zebra-performance-speedup-01/baseline-a856cab",
+        "--after",
+        "/tmp/zebra-performance-speedup-01/baseline-a856cab",
+        "--suite",
+        "request"
+      ],
+      "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-03-metadata",
+      "started": "2026-09-08T06:42:53.396448+00:00",
+      "rule": {
+        "sampleSeconds": 2,
+        "quietSamples": 15,
+        "maxQuietSeconds": 300,
+        "outsideCpuPercentOfOneCore": 15,
+        "exclusion": "Any measured outside CPU >=15% or detected competing workload excludes the entire comparison; retain all rows."
+      },
+      "status": "quiet-timeout",
+      "interferenceSamples": 0,
+      "quietSamples": 0,
+      "finished": "2026-09-08T06:47:54.608182+00:00"
+    },
+    "processes": 0,
+    "completedProcesses": 0,
+    "rounds": 0,
+    "sources": [],
+    "runtime": null,
+    "harness": null
+  },
+  {
+    "run": "candidate-140-1",
+    "status": {
+      "command": [
+        "python3",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-03-metadata/plans/performance-speedup/results/03/compare-suites.py"
+      ],
+      "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-03-metadata",
+      "started": "2026-09-08T07:19:10.448816+00:00",
+      "rule": {
+        "sampleSeconds": 2,
+        "quietSamples": 15,
+        "maxQuietSeconds": 300,
+        "outsideCpuPercentOfOneCore": 15,
+        "exclusion": "Any measured outside CPU >=15% or detected competing workload excludes the entire comparison; retain all rows."
+      },
+      "status": "quiet-timeout",
+      "interferenceSamples": 0,
+      "quietSamples": 0,
+      "finished": "2026-09-08T07:24:11.211855+00:00"
+    },
+    "processes": 0,
+    "completedProcesses": 0,
+    "rounds": 0,
+    "sources": [],
+    "runtime": null,
+    "harness": null
+  },
+  {
+    "run": "candidate-142-1",
+    "status": {
+      "command": [
+        "python3",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-03-metadata/plans/performance-speedup/results/03/compare-suites.py"
+      ],
+      "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-03-metadata",
+      "started": "2026-09-08T07:04:06.761329+00:00",
+      "rule": {
+        "sampleSeconds": 2,
+        "quietSamples": 15,
+        "maxQuietSeconds": 300,
+        "outsideCpuPercentOfOneCore": 15,
+        "exclusion": "Any measured outside CPU >=15% or detected competing workload excludes the entire comparison; retain all rows."
+      },
+      "status": "quiet-timeout",
+      "interferenceSamples": 0,
+      "quietSamples": 0,
+      "finished": "2026-09-08T07:09:07.727719+00:00"
+    },
+    "processes": 0,
+    "completedProcesses": 0,
+    "rounds": 0,
+    "sources": [],
+    "runtime": null,
+    "harness": null
+  },
+  {
+    "run": "candidate-142-2",
+    "status": {
+      "command": [
+        "python3",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-03-metadata/plans/performance-speedup/results/03/compare-suites.py"
+      ],
+      "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-03-metadata",
+      "started": "2026-09-08T07:09:07.779964+00:00",
+      "rule": {
+        "sampleSeconds": 2,
+        "quietSamples": 15,
+        "maxQuietSeconds": 300,
+        "outsideCpuPercentOfOneCore": 15,
+        "exclusion": "Any measured outside CPU >=15% or detected competing workload excludes the entire comparison; retain all rows."
+      },
+      "status": "quiet-timeout",
+      "interferenceSamples": 0,
+      "quietSamples": 0,
+      "finished": "2026-09-08T07:14:08.901593+00:00"
+    },
+    "processes": 0,
+    "completedProcesses": 0,
+    "rounds": 0,
+    "sources": [],
+    "runtime": null,
+    "harness": null
+  },
+  {
+    "run": "historical-142",
+    "status": {
+      "command": [
+        "bun",
+        "run",
+        "bench:check"
+      ],
+      "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-03-metadata",
+      "started": "2026-09-08T07:14:08.955353+00:00",
+      "rule": {
+        "sampleSeconds": 2,
+        "quietSamples": 15,
+        "maxQuietSeconds": 300,
+        "outsideCpuPercentOfOneCore": 15,
+        "exclusion": "Any measured outside CPU >=15% or detected competing workload excludes the entire comparison; retain all rows."
+      },
+      "status": "quiet-timeout",
+      "interferenceSamples": 0,
+      "quietSamples": 0,
+      "finished": "2026-09-08T07:19:10.392213+00:00"
+    }
+  }
+]
