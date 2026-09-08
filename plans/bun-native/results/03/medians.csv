@@ -1,0 +1,248 @@
+run,bun,eligible,phase,scenario,rounds,unit,before,after,changePercent
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,static,3,req/s (printed),,32168.0,
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,static,3,p95 ms (printed),,2.75,
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,param,3,req/s (printed),,35756.0,
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,param,3,p95 ms (printed),,3.02,
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,wildcard,3,req/s (printed),,33556.0,
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,wildcard,3,p95 ms (printed),,3.33,
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,middleware,3,req/s (printed),,38068.0,
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,middleware,3,p95 ms (printed),,2.7,
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,json,3,req/s (printed),,37336.0,
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,json,3,p95 ms (printed),,2.97,
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,di,3,req/s (printed),,28300.0,
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,di,3,p95 ms (printed),,3.62,
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,static-file,3,req/s (printed),,17847.0,
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,static-file,3,p95 ms (printed),,5.05,
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,post-json,3,req/s (printed),,9096.0,
+bun140-bench-check-1,1.4.0,True,HTTP gate FAIL,post-json,3,p95 ms (printed),,12.13,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,static,3,req/s,,40736.014378300126,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,static,3,p95 ms,,2.445769000000155,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,param,3,req/s,,40923.445081149825,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,param,3,p95 ms,,2.3762989999995625,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,wildcard,3,req/s,,35350.592168189316,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,wildcard,3,p95 ms,,2.833725999998933,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,middleware,3,req/s,,36899.66875481906,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,middleware,3,p95 ms,,2.6629069999999047,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,json,3,req/s,,31199.577586543008,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,json,3,p95 ms,,3.192087999999785,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,di,3,req/s,,30835.15710851569,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,di,3,p95 ms,,3.2680209999998624,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,static-file,3,req/s,,16482.09707440982,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,static-file,3,p95 ms,,5.8572690000000875,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,post-json,3,req/s,,10213.964022506825,
+bun140-http-samples-baseline-1,1.4.0,True,HTTP,post-json,3,p95 ms,,10.969554000002972,
+bun140-native-body-1,1.4.0,False,merge,empty-stream,9,ns/op,26.0561899999999,50.39828,93.42152478931183
+bun140-native-body-1,1.4.0,False,merge,empty-chunks,9,ns/op,84.46855000000028,69.71086999999955,-17.47121265843996
+bun140-native-body-1,1.4.0,False,merge,single-byte,9,ns/op,56.730810000000254,170.52356999999915,200.58370398730142
+bun140-native-body-1,1.4.0,False,merge,small-json-single,9,ns/op,64.96509999999944,242.87746999999968,273.85837934522044
+bun140-native-body-1,1.4.0,False,merge,small-json-chunked,9,ns/op,128.29053999999815,251.0143799999992,95.66086478395275
+bun140-native-body-1,1.4.0,False,merge,16x1KiB,9,ns/op,3118.6743164062227,2985.5937500000705,-4.267215903438948
+bun140-native-body-1,1.4.0,False,merge,256x64B,9,ns/op,9955.283203124998,4894.019042968823,-50.83998171511009
+bun140-native-body-1,1.4.0,False,merge,offset-uint8-16x1KiB,9,ns/op,2869.517578125036,2653.0195312499673,-7.544754160960043
+bun140-native-body-1,1.4.0,False,merge,offset-buffer-16x1KiB,9,ns/op,2817.2373046875255,2238.6269531249336,-20.53821843832103
+bun140-native-body-1,1.4.0,False,merge,large-single-1MiB,9,ns/op,205217.09375000084,218929.27343749945,6.681792163085132
+bun140-native-body-1,1.4.0,False,merge,large-64x16KiB,9,ns/op,226040.3046874977,235563.64843749834,4.2131175513883345
+bun140-native-body-1,1.4.0,False,readBody,empty-stream,9,ns/op,5344.481600000017,4771.091999999953,-10.728628946913432
+bun140-native-body-1,1.4.0,False,readBody,empty-chunks,9,ns/op,5454.064400000061,5284.721800000079,-3.104888163769759
+bun140-native-body-1,1.4.0,False,readBody,single-byte,9,ns/op,5143.259600000056,5446.806800000013,5.901844814521007
+bun140-native-body-1,1.4.0,False,readBody,small-json-single,9,ns/op,5415.759000000071,5775.583199999892,6.644021641284548
+bun140-native-body-1,1.4.0,False,readBody,small-json-chunked,9,ns/op,5433.271799999784,5929.787800000122,9.13843478252565
+bun140-native-body-1,1.4.0,False,readBody,16x1KiB,9,ns/op,12252.41894531237,12080.03710937433,-1.4069208432020752
+bun140-native-body-1,1.4.0,False,readBody,256x64B,9,ns/op,79313.689453123,76076.93945312733,-4.080947466084906
+bun140-native-body-1,1.4.0,False,readBody,offset-uint8-16x1KiB,9,ns/op,12124.162109376613,12292.916015628209,1.3918809789015052
+bun140-native-body-1,1.4.0,False,readBody,offset-buffer-16x1KiB,9,ns/op,12258.066406250378,12236.443359373794,-0.17639851310936594
+bun140-native-body-1,1.4.0,False,readBody,large-single-1MiB,9,ns/op,173295.76562497095,156181.7656250355,-9.875601944580591
+bun140-native-body-1,1.4.0,False,readBody,large-64x16KiB,9,ns/op,197382.18750001123,182546.6562499969,-7.516144915565648
+bun140-native-body-2,1.4.0,False,merge,empty-stream,9,ns/op,26.676659999999973,56.84337000000028,113.08278472642503
+bun140-native-body-2,1.4.0,False,merge,empty-chunks,9,ns/op,76.45883000000026,74.91763999999989,-2.015712246708934
+bun140-native-body-2,1.4.0,False,merge,single-byte,9,ns/op,61.57461000000012,230.09923999999955,273.6917537926738
+bun140-native-body-2,1.4.0,False,merge,small-json-single,9,ns/op,70.2624400000002,240.17096000000038,241.81984001694178
+bun140-native-body-2,1.4.0,False,merge,small-json-chunked,9,ns/op,113.86014999999816,258.38501999999835,126.93191603910807
+bun140-native-body-2,1.4.0,False,merge,16x1KiB,9,ns/op,2579.1181640625327,3346.392089843775,29.749467723985944
+bun140-native-body-2,1.4.0,False,merge,256x64B,9,ns/op,8320.47119140622,5445.0712890624645,-34.55813782894419
+bun140-native-body-2,1.4.0,False,merge,offset-uint8-16x1KiB,9,ns/op,2648.564453125113,2967.4174804688037,12.038711271212122
+bun140-native-body-2,1.4.0,False,merge,offset-buffer-16x1KiB,9,ns/op,2512.7099609374427,3435.8173828124004,36.737523877629094
+bun140-native-body-2,1.4.0,False,merge,large-single-1MiB,9,ns/op,164984.03906249948,171092.96874999913,3.702739805749
+bun140-native-body-2,1.4.0,False,merge,large-64x16KiB,9,ns/op,172063.0546874986,182333.8906249994,5.969227941555899
+bun140-native-body-2,1.4.0,False,readBody,empty-stream,9,ns/op,3912.078799999926,4013.4966000000527,2.592427330454816
+bun140-native-body-2,1.4.0,False,readBody,empty-chunks,9,ns/op,4514.551399999982,4628.76099999994,2.5298106031079515
+bun140-native-body-2,1.4.0,False,readBody,single-byte,9,ns/op,4300.943999999981,4585.470200000054,6.615436053110058
+bun140-native-body-2,1.4.0,False,readBody,small-json-single,9,ns/op,4361.1807999999655,4529.705599999943,3.8642011814777
+bun140-native-body-2,1.4.0,False,readBody,small-json-chunked,9,ns/op,4745.934199999829,4963.030000000072,4.574353348604165
+bun140-native-body-2,1.4.0,False,readBody,16x1KiB,9,ns/op,10154.58984374895,10071.367187501679,-0.819557042951391
+bun140-native-body-2,1.4.0,False,readBody,256x64B,9,ns/op,76966.60058593708,72524.00878906329,-5.772103435844766
+bun140-native-body-2,1.4.0,False,readBody,offset-uint8-16x1KiB,9,ns/op,11604.370117188622,10659.898437500815,-8.138931024690754
+bun140-native-body-2,1.4.0,False,readBody,offset-buffer-16x1KiB,9,ns/op,11552.271484374543,11136.903320313251,-3.5955540399402297
+bun140-native-body-2,1.4.0,False,readBody,large-single-1MiB,9,ns/op,172778.4999999926,165336.12500001027,-4.307465917334996
+bun140-native-body-2,1.4.0,False,readBody,large-64x16KiB,9,ns/op,207486.18750002378,124724.90624998044,-39.88760998851254
+bun140-native-body-3,1.4.0,True,merge,empty-stream,9,ns/op,35.71429000000023,60.32900999999981,68.92120772945344
+bun140-native-body-3,1.4.0,True,merge,empty-chunks,9,ns/op,90.84558000000015,76.3330400000001,-15.974954422658794
+bun140-native-body-3,1.4.0,True,merge,single-byte,9,ns/op,67.64909999999986,236.01123999999913,248.8756539259201
+bun140-native-body-3,1.4.0,True,merge,small-json-single,9,ns/op,79.073249999999,253.73747999999978,220.88915024993025
+bun140-native-body-3,1.4.0,True,merge,small-json-chunked,9,ns/op,145.19502000000102,288.0220899999995,98.36912450578363
+bun140-native-body-3,1.4.0,True,merge,16x1KiB,9,ns/op,2736.015136718728,3314.6943359374513,21.150438513754956
+bun140-native-body-3,1.4.0,True,merge,256x64B,9,ns/op,9097.925781250016,5707.557617187442,-37.26528711687019
+bun140-native-body-3,1.4.0,True,merge,offset-uint8-16x1KiB,9,ns/op,2627.565429687451,3543.3007812499804,34.85109604564467
+bun140-native-body-3,1.4.0,True,merge,offset-buffer-16x1KiB,9,ns/op,2994.618652343739,3844.977539062544,28.396232891065164
+bun140-native-body-3,1.4.0,True,merge,large-single-1MiB,9,ns/op,174494.3437499984,182180.36718749886,4.404740733895873
+bun140-native-body-3,1.4.0,True,merge,large-64x16KiB,9,ns/op,228919.7187499994,226781.73437500247,-0.9339450470545851
+bun140-native-body-3,1.4.0,True,readBody,empty-stream,9,ns/op,5446.76359999994,5347.884599999998,-1.815371608930183
+bun140-native-body-3,1.4.0,True,readBody,empty-chunks,9,ns/op,5185.493000000133,5157.689000000028,-0.5361881695743254
+bun140-native-body-3,1.4.0,True,readBody,single-byte,9,ns/op,4991.0853999999745,5210.196999999971,4.3900591242136855
+bun140-native-body-3,1.4.0,True,readBody,small-json-single,9,ns/op,5254.0250000000015,5492.292599999928,4.53495367836898
+bun140-native-body-3,1.4.0,True,readBody,small-json-chunked,9,ns/op,5574.184199999945,5856.708399999843,5.068440328898727
+bun140-native-body-3,1.4.0,True,readBody,16x1KiB,9,ns/op,11996.09570312532,11975.959960937033,-0.16785246372319484
+bun140-native-body-3,1.4.0,True,readBody,256x64B,9,ns/op,78066.97851562561,73998.58886718747,-5.211409133278833
+bun140-native-body-3,1.4.0,True,readBody,offset-uint8-16x1KiB,9,ns/op,11870.490234375808,10520.269531250293,-11.374599333862424
+bun140-native-body-3,1.4.0,True,readBody,offset-buffer-16x1KiB,9,ns/op,10456.821289064777,10218.91503906147,-2.275129730409542
+bun140-native-body-3,1.4.0,True,readBody,large-single-1MiB,9,ns/op,109440.7499999761,96025.67187499744,-12.257845569389458
+bun140-native-body-3,1.4.0,True,readBody,large-64x16KiB,9,ns/op,141001.04687497605,112888.14062498887,-19.938083349774395
+bun140-native-json-1,1.4.0,True,json,constructor/small,7,ns/op,1200.9319999999973,1224.586099999999,1.9696452421953836
+bun140-native-json-1,1.4.0,True,json,framework/helper/small,7,ns/op,1333.1371999999988,1314.694800000001,-1.383383495712065
+bun140-native-json-1,1.4.0,True,json,framework/dispatch-value/small,7,ns/op,4723.333599999978,4738.156000000004,0.3138122617472039
+bun140-native-json-1,1.4.0,True,json,framework/dispatch-helper/small,7,ns/op,4511.668399999985,4749.8468,5.2791645769005635
+bun140-native-json-1,1.4.0,True,json,framework/dispatch-contract/small,7,ns/op,6377.478699999983,6624.385399999983,3.8715409586550287
+bun140-native-json-1,1.4.0,True,json,constructor/nested-array,7,ns/op,5346.930900000007,5296.374900000001,-0.9455143697481794
+bun140-native-json-1,1.4.0,True,json,framework/helper/nested-array,7,ns/op,5155.006500000036,5209.796700000061,1.062854139951619
+bun140-native-json-1,1.4.0,True,json,framework/dispatch-value/nested-array,7,ns/op,8436.669100000017,8548.849000000064,1.3296704975669371
+bun140-native-json-1,1.4.0,True,json,framework/dispatch-helper/nested-array,7,ns/op,8699.252499999966,9066.736500000025,4.224316974361408
+bun140-native-json-1,1.4.0,True,json,framework/dispatch-contract/nested-array,7,ns/op,11552.822300000025,11265.160600000036,-2.489969052843377
+bun140-native-json-1,1.4.0,True,json,constructor/unicode,7,ns/op,2012.8983000000517,3103.764599999886,54.19381098388358
+bun140-native-json-1,1.4.0,True,json,framework/helper/unicode,7,ns/op,2268.2307999999466,2318.7708000001294,2.228168315154866
+bun140-native-json-1,1.4.0,True,json,framework/dispatch-value/unicode,7,ns/op,6657.467100000031,5726.895300000069,-13.977865545891433
+bun140-native-json-1,1.4.0,True,json,framework/dispatch-helper/unicode,7,ns/op,6755.232400000023,6708.9342000001125,-0.6853679823052405
+bun140-native-json-1,1.4.0,True,json,framework/dispatch-contract/unicode,7,ns/op,7314.265399999931,7371.468900000035,0.7820812736724747
+bun140-native-json-1,1.4.0,True,json,constructor/problem,7,ns/op,2227.8376999998727,2811.6006999998717,26.203120631275457
+bun140-native-json-1,1.4.0,True,json,framework/helper/problem,7,ns/op,2525.9117999999944,2420.565699999861,-4.1706167254190625
+bun140-native-json-1,1.4.0,True,json,framework/dispatch-value/problem,7,ns/op,7143.703199999982,7080.1047999999355,-0.8902721490451349
+bun140-native-json-1,1.4.0,True,json,framework/dispatch-helper/problem,7,ns/op,7031.984399999964,6978.620999999839,-0.7588668712081525
+bun140-native-json-1,1.4.0,True,json,framework/dispatch-contract/problem,7,ns/op,7732.968900000015,7683.610000000045,-0.6382917174278302
+bun140-native-json-1,1.4.0,True,json,framework/middleware/problem-cookies,7,ns/op,5887.818800000241,6461.212800000067,9.738648886405986
+bun140-native-json-1,1.4.0,True,json,framework/dispatch-error/problem-cookies,7,ns/op,11892.747500000041,12536.714799999754,5.414789980193491
+bun140-native-json-1,1.4.0,True,json,framework/ws-problem/rejected,7,ns/op,3191.3494000000355,3302.353099999891,3.4782684716331724
+bun140-session-sign-1,1.4.0,True,session,sign,7,ns/op,1261.0,787.1,-37.58128469468676
+bun140-session-sign-1,1.4.0,True,session,verify valid cookie,7,ns/op,1529.3,1036.6,-32.21735434512523
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,static,3,req/s (printed),,38192.0,
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,static,3,p95 ms (printed),,2.56,
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,param,3,req/s (printed),,34424.0,
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,param,3,p95 ms (printed),,2.68,
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,wildcard,3,req/s (printed),,32959.0,
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,wildcard,3,p95 ms (printed),,2.57,
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,middleware,3,req/s (printed),,35790.0,
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,middleware,3,p95 ms (printed),,2.46,
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,json,3,req/s (printed),,36973.0,
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,json,3,p95 ms (printed),,2.52,
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,di,3,req/s (printed),,30654.0,
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,di,3,p95 ms (printed),,3.36,
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,static-file,3,req/s (printed),,18500.0,
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,static-file,3,p95 ms (printed),,4.84,
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,post-json,3,req/s (printed),,10782.0,
+bun142-bench-check-1,1.4.2,True,HTTP gate FAIL,post-json,3,p95 ms (printed),,9.37,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,static,3,req/s,,37972.92499606319,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,static,3,p95 ms,,2.1212319999999636,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,param,3,req/s,,39600.907055098185,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,param,3,p95 ms,,2.2261490000000776,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,wildcard,3,req/s,,37601.12270633927,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,wildcard,3,p95 ms,,2.4848130000009405,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,middleware,3,req/s,,35512.721212930606,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,middleware,3,p95 ms,,2.9827949999998964,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,json,3,req/s,,37009.42064130382,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,json,3,p95 ms,,2.6975520000014512,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,di,3,req/s,,31459.1760596449,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,di,3,p95 ms,,3.1154739999983576,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,static-file,3,req/s,,15556.02332089696,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,static-file,3,p95 ms,,6.043616999999358,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,post-json,3,req/s,,12631.790024940274,
+bun142-http-samples-baseline-1,1.4.2,True,HTTP,post-json,3,p95 ms,,7.996613999999681,
+bun142-native-body-1,1.4.2,True,merge,empty-stream,9,ns/op,29.420949999999948,56.94392999999991,93.54891667332295
+bun142-native-body-1,1.4.2,True,merge,empty-chunks,9,ns/op,99.76093999999989,71.69172000000003,-28.13648307644243
+bun142-native-body-1,1.4.2,True,merge,single-byte,9,ns/op,73.70471000000066,249.99555999999984,239.18532479131605
+bun142-native-body-1,1.4.2,True,merge,small-json-single,9,ns/op,86.12812999999962,280.72766,225.94189610293554
+bun142-native-body-1,1.4.2,True,merge,small-json-chunked,9,ns/op,137.17208999999912,287.8101700000002,109.81685851691991
+bun142-native-body-1,1.4.2,True,merge,16x1KiB,9,ns/op,2500.1689453125755,4036.329589843679,61.4422736275948
+bun142-native-body-1,1.4.2,True,merge,256x64B,9,ns/op,8674.61914062495,5750.417480468562,-33.709856453083646
+bun142-native-body-1,1.4.2,True,merge,offset-uint8-16x1KiB,9,ns/op,2370.458007812548,2992.4453124998695,26.239119302572632
+bun142-native-body-1,1.4.2,True,merge,offset-buffer-16x1KiB,9,ns/op,2987.479980468777,3877.0556640623786,29.776791456658238
+bun142-native-body-1,1.4.2,True,merge,large-single-1MiB,9,ns/op,188886.96093749857,221632.21093749997,17.33589753230058
+bun142-native-body-1,1.4.2,True,merge,large-64x16KiB,9,ns/op,186252.10156250204,205896.64843749843,10.547288707184933
+bun142-native-body-1,1.4.2,True,readBody,empty-stream,9,ns/op,5189.446999999927,5833.849199999986,12.417550463470729
+bun142-native-body-1,1.4.2,True,readBody,empty-chunks,9,ns/op,5894.999999999891,5804.680399999961,-1.5321391009318286
+bun142-native-body-1,1.4.2,True,readBody,single-byte,9,ns/op,5500.028200000088,6186.72579999984,12.48534689330758
+bun142-native-body-1,1.4.2,True,readBody,small-json-single,9,ns/op,6130.184999999983,5942.11239999986,-3.0679759256877825
+bun142-native-body-1,1.4.2,True,readBody,small-json-chunked,9,ns/op,5847.478000000046,6144.413800000257,5.07801482964465
+bun142-native-body-1,1.4.2,True,readBody,16x1KiB,9,ns/op,13387.958007813339,12994.750976561776,-2.9370202014533
+bun142-native-body-1,1.4.2,True,readBody,256x64B,9,ns/op,84486.08496093791,80727.31738281291,-4.448978290167982
+bun142-native-body-1,1.4.2,True,readBody,offset-uint8-16x1KiB,9,ns/op,10929.105468751033,10518.279296876543,-3.7590100402008386
+bun142-native-body-1,1.4.2,True,readBody,offset-buffer-16x1KiB,9,ns/op,11567.454101562902,11481.64160155929,-0.7418443094753036
+bun142-native-body-1,1.4.2,True,readBody,large-single-1MiB,9,ns/op,179496.76562500373,99022.76562502266,-44.83311981682366
+bun142-native-body-1,1.4.2,True,readBody,large-64x16KiB,9,ns/op,142586.64062498382,122014.92187500662,-14.427521863063408
+bun142-native-body-2,1.4.2,False,merge,empty-stream,9,ns/op,27.161780000000135,64.71697000000006,138.26483389527394
+bun142-native-body-2,1.4.2,False,merge,empty-chunks,9,ns/op,93.17444000000022,80.15879999999981,-13.969109983382111
+bun142-native-body-2,1.4.2,False,merge,single-byte,9,ns/op,65.40944999999965,231.73492999999897,254.28356300198246
+bun142-native-body-2,1.4.2,False,merge,small-json-single,9,ns/op,73.66929999999911,253.78138000000038,244.48729660795397
+bun142-native-body-2,1.4.2,False,merge,small-json-chunked,9,ns/op,138.6223199999995,287.77428999999984,107.59592683198558
+bun142-native-body-2,1.4.2,False,merge,16x1KiB,9,ns/op,2681.0039062500346,3852.4399414062714,43.69393242678055
+bun142-native-body-2,1.4.2,False,merge,256x64B,9,ns/op,9511.22509765634,6575.92822265618,-30.861396348651716
+bun142-native-body-2,1.4.2,False,merge,offset-uint8-16x1KiB,9,ns/op,3280.3579101561286,4550.521972656263,38.72028898333477
+bun142-native-body-2,1.4.2,False,merge,offset-buffer-16x1KiB,9,ns/op,3317.780273437432,5013.286621093905,51.10363580225341
+bun142-native-body-2,1.4.2,False,merge,large-single-1MiB,9,ns/op,182438.40625000017,204292.6953124997,11.978995822048578
+bun142-native-body-2,1.4.2,False,merge,large-64x16KiB,9,ns/op,165381.89843750218,164229.92187500186,-0.6965554110721861
+bun142-native-body-2,1.4.2,False,readBody,empty-stream,9,ns/op,3957.2017999999844,4220.530400000007,6.654414237859285
+bun142-native-body-2,1.4.2,False,readBody,empty-chunks,9,ns/op,4463.9241999999285,4612.146200000097,3.320441686715281
+bun142-native-body-2,1.4.2,False,readBody,single-byte,9,ns/op,4292.590000000018,4320.737799999915,0.6557299905161518
+bun142-native-body-2,1.4.2,False,readBody,small-json-single,9,ns/op,4829.746800000066,4855.079599999954,0.5245161092065409
+bun142-native-body-2,1.4.2,False,readBody,small-json-chunked,9,ns/op,5711.402600000292,6093.310399999973,6.686760271455228
+bun142-native-body-2,1.4.2,False,readBody,16x1KiB,9,ns/op,10420.0869140616,10178.438476561525,-2.3190635499784285
+bun142-native-body-2,1.4.2,False,readBody,256x64B,9,ns/op,77337.22460937465,74241.92187500012,-4.002345248369988
+bun142-native-body-2,1.4.2,False,readBody,offset-uint8-16x1KiB,9,ns/op,10484.963867188668,10112.732421875493,-3.5501452368188358
+bun142-native-body-2,1.4.2,False,readBody,offset-buffer-16x1KiB,9,ns/op,11110.359375001266,10649.067382813015,-4.151908832275719
+bun142-native-body-2,1.4.2,False,readBody,large-single-1MiB,9,ns/op,130522.01562499022,113933.71874999048,-12.709194533633672
+bun142-native-body-2,1.4.2,False,readBody,large-64x16KiB,9,ns/op,153484.64062498123,126143.79687499878,-17.813407021479154
+bun142-native-json-1,1.4.2,True,json,constructor/small,7,ns/op,1161.943500000001,1217.6200999999992,4.79167876923432
+bun142-native-json-1,1.4.2,True,json,framework/helper/small,7,ns/op,1300.761300000005,1290.8595999999989,-0.7612234466082279
+bun142-native-json-1,1.4.2,True,json,framework/dispatch-value/small,7,ns/op,4504.579400000011,4663.552900000002,3.5291530214783373
+bun142-native-json-1,1.4.2,True,json,framework/dispatch-helper/small,7,ns/op,4479.688699999997,4501.780199999985,0.49314810647418383
+bun142-native-json-1,1.4.2,True,json,framework/dispatch-contract/small,7,ns/op,4993.248799999992,5145.306299999993,3.045261834339219
+bun142-native-json-1,1.4.2,True,json,constructor/nested-array,7,ns/op,4477.022699999998,4612.759499999993,3.031854182914806
+bun142-native-json-1,1.4.2,True,json,framework/helper/nested-array,7,ns/op,5005.438699999968,4811.767199999986,-3.869221293230174
+bun142-native-json-1,1.4.2,True,json,framework/dispatch-value/nested-array,7,ns/op,8526.866299999983,8418.651099999988,-1.2691086759504477
+bun142-native-json-1,1.4.2,True,json,framework/dispatch-helper/nested-array,7,ns/op,9146.290299999964,8903.400200000033,-2.655613281812541
+bun142-native-json-1,1.4.2,True,json,framework/dispatch-contract/nested-array,7,ns/op,9310.690900000009,8915.67530000002,-4.242602447472377
+bun142-native-json-1,1.4.2,True,json,constructor/unicode,7,ns/op,1886.050100000011,3004.752499999995,59.31456433739366
+bun142-native-json-1,1.4.2,True,json,framework/helper/unicode,7,ns/op,2302.3347000000285,2132.399699999951,-7.380985918340876
+bun142-native-json-1,1.4.2,True,json,framework/dispatch-value/unicode,7,ns/op,5626.70820000003,5204.933500000152,-7.495940521669064
+bun142-native-json-1,1.4.2,True,json,framework/dispatch-helper/unicode,7,ns/op,5181.983299999956,5359.2711999999665,3.4212364211982704
+bun142-native-json-1,1.4.2,True,json,framework/dispatch-contract/unicode,7,ns/op,6252.072300000145,6089.277699999911,-2.6038502465851265
+bun142-native-json-1,1.4.2,True,json,constructor/problem,7,ns/op,1959.46899999999,2286.7113000000245,16.700560202791472
+bun142-native-json-1,1.4.2,True,json,framework/helper/problem,7,ns/op,2199.087800000052,2251.41509999994,2.3795002636951113
+bun142-native-json-1,1.4.2,True,json,framework/dispatch-value/problem,7,ns/op,7099.710899999991,5902.952000000005,-16.856445520901254
+bun142-native-json-1,1.4.2,True,json,framework/dispatch-helper/problem,7,ns/op,6064.7516999999425,6071.927200000027,0.11831481905657526
+bun142-native-json-1,1.4.2,True,json,framework/dispatch-contract/problem,7,ns/op,6292.577500000152,6333.936100000028,0.6572600814193308
+bun142-native-json-1,1.4.2,True,json,framework/middleware/problem-cookies,7,ns/op,5915.696899999966,6363.302300000032,7.566401855376803
+bun142-native-json-1,1.4.2,True,json,framework/dispatch-error/problem-cookies,7,ns/op,10838.396499999908,11828.917199999887,9.138996714135605
+bun142-native-json-1,1.4.2,True,json,framework/ws-problem/rejected,7,ns/op,2574.0207999999257,2688.709200000085,4.455612790703256
+bun142-native-json-2,1.4.2,False,json,constructor/small,7,ns/op,1192.2098000000005,1202.2025000000012,0.8381662355065878
+bun142-native-json-2,1.4.2,False,json,framework/helper/small,7,ns/op,1329.535599999997,1301.1614000000009,-2.1341436814475756
+bun142-native-json-2,1.4.2,False,json,framework/dispatch-value/small,7,ns/op,4787.243599999999,4503.522799999996,-5.9266004345382095
+bun142-native-json-2,1.4.2,False,json,framework/dispatch-helper/small,7,ns/op,4846.140100000002,4779.543199999989,-1.3742256440339662
+bun142-native-json-2,1.4.2,False,json,framework/dispatch-contract/small,7,ns/op,5673.216300000013,5384.136400000034,-5.095520507476126
+bun142-native-json-2,1.4.2,False,json,constructor/nested-array,7,ns/op,4927.494000000024,5400.901900000008,9.607477959384259
+bun142-native-json-2,1.4.2,False,json,framework/helper/nested-array,7,ns/op,5164.423799999986,5049.023200000011,-2.23453001668793
+bun142-native-json-2,1.4.2,False,json,framework/dispatch-value/nested-array,7,ns/op,8744.700000000012,9030.540699999983,3.268730774068529
+bun142-native-json-2,1.4.2,False,json,framework/dispatch-helper/nested-array,7,ns/op,9026.287700000012,9143.098999999984,1.2941233858518864
+bun142-native-json-2,1.4.2,False,json,framework/dispatch-contract/nested-array,7,ns/op,9509.396899999956,9118.040099999962,-4.115474452433421
+bun142-native-json-2,1.4.2,False,json,constructor/unicode,7,ns/op,2174.409100000048,3199.2496000000756,47.1319081584052
+bun142-native-json-2,1.4.2,False,json,framework/helper/unicode,7,ns/op,2353.6236999998437,2435.7248999998774,3.488289143249168
+bun142-native-json-2,1.4.2,False,json,framework/dispatch-value/unicode,7,ns/op,5749.041600000055,5742.719800000123,-0.1099626762125383
+bun142-native-json-2,1.4.2,False,json,framework/dispatch-helper/unicode,7,ns/op,6170.710300000064,6221.472799999901,0.8226362530718179
+bun142-native-json-2,1.4.2,False,json,framework/dispatch-contract/unicode,7,ns/op,6822.892300000058,6728.781499999969,-1.379338788626161
+bun142-native-json-2,1.4.2,False,json,constructor/problem,7,ns/op,2003.6334999998871,2377.626699999928,18.665749000506416
+bun142-native-json-2,1.4.2,False,json,framework/helper/problem,7,ns/op,2491.6197000000466,2634.473000000071,5.733350880153254
+bun142-native-json-2,1.4.2,False,json,framework/dispatch-value/problem,7,ns/op,5912.994500000059,5824.946099999943,-1.4890661575977293
+bun142-native-json-2,1.4.2,False,json,framework/dispatch-helper/problem,7,ns/op,6465.430799999922,6378.867399999945,-1.338865153424551
+bun142-native-json-2,1.4.2,False,json,framework/dispatch-contract/problem,7,ns/op,6589.205399999992,6000.424700000076,-8.935534169262905
+bun142-native-json-2,1.4.2,False,json,framework/middleware/problem-cookies,7,ns/op,5067.4198000000615,5388.154000000031,6.329339440161763
+bun142-native-json-2,1.4.2,False,json,framework/dispatch-error/problem-cookies,7,ns/op,9700.568000000203,10135.914499999853,4.487845453994455
+bun142-native-json-2,1.4.2,False,json,framework/ws-problem/rejected,7,ns/op,2778.8731000000553,2894.421300000249,4.158095596383715
+bun142-session-sign-2,1.4.2,True,session,sign,7,ns/op,1267.4,700.6,-44.72147703960865
+bun142-session-sign-2,1.4.2,True,session,verify valid cookie,7,ns/op,1597.1,981.1,-38.569907958174184

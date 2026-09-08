@@ -1,0 +1,56 @@
+"""Check local Markdown links in changed task documents and final bilingual output."""
+from html.parser import HTMLParser
+import hashlib
+import json
+from pathlib import Path
+import re
+import subprocess
+from urllib.parse import unquote, urlsplit
+
+ROOT = Path(__file__).resolve().parents[4]
+changed = subprocess.check_output(["git", "diff", "--name-only", "12e6b88"], cwd=ROOT, text=True).splitlines()
+files = sorted({path for path in changed if path.endswith(".md")} | {
+    "plans/bun-native/results/03/REPORT.md",
+    "plans/bun-native/todos/03-docs-and-validation.md",
+})
+checked, remote = [], []
+for name in files:
+    path = ROOT / name
+    text = re.sub(r"```.*?```", "", path.read_text(), flags=re.S)
+    for href in re.findall(r"\[[^\]]*\]\(([^)]+)\)", text):
+        parsed = urlsplit(href)
+        if parsed.scheme or parsed.netloc:
+            remote.append({"file": name, "href": href})
+            continue
+        target = (path.parent / unquote(parsed.path)).resolve() if parsed.path else path
+        assert target.exists(), (name, href)
+        if parsed.fragment and target.suffix == ".md":
+            headings = re.findall(r"^#+\s+(.+)$", target.read_text(), re.M)
+            slugs = [re.sub(r"[^\w -]", "", heading.lower()).replace(" ", "-") for heading in headings]
+            assert unquote(parsed.fragment) in slugs, (name, href, slugs)
+        checked.append({"file": name, "href": href})
+
+
+class Text(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.parts = []
+
+    def handle_data(self, data):
+        self.parts.append(data)
+
+
+pages = []
+for name in ("README.html", "zh/README.html", "index.html", "zh/index.html"):
+    path = ROOT / "docs/.vitepress/dist" / name
+    raw = path.read_bytes()
+    rendered = raw.decode()
+    parser = Text()
+    parser.feed(rendered)
+    text = "".join(parser.parts)
+    assert "/zebra/assets/" in rendered, name
+    if "README" in name:
+        assert "Bun ≥ 1.4.0" in text, name
+        assert "timingSafeEqual" in text and "node:fs" in text, name
+    pages.append({"page": name, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()})
+print(json.dumps({"documents": files, "documentSha256": {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in files}, "checkedLocalLinks": checked, "existingRemoteLinksNotFetched": remote, "builtPages": pages}))

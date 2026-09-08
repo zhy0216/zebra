@@ -3,7 +3,7 @@ layout: home
 
 hero:
   name: Zebra
-  text: Bun-first 的 TypeScript Web 框架
+  text: 面向 Bun 的 TypeScript Web 框架
   tagline: 一等公民的依赖注入、契约优先 API 与结构化错误 —— 直接构建在 Bun 之上。
   actions:
     - theme: brand
@@ -16,8 +16,8 @@ hero:
     src: /logo.svg
     alt: Zebra
 features:
-  - title: Bun-first
-    details: 直接构建在 Bun.serve / Bun.file 与 Web Standard Request / Response 之上，没有 Node 兼容层。
+  - title: 面向 Bun
+    details: 服务端包直接面向 Bun ≥ 1.4.0，使用 Bun.serve / Bun.file 与 Web Standard Request / Response。
   - title: DI 是强制的，不是外挂
     details: 每个应用都围绕一个 Container 构建；路由与中间件声明自己的依赖，容器在启动时校验整张依赖图。
   - title: 命名对象路由 DI

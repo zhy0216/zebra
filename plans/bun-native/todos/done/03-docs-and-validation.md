@@ -1,0 +1,88 @@
+difficulty: medium
+agent: inherit
+
+# Bun 定位说明、性能记录与整体验收
+
+## T1 · 按实际实现更新 Bun 说明与 benchmark 记录
+
+要做什么：
+
+等 01、02 完成并集成后，读取其最终源码和原始结果。将 README 的 Bun 定位表述为直接面向 Bun 运行时；说明采用的 API、保留的必要 fs/path/timingSafeEqual 调用及浏览器客户端边界。保留用户已有 session HMAC 工作的来源，仅报告复核过的数字。候选未采用时明确说明，不能笼统宣称全部原生化。
+
+预计修改的文件：
+
+- `README.md`
+- `docs/README.md`
+- `docs/zh/README.md`
+- `CONTRIBUTING.md`
+- `bench/README.md`
+- `docs/index.md`、`docs/zh/index.md`、`docs/01-getting-started.md`、`docs/zh/01-getting-started.md`（协调器明确补充纳入范围）
+- `docs/05-http.md` 与 `docs/zh/05-http.md`，仅在最终实现需要补充维护说明时同步；避免给产品使用流程增加无关内部细节。
+
+验收条件：
+
+- 两种语言的 Bun 定位和最低版本一致，不暗示所有 `node:` 导入已删除，也不更改 API freeze 或运行时要求。
+- benchmark 文档提供新脚本的准确运行方法、before/after 基线 commit、每个版本的环境、轮数、中位数及完整数据位置。
+- 对 01、02 分别给出采用/未采用结论和原因。局部成本与 HTTP gate 分开解释，包含无收益/退化结果。
+- session 签名若被用户保留，复跑后注明它是本轮之前的实现；不把旧数字复制成本轮其他路径收益。
+- 不改业务实现、测试预期、包版本/依赖、共享 benchmark gate 或 baseline。
+
+前置依赖：依赖 01-native-json.md；依赖 02-native-body.md，均须完成并集成。
+
+## T2 · 复核最低 Bun 与最终仓库门禁
+
+要做什么：
+
+按 plan 的合并态命令在隔离 Bun 1.4.0 和当前 Bun 1.4.2 下验证，检查 src-direct 包导入以及 client/contract 浏览器边界。由协调器安排两个新 benchmark 与原 HTTP gate 的独占测量时段。复核已有证据即可，不在没有新修改/失败的情况下反复重跑同一门禁。
+
+预计修改的文件：测量方法和稳定结论写入 `bench/README.md`；协调器按 herdr-finish-plan 将完成证据写入计划记录并归档任务，本任务 agent 不并行修改共享队列。
+
+验收条件：
+
+- typecheck、lint、build、全量 test、12 包 verify:packages、core coverage/check:coverage、带 `/zebra/` base 的双语 docs 构建均通过。
+- 两个新 benchmark 能复现；原 `bun run bench:check` 结果完整报告，失败不改 baseline/门槛掩盖。
+- 最低 Bun 的验证使用隔离可执行文件，不更改用户全局安装、packageManager、engines、CI 或锁文件。若无法验证，保留未完成状态和原因。
+- 对每条命令记录版本、HEAD、退出码；不得把历史计划或规划阶段结果当作最终验收。
+- 文档与实际代码一致，所有链接存在，`git diff --check` 通过；不为纯文本修改新写测试。
+
+前置依赖：依赖 01-native-json.md；依赖 02-native-body.md；最终 docs 构建在本文件 T1 文档修改后执行。
+
+## 验证方式
+
+执行 [plan.md](../../plan.md) 的“合并态验收”全部命令，并在隔离 Bun 1.4.0 下按同一清单复核。纯文档修改不需要新增测试；若门禁发现代码问题，交由对应原任务修复并串行集成，再补受影响检查，不能降低验收要求。
+
+
+## 03 完成记录
+
+- T1 已完成全部九份文档：README、双语 docs README、CONTRIBUTING 与 bench README
+  明确 Bun ≥ 1.4.0、现有 API/必要 node: 调用、浏览器边界和两个候选均未采用。
+  session 明确来自用户此前 `4466df7`，新复跑数字与 JSON/body 收益分开。
+  协调器补充纳入的双语首页与入门指南也已同步，首页 feature 保持简洁，入门指南
+  明确最低版本与 CI 浮动版本的区别，四页旧表述已消除。
+- T2 两版冻结安装、typecheck、lint、build、全量 test、12 包 verify:packages、
+  core coverage/check:coverage、最终 T1 文档之后的 `/zebra/` 双语 docs 构建均通过。
+  全量每版 1306 pass / 0 fail；core 每版 2389/2417 行 = 98.84%，门槛保持 90%。
+  两版 client/contract browser target 打包和 Web-only VM 依赖边界检查通过。
+- 两个新脚本每版新增一份有效完整复现已完成；当前 Bun 的有效第一轮直接复用。
+  两版 session 各一份有效完整复跑。03 另四份完整运行受外部负载干扰而排除，
+  原数据全部保留；一个 session wait-only 记录无计时数据。
+- **原 HTTP gate 两版各 8/8 FAIL、exit 1**，同机 `1418a2f` 原始源码对照也均
+  8/8 FAIL、exit 1。80 个生产文件逐字节相同，原 baseline/门槛完全未改。
+  完整输出、每场景 rps/p95、负载规则与环境/测量限制见报告，未把失败改报通过。
+- 02 历史最低 Bun peer-IP 失败已由 01 固定监听和请求为 127.0.0.1 解决；本轮
+  两版全量日志均验证原断言通过，没有覆盖历史失败证据。
+- 每条验收命令的版本、HEAD、前后文档/生产源码指纹、退出码和完整日志见
+  [03 REPORT](../../results/03/REPORT.md)、[command index](../../results/03/commands.csv)。
+  全部中位数及负结果见 [medians.csv](../../results/03/medians.csv)。
+- 四页同步后，两版只补 `/zebra/` docs 构建、本地链接/六份产物校验、lint、diff
+  和固定输入证据 hash，最终均 exit 0；记录器文档指纹覆盖全部九份文档。首次
+  扩展链接检查发现既有根路径 favicon 不带 base（exit 1），失败日志保留；最终
+  检查逐页报告该配置限制，未修改配置或声称 favicon 已修复。另修正检查器对
+  无扩展名相对路径的解析，以及双语 docs README 构建后失效的仓库链接，失败
+  日志全部保留；最后在两版构建并复核修正后的最终文档。未重复测试
+  或性能测量，历史日志和补丁原样保留，补丁明确为已应用意图的修订前参考。
+  没有待审批文档范围项；上述复核阶段尚未修改共享队列 README 或归档任务。
+- 集成阶段协调器已串行归档本文件并修复相对链接、更新共享队列；任务 agent
+  按明确授权复核归档链接、文档指纹及 diff，收录改动并 rebase 到 master。
+  九份站点文档未变，复用两版最终 docs 构建，不重复全量测试或性能测量。
+- 协调器仍须亲自执行集成后的仓库门禁；本记录不替代协调器验收。

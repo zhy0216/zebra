@@ -2,13 +2,22 @@
 
 > English docs: [English](../README.md)
 
-Zebra 是一个 Bun-first 的 TypeScript Web 框架，把依赖注入（DI）当作一等公民。
+Zebra 是直接面向 Bun 运行时的 TypeScript Web 框架，把依赖注入（DI）当作一等公民。
 
-- **Bun-first** —— 直接构建在 `Bun.serve` / `Bun.file` 与 Web Standard `Request` / `Response` 之上，没有 Node 兼容层。
+- **面向 Bun** —— HTTP/WebSocket 使用 `Bun.serve`，静态正文使用 `Bun.file`，请求与响应使用 Web Standard `Request` / `Response`。
 - **DI 是强制的，不是外挂** —— 每个应用都围绕一个 `Container` 构建；路由与中间件声明自己的依赖，容器在启动时校验整张依赖图。
 - **命名对象路由 DI** —— `app.get(path, { svc: Service }, (req, { svc }) => ...)`，显式、类型安全、零字符串解析。
 - **结构化错误** —— 默认错误响应遵循 RFC 9457（Problem+Json）。
 - **契约优先（oRPC 风格）** —— 契约定义一次（`zc.get(path).params(s).query(s).body(s).output(s).status(n).errors(e).meta(m)`），服务端用完整类型推断 + 运行时校验实现（`app.implement`），并从同一契约派生类型安全客户端（`createClient` / `createTestClient`）。
+
+服务端包要求 **Bun ≥ 1.4.0**。会话 HMAC-SHA256 使用 `Bun.CryptoHasher`，
+验签保留 `node:crypto.timingSafeEqual`。静态文件的元数据、路径边界和符号链接校验
+保留 Bun 提供的 `node:fs` / `node:path` API。JSON 响应和受限请求体合并在评估原生
+候选后保留原实现；面向 Bun 并不意味着删除全部 `node:` 导入。
+
+`@zebra-web/client` 与 `@zebra-web/contract` 保持浏览器兼容，使用 Web API 和纯
+TypeScript，不引用 Bun 运行时。浏览器代码直接导入这两个包，避免打包服务端包。
+服务端的装饰器与 `reflect-metadata` 要求见[快速开始](01-getting-started.md)。
 
 ## 篇章索引
 
@@ -88,4 +97,4 @@ bun --filter example-forum start           # 全功能：契约 API + 会话 + �
 bun --filter example-better-auth start     # Better Auth 集成 — http://localhost:3003
 ```
 
-完整列表见仓库 [README](../../README.md)。
+完整列表见仓库 [README](https://github.com/zhy0216/zebra/blob/master/README.md)。

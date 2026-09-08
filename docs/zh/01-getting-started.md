@@ -1,6 +1,6 @@
 # 快速开始
 
-Zebra 是一个 Bun-first 的 TypeScript Web 框架。本文带你完成安装、配置和第一个应用。
+Zebra 是直接面向 Bun 的 TypeScript Web 框架。本文带你完成安装、配置和第一个应用。
 
 ## 安装
 
@@ -18,7 +18,7 @@ bun add @zebra-web/observability @zebra-web/redis
 
 ## 运行环境
 
-- **Bun ≥ 1.4.0**（运行时）。仓库固定为 `packageManager bun@1.4.0`，测试与 CI 跑在同一个 Bun 上。
+- **Bun ≥ 1.4.0**（服务端包）。仓库使用 `packageManager bun@1.4.0`；CI 选择浮动的 `1.4` 系列，因此最低版本需单独验证。
 - **类型检查**通过 `tsgo`——原生 TypeScript 编译器（`@typescript/native-preview`）。
 - `reflect-metadata` 在入口处导入一次，且 `tsconfig.json` 开启装饰器支持：
 

@@ -13,7 +13,16 @@ Typechecking uses `tsgo` (the native TypeScript compiler via
 Server packages target Bun directly. Prefer Bun-native APIs when representative
 benchmarks show a performance benefit, preserving public behavior and security
 properties. Compare on the same machine and Bun version, and keep a reproducible
-benchmark for the changed path. The client package must remain browser-safe.
+benchmark for the changed path. Retain negative results and reject a candidate
+when compatibility differs or representative regressions reproduce. Local helper
+costs and HTTP throughput are separate measurements; see [bench/README.md](bench/README.md).
+
+Keep `node:fs` / `node:path` where static metadata, path boundaries and realpath
+checks require them, and retain `node:crypto.timingSafeEqual` for session signature
+comparison. The existing session HMAC implementation uses `Bun.CryptoHasher`;
+the JSON response and bounded body-merge candidates were evaluated but not adopted.
+Both client and contract packages must remain browser-safe, without Bun runtime
+references. These choices preserve the [API freeze](docs/api-freeze.md).
 
 ## Before a PR
 
@@ -54,8 +63,22 @@ all package sources and tests, example sources/tests/client demos, and scripts a
 benchmarks with their tests. Package-local typecheck commands remain available.
 CI also runs `bun test --coverage --coverage-reporter=lcov packages/core` followed
 by `bun run check:coverage` (90% core source line coverage). Build documentation
-changes with `bun run docs:build`; run `bun run bench:check` locally for performance
-changes because the baseline depends on the measurement machine.
+changes with `DOCS_BASE=/zebra/ bun run docs:build`. For runtime changes, run the
+same install (`bun install --frozen-lockfile`), repository checks, core coverage,
+docs build and relevant benchmarks on both the current Bun and the minimum
+supported Bun 1.4.0. Prepend an isolated minimum-version binary directory to
+`PATH` so subprocesses also use it; do not change the global installation,
+packageManager, engines or lockfile to perform this check. CI's floating `1.4`
+selection does not substitute for a minimum-version run.
+
+Build client and contract entry points with `bun build --target browser` and
+check the emitted bundles for Bun runtime references. Run `bun run bench:check`
+locally for performance changes. Its Apple Silicon baseline is machine-specific:
+record a failed gate in full, compare the original and final sources on the same
+machine and Bun version, and keep the existing baseline and thresholds intact
+during an evaluation. Serialize performance runs after a sustained quiet window,
+record load throughout, and retain but exclude complete interrupted runs using a
+rule chosen before inspecting results.
 
 ## Commits
 

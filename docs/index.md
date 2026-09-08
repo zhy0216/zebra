@@ -3,7 +3,7 @@ layout: home
 
 hero:
   name: Zebra
-  text: Bun-first TypeScript web framework
+  text: TypeScript web framework for Bun
   tagline: First-class dependency injection, contract-first APIs, and structured errors — built directly on Bun.
   actions:
     - theme: brand
@@ -16,8 +16,8 @@ hero:
     src: /logo.svg
     alt: Zebra
 features:
-  - title: Bun-first
-    details: Built directly on Bun.serve / Bun.file and Web Standard Request / Response. No Node compat layer.
+  - title: Built for Bun
+    details: Server packages target Bun ≥ 1.4.0, using Bun.serve / Bun.file and Web Standard Request / Response.
   - title: DI is mandatory, not bolted on
     details: Every app is built around a Container. Routes and middleware declare their dependencies; the container validates the full graph at boot.
   - title: Named-object route DI

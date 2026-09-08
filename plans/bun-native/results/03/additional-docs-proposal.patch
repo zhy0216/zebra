@@ -1,0 +1,32 @@
+--- a/docs/index.md
++++ b/docs/index.md
+@@ -6 +6 @@
+-  text: Bun-first TypeScript web framework
++  text: TypeScript web framework for Bun
+@@ -19,2 +19,2 @@
+-  - title: Bun-first
+-    details: Built directly on Bun.serve / Bun.file and Web Standard Request / Response. No Node compat layer.
++  - title: Built for Bun
++    details: Server packages target Bun ≥ 1.4.0, using Bun.serve / Bun.file and Web Standard Request / Response. Necessary node:fs / node:path and timingSafeEqual calls are retained.
+--- a/docs/zh/index.md
++++ b/docs/zh/index.md
+@@ -6 +6 @@
+-  text: Bun-first 的 TypeScript Web 框架
++  text: 面向 Bun 的 TypeScript Web 框架
+@@ -19,2 +19,2 @@
+-  - title: Bun-first
+-    details: 直接构建在 Bun.serve / Bun.file 与 Web Standard Request / Response 之上，没有 Node 兼容层。
++  - title: 面向 Bun
++    details: 服务端包直接面向 Bun ≥ 1.4.0，使用 Bun.serve / Bun.file 与 Web Standard Request / Response，保留必要的 node:fs / node:path 和 timingSafeEqual 调用。
+--- a/docs/01-getting-started.md
++++ b/docs/01-getting-started.md
+@@ -21,2 +21,2 @@
+-- **Bun ≥ 1.4.0** (runtime). The repo is pinned to `packageManager bun@1.4.0`;
+-  tests and CI run on the same Bun.
++- **Bun ≥ 1.4.0** for server packages. The repo uses `packageManager bun@1.4.0`;
++  CI selects the floating `1.4` line, so minimum-version checks run separately.
+--- a/docs/zh/01-getting-started.md
++++ b/docs/zh/01-getting-started.md
+@@ -21 +21 @@
+-- **Bun ≥ 1.4.0**（运行时）。仓库固定为 `packageManager bun@1.4.0`，测试与 CI 跑在同一个 Bun 上。
++- **Bun ≥ 1.4.0**（服务端包）。仓库使用 `packageManager bun@1.4.0`；CI 选择浮动的 `1.4` 系列，因此最低版本需单独验证。

@@ -1,10 +1,10 @@
 # Zebra
 
-A Bun-first TypeScript web framework with first-class DI.
+A TypeScript web framework built directly for the Bun runtime, with first-class DI.
 
 ## Why Zebra
 
-- **Bun-first.** Uses `Bun.serve`, `Bun.file`, and Web Standard `Request`/`Response`. No Node compat layer.
+- **Built for Bun.** Uses `Bun.serve` for HTTP/WebSocket, `Bun.file` for static bodies, and Web Standard `Request`/`Response`.
 - **DI is mandatory, not bolted on.** Every app is built around a `Container`. Routes and middleware declare their dependencies; the container validates the full graph at boot.
 - **Named-object route DI.** `app.get(path, { svc: Service }, (req, { svc }) => ...)` — explicit, type-safe, no string-parsing tricks.
 - **Structured errors.** Default error responses follow RFC 9457 (Problem+Json).
@@ -36,12 +36,24 @@ Import `reflect-metadata` once at your entry point, before anything else.
 
 ## Requirements
 
-- **Bun ≥ 1.4.0** at runtime (the repo is pinned to `packageManager bun@1.4.0`;
-  tests and CI run on the same Bun).
+- **Bun ≥ 1.4.0** for server packages (`packageManager` is `bun@1.4.0`;
+  CI selects the Bun `1.4` line, so minimum-version checks run separately).
 - **Typecheck** via `tsgo` — the native TypeScript compiler
   (`@typescript/native-preview`), configured in the root devDependencies.
 - `reflect-metadata` imported once at the entry point, and
   `experimentalDecorators` + `emitDecoratorMetadata` enabled (see Install).
+
+Session signing uses `Bun.CryptoHasher` for HMAC-SHA256 and retains
+`node:crypto.timingSafeEqual` for verification. Static-file safety checks retain
+Bun's `node:fs` / `node:path` APIs for metadata, path containment and realpaths.
+Targeting Bun does not mean removing every `node:` import. JSON responses and
+bounded request-body merging retain their existing implementations after native
+candidates failed the compatibility or performance criteria; see the
+[benchmark evaluation](bench/README.md#bun-native-评估).
+
+`@zebra-web/client` and `@zebra-web/contract` remain browser-safe: they use Web APIs
+and pure TypeScript without Bun runtime references. Keep server packages out of
+browser bundles.
 
 ## Quick start
 
@@ -172,8 +184,9 @@ native TS support runs them directly (bundler-resolution consumers get the
 same files).
 
 `bun run build` produces `dist/` bundles (`--target bun --packages external`)
-for bundler/edge consumers who prefer prebuilt artifacts, but `dist/` is **not
-part of the published tarball** (`files: ["src"]` excludes it).
+for consumers who need local Bun-targeted artifacts, but `dist/` is **not
+part of the published tarball** (`files: ["src"]` excludes it). Browser consumers
+bundle the client/contract source entry points for their browser target.
 
 `bun run verify:packages` packs every publishable package into a tarball and
 smoke-tests each one from a fresh install: contents (`src/index.ts` present,

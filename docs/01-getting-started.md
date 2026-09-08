@@ -1,6 +1,6 @@
 # Getting Started
 
-Zebra is a Bun-first TypeScript web framework. This guide covers installation, configuration, and your first app.
+Zebra is a TypeScript web framework built directly for Bun. This guide covers installation, configuration, and your first app.
 
 ## Install
 
@@ -18,8 +18,8 @@ bun add @zebra-web/observability @zebra-web/redis
 
 ## Runtime requirements
 
-- **Bun ≥ 1.4.0** (runtime). The repo is pinned to `packageManager bun@1.4.0`;
-  tests and CI run on the same Bun.
+- **Bun ≥ 1.4.0** for server packages. The repo uses `packageManager bun@1.4.0`;
+  CI selects the floating `1.4` line, so minimum-version checks run separately.
 - **Typecheck** via `tsgo` — the native TypeScript compiler
   (`@typescript/native-preview`).
 - `reflect-metadata` imported once at the entry point, and decorators enabled in `tsconfig.json`:

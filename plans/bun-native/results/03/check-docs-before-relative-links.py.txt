@@ -1,0 +1,118 @@
+"""Check local Markdown links in changed task documents and final bilingual output."""
+from html.parser import HTMLParser
+import hashlib
+import json
+from pathlib import Path
+import re
+import subprocess
+from urllib.parse import unquote, urlsplit
+
+ROOT = Path(__file__).resolve().parents[4]
+changed = subprocess.check_output(["git", "diff", "--name-only", "12e6b88"], cwd=ROOT, text=True).splitlines()
+files = sorted({path for path in changed if path.endswith(".md")} | {
+    "plans/bun-native/results/03/REPORT.md",
+    "plans/bun-native/todos/03-docs-and-validation.md",
+})
+checked, remote = [], []
+
+
+def site_target(url_path, root):
+    target = root / url_path.lstrip("/")
+    if target.is_dir() or url_path.endswith("/"):
+        return target / ("index.md" if root == ROOT / "docs" else "index.html")
+    if not target.suffix:
+        target = target.with_suffix(".md" if root == ROOT / "docs" else ".html")
+    if root == ROOT / "docs" and not target.exists():
+        public = root / "public" / url_path.lstrip("/")
+        if public.exists():
+            return public
+    return target
+
+
+for name in files:
+    path = ROOT / name
+    text = re.sub(r"```.*?```", "", path.read_text(), flags=re.S)
+    hrefs = re.findall(r"\[[^\]]*\]\(([^)]+)\)", text)
+    if text.startswith("---\n"):
+        frontmatter = text.split("---", 2)[1]
+        hrefs += re.findall(r"^\s*(?:link|src):\s*(/\S+)\s*$", frontmatter, re.M)
+    for href in hrefs:
+        parsed = urlsplit(href)
+        if parsed.scheme or parsed.netloc:
+            remote.append({"file": name, "href": href})
+            continue
+        if parsed.path.startswith("/"):
+            target = site_target(unquote(parsed.path), ROOT / "docs")
+        else:
+            target = (path.parent / unquote(parsed.path)).resolve() if parsed.path else path
+        assert target.exists(), (name, href)
+        if parsed.fragment and target.suffix == ".md":
+            headings = re.findall(r"^#+\s+(.+)$", target.read_text(), re.M)
+            slugs = [re.sub(r"[^\w -]", "", heading.lower()).replace(" ", "-") for heading in headings]
+            assert unquote(parsed.fragment) in slugs, (name, href, slugs)
+        checked.append({"file": name, "href": href})
+
+
+class Text(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.parts = []
+        self.urls = []
+
+    def handle_data(self, data):
+        self.parts.append(data)
+
+    def handle_starttag(self, tag, attrs):
+        self.urls.extend(value for key, value in attrs if key in ("href", "src") and value)
+
+
+pages = []
+for name in ("README.html", "zh/README.html", "index.html", "zh/index.html",
+             "01-getting-started.html", "zh/01-getting-started.html"):
+    path = ROOT / "docs/.vitepress/dist" / name
+    raw = path.read_bytes()
+    rendered = raw.decode()
+    parser = Text()
+    parser.feed(rendered)
+    text = "".join(parser.parts)
+    assert "/zebra/assets/" in rendered, name
+    assert "Bun ≥ 1.4.0" in text, name
+    if "README" in name:
+        assert "timingSafeEqual" in text and "node:fs" in text, name
+    else:
+        for obsolete in ("No Node compat layer", "没有 Node 兼容层", "tests and CI run on the same Bun",
+                         "测试与 CI 跑在同一个 Bun 上", "Bun-first"):
+            assert obsolete not in text, (name, obsolete)
+        if "index.html" in name:
+            assert all(api in text for api in ("Bun.serve", "Bun.file", "Web Standard Request / Response")), name
+            assert not any(api in text for api in ("node:fs", "node:path", "timingSafeEqual")), name
+        else:
+            assert "packageManager bun@1.4.0" in text, name
+            assert ("CI 选择浮动的 1.4 系列" if name.startswith("zh/") else "CI selects the floating 1.4 line") in text, name
+    local_output, base_exceptions = [], []
+    for href in parser.urls:
+        parsed = urlsplit(href)
+        if parsed.scheme or parsed.netloc or not parsed.path:
+            continue
+        url_path = unquote(parsed.path)
+        if url_path.startswith("/"):
+            if url_path.startswith("/zebra/"):
+                target = site_target(url_path[len("/zebra/"):], ROOT / "docs/.vitepress/dist")
+            else:
+                # Report the pre-existing explicit root favicon separately from site-base URLs.
+                assert url_path == "/favicon.svg", (name, href)
+                config_name = "docs/.vitepress/config.mts"
+                config = (ROOT / config_name).read_bytes()
+                assert config == subprocess.check_output(["git", "show", f"1418a2f:{config_name}"], cwd=ROOT)
+                assert b'href: "/favicon.svg"' in config
+                target = ROOT / "docs/.vitepress/dist/favicon.svg"
+                base_exceptions.append({"href": href, "source": config_name,
+                                        "sourceSha256": hashlib.sha256(config).hexdigest(),
+                                        "unchangedFrom1418a2f": True, "withinDocsBase": False})
+        else:
+            target = path.parent / url_path
+        assert target.exists(), (name, href, str(target))
+        local_output.append(href)
+    pages.append({"page": name, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest(),
+                  "checkedLocalOutputUrls": local_output, "baseExceptions": base_exceptions})
+print(json.dumps({"documents": files, "documentSha256": {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in files}, "checkedLocalLinks": checked, "existingRemoteLinksNotFetched": remote, "builtPages": pages}))

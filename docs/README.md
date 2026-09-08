@@ -1,14 +1,27 @@
 # Zebra Documentation
 
-Zebra is a Bun-first TypeScript web framework with first-class dependency injection.
+Zebra is a TypeScript web framework built directly for the Bun runtime, with first-class dependency injection.
 
-- **Bun-first** — built directly on `Bun.serve` / `Bun.file` and Web Standard `Request` / `Response`. No Node compat layer.
+- **Built for Bun** — uses `Bun.serve` for HTTP/WebSocket, `Bun.file` for static bodies, and Web Standard `Request` / `Response`.
 - **DI is mandatory, not bolted on.** Every app is built around a `Container`. Routes and middleware declare their dependencies; the container validates the full graph at boot.
 - **Named-object route DI.** `app.get(path, { svc: Service }, (req, { svc }) => ...)` — explicit, type-safe, no string-parsing tricks.
 - **Structured errors.** Default error responses follow RFC 9457 (Problem+Json).
 - **Contract-first (oRPC style).** Define a contract once (`zc.get(path).params(s).query(s).body(s).output(s).status(n).errors(e).meta(m)`), implement it on the server with full type inference + runtime validation (`app.implement`), and derive a type-safe client from the same contract (`createClient` / `createTestClient`).
 
 > 中文文档：[简体中文](zh/README.md)
+
+Server packages require **Bun ≥ 1.4.0**. Session HMAC-SHA256 uses
+`Bun.CryptoHasher`, with `node:crypto.timingSafeEqual` for verification. Static-file
+metadata, path containment and symlink checks retain Bun's `node:fs` / `node:path`
+APIs. JSON responses and bounded body merging retain their existing implementations
+after evaluating native candidates; targeting Bun does not mean removing every
+`node:` import.
+
+`@zebra-web/client` and `@zebra-web/contract` remain browser-safe, using Web APIs and
+pure TypeScript without Bun runtime references. Import them directly in browser
+code and keep server packages out of the bundle. See
+[Getting started](01-getting-started.md) for the server's decorator and
+`reflect-metadata` requirements.
 
 ## Guide Index
 
@@ -89,4 +102,4 @@ bun --filter example-forum start           # full-featured: contract API + sessi
 bun --filter example-better-auth start     # Better Auth integration — http://localhost:3003
 ```
 
-See the repo [README](../README.md) for the full list.
+See the repo [README](https://github.com/zhy0216/zebra/blob/master/README.md) for the full list.
