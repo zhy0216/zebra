@@ -14,13 +14,13 @@ default_agent: codex
 
 | 文件 | 优先级 | 难度 | agent | 模型 / Codex 推理强度 | 一句话说明 |
 | --- | --- | --- | --- | --- | --- |
-| [01-native-json.md](01-native-json.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 验证并优化 JSON/Problem+Json 原生构造，保持调用点行为 |
+| [01-native-json.md](done/01-native-json.md) | P1 | hard | codex（继承默认） | gpt-6-astra / max | 验证并优化 JSON/Problem+Json 原生构造，保持调用点行为 |
 | [02-native-body.md](done/02-native-body.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 评估原生字节合并，保持请求体限额、取消和复制语义 |
 | [03-docs-and-validation.md](03-docs-and-validation.md) | P2 | medium | codex（继承默认） | gpt-6-astra / xhigh | 汇总采用决定、实测结果及 Bun 文档，完成整体验收 |
 
 ## 文件
 
-1. [01-native-json.md](01-native-json.md) — 依赖：无。
+1. [01-native-json.md](done/01-native-json.md) — 依赖：无。
 2. [02-native-body.md](done/02-native-body.md) — 依赖：无。
 3. [03-docs-and-validation.md](03-docs-and-validation.md)。
    依赖 01-native-json.md。
@@ -57,6 +57,6 @@ default_agent: codex
 
 ## 当前执行状态
 
-- 01：实现与测量准备完成，等待独占测量。
-- 02：评估完成并归档；候选未采用，保留原实现。最低 Bun 的既有 peer-IP 全量测试问题由 01/03 与协调器继续处理。
-- 03：等待 01、02 集成。
+- 01：评估完成并归档；五个入口均未采用迁移，保留原实现。peer-IP 测试夹具已固定地址族，两版原断言均通过。
+- 02：评估完成并归档；候选未采用，保留原实现。历史最低 Bun 的 peer-IP 测试夹具问题已在 01 解决，最终全套门禁由 03 与协调器复核。
+- 03：待 01 集成清理后立即启动。

@@ -1,0 +1,5 @@
+{
+  "at": "2026-09-08T01:44:06.214874+00:00",
+  "measurementStarted": false,
+  "reason": "Cancelled a redundant waiting recorder; the original serial queue already resumed. No benchmark overlap or external process control."
+}

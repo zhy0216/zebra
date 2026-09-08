@@ -1,0 +1,520 @@
+import "reflect-metadata";
+import { mkdir, mkdtemp, readdir, rm, symlink } from "node:fs/promises";
+import { cpus, tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import { z } from "zod";
+import { zc } from "../packages/contract/src/index.ts";
+
+const DEFAULT_BASELINE = "1418a2f3f8b3e0bae53490eb195811b34590e041";
+const ROOT = resolve(import.meta.dir, "..");
+const JSON_TYPE = "application/json; charset=utf-8";
+const PROBLEM_TYPE = "application/problem+json; charset=utf-8";
+
+function options() {
+  const result = {
+    baseline: DEFAULT_BASELINE,
+    rounds: 7,
+    iterations: 10_000,
+    warmup: 2_000,
+    check: false,
+    candidate: "problem-native",
+  };
+  const args = process.argv.slice(2);
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--help" || arg === "-h") {
+      console.log(`Usage: bun run bench/native-json.ts [options]
+  --baseline COMMIT   Export original core sources with git archive (default ${DEFAULT_BASELINE})
+  --rounds N          Alternating measured rounds, at least 7 (default 7)
+  --iterations N      Operations per implementation per round (default 10000)
+  --warmup N          Untimed warmup operations per implementation (default 2000)
+  --check             Only check behavior and baseline loading; no timers or warmup
+  --candidate MODE    problem-native (default), or current to compare the working tree
+
+Run only in a coordinator-approved exclusive measurement slot. Repeat the complete
+command at least twice. For Bun 1.4.0, prepend its isolated bin directory to PATH.
+Example: bun run bench/native-json.ts --baseline ${DEFAULT_BASELINE}
+
+JSON Lines output includes environment, source diff, each round, medians and checksums.
+The baseline is an automatically removed temporary source archive, not a Git worktree.
+Actual framework scenarios load the same routes, values and options from both source
+trees. Unchanged paths are controls; raw constructor candidates are not evidence that
+all framework paths migrated. --check records known raw Response.json incompatibilities.
+The default --candidate problem-native changes only the two fixed-root Problem+Json constructors
+in a second baseline archive. It reproduces a rejected candidate from the final HEAD
+without editing the checkout or applying raw Response.json to general value returns.
+Inputs, Requests and thrown HttpErrors are prepared outside timing. Every measured
+Response is consumed with text() and checked against the prepared JSON. Results are
+in-process construction/dispatch costs, including consumption, not HTTP throughput.`);
+      process.exit(0);
+    }
+    if (arg === "--check") {
+      result.check = true;
+      continue;
+    }
+    if (arg === "--baseline") {
+      const value = args[++i];
+      if (!value || value.startsWith("-")) throw new Error("--baseline needs a commit");
+      result.baseline = value;
+      continue;
+    }
+    if (arg === "--candidate") {
+      const value = args[++i];
+      if (value !== "current" && value !== "problem-native") {
+        throw new Error("--candidate must be current or problem-native");
+      }
+      result.candidate = value;
+      continue;
+    }
+    const key =
+      arg === "--rounds"
+        ? "rounds"
+        : arg === "--iterations"
+          ? "iterations"
+          : arg === "--warmup"
+            ? "warmup"
+            : undefined;
+    if (!key) throw new Error(`Unknown option: ${arg}`);
+    const value = Number(args[++i]);
+    if (!Number.isSafeInteger(value) || value < (key === "rounds" ? 7 : 1)) {
+      throw new Error(`${arg} requires an integer >= ${key === "rounds" ? 7 : 1}`);
+    }
+    result[key] = value;
+  }
+  return result;
+}
+
+function git(...args: string[]): string {
+  const result = Bun.spawnSync(["git", ...args], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
+  if (result.exitCode !== 0) throw new Error(result.stderr.toString());
+  return result.stdout.toString().trim();
+}
+
+async function loadCore(root: string) {
+  const source = (path: string) => pathToFileURL(join(root, "packages/core/src", path)).href;
+  const [app, response, errors, request, middleware, ws] = await Promise.all([
+    import(source("app/app.ts")) as Promise<typeof import("../packages/core/src/app/app.ts")>,
+    import(source("http/response.ts")) as Promise<
+      typeof import("../packages/core/src/http/response.ts")
+    >,
+    import(source("http/errors.ts")) as Promise<
+      typeof import("../packages/core/src/http/errors.ts")
+    >,
+    import(source("http/request.ts")) as Promise<
+      typeof import("../packages/core/src/http/request.ts")
+    >,
+    import(source("middleware/error.ts")) as Promise<
+      typeof import("../packages/core/src/middleware/error.ts")
+    >,
+    import(source("ws/upgrade.ts")) as Promise<typeof import("../packages/core/src/ws/upgrade.ts")>,
+  ]);
+  return { ...app, ...response, ...errors, ...request, ...middleware, ...ws };
+}
+
+type Core = Awaited<ReturnType<typeof loadCore>>;
+type Operation = (index: number) => Response | Promise<Response>;
+type Expected = { text: string; status: number; contentType: string; cookies: string[] };
+type Scenario = { name: string; before: Operation; after: Operation; expected: Expected[] };
+
+function fixtures() {
+  return [
+    {
+      name: "small",
+      values: Array.from({ length: 64 }, (_, id) => ({ id, message: `hello-${id}`, ok: true })),
+    },
+    {
+      name: "nested-array",
+      values: Array.from({ length: 64 }, (_, id) =>
+        Array.from({ length: 16 }, (_, item) => ({
+          id: id * 16 + item,
+          tags: ["alpha", "beta"],
+          meta: { active: item % 2 === 0, score: item / 3, optional: null },
+        })),
+      ),
+    },
+    {
+      name: "unicode",
+      values: Array.from({ length: 64 }, (_, id) => ({
+        id,
+        text: `你好 🦓 café e\u0301 日本語 🌍 \ud800 ${id}`.repeat(8),
+      })),
+    },
+    {
+      name: "problem",
+      values: Array.from({ length: 64 }, (_, id) => ({
+        type: "https://errors.zebra.dev/conflict",
+        status: 409,
+        title: "Conflict",
+        instance: `/items/${id}`,
+        detail: { id, message: "已存在 🦓" },
+      })),
+    },
+  ];
+}
+
+function scenarios(before: Core, after: Core): Scenario[] {
+  const result: Scenario[] = [];
+  const groups = fixtures();
+  for (const group of groups) {
+    const values: unknown[] = group.values;
+    const problem = group.name === "problem";
+    const status = problem ? 409 : 200;
+    const contentType = problem ? PROBLEM_TYPE : JSON_TYPE;
+    const expected = values.map((value) => ({
+      text: JSON.stringify(value),
+      status,
+      contentType,
+      cookies: [],
+    }));
+    result.push({
+      name: `constructor/${group.name}`,
+      before: (i) =>
+        new Response(JSON.stringify(values[i]), {
+          status,
+          headers: { "content-type": contentType },
+        }),
+      after: (i) => Response.json(values[i], { status, headers: { "content-type": contentType } }),
+      expected,
+    });
+    const helper = (core: Core): Operation =>
+      problem
+        ? (i) => core.json(values[i], { status, headers: { "content-type": contentType } })
+        : (i) => core.json(values[i]);
+    result.push({
+      name: `framework/helper/${group.name}`,
+      before: helper(before),
+      after: helper(after),
+      expected,
+    });
+
+    for (const kind of ["value", "helper", "contract"] as const) {
+      const requests = values.map((_, i) => new Request(`http://bench.test/items/${i}`));
+      const dispatch = (core: Core): Operation => {
+        const app = new core.Zebra();
+        const render = helper(core);
+        if (kind === "contract") {
+          // Actual output validation is part of this representative contract path.
+          const output =
+            group.name === "small"
+              ? z.object({ id: z.number(), message: z.string(), ok: z.boolean() })
+              : z.unknown();
+          app.implement(
+            zc.get("/items/:id").output(output),
+            (req) => values[Number(req.params.id)] as never,
+          );
+        } else {
+          app.get("/items/:id", (req) => {
+            const i = Number(req.params.id);
+            return kind === "helper" ? render(i) : values[i];
+          });
+        }
+        return (i) => app.dispatch(requests[i]!);
+      };
+      result.push({
+        name: `framework/dispatch-${kind}/${group.name}`,
+        before: dispatch(before),
+        after: dispatch(after),
+        expected:
+          kind === "helper"
+            ? expected
+            : expected.map((item) => ({ ...item, status: 200, contentType: JSON_TYPE })),
+      });
+    }
+  }
+
+  const problems = groups.find((group) => group.name === "problem")!.values;
+  const cookies = ["sid=benchmark; Path=/; HttpOnly", "preference=light; Path=/"];
+  const expected = problems.map((problem) => ({
+    text: JSON.stringify(problem),
+    status: 409,
+    contentType: PROBLEM_TYPE,
+    cookies,
+  }));
+  for (const kind of ["middleware", "dispatch-error"] as const) {
+    const operation = (core: Core): Operation => {
+      const errors = Array.from(
+        { length: 64 },
+        (_, id) => new core.HttpError(409, "conflict", "Conflict", { id, message: "已存在 🦓" }),
+      );
+      const requests = errors.map((_, id) => new Request(`http://bench.test/items/${id}`));
+      if (kind === "middleware") {
+        const mw = core.errorMiddleware({ exposeStack: false });
+        const reqs = requests.map((request) => {
+          const req = core.buildRequest(request, {});
+          req.ctx.set(Symbol.for("zebra.set-cookie"), cookies);
+          return req;
+        });
+        const next = errors.map((error) => async () => {
+          throw error;
+        });
+        return (i) => mw(reqs[i]!, next[i]!);
+      }
+      const app = new core.Zebra();
+      app.get("/items/:id", (req) => {
+        req.ctx.set(Symbol.for("zebra.set-cookie"), cookies);
+        throw errors[Number(req.params.id)];
+      });
+      return (i) => app.dispatch(requests[i]!);
+    };
+    result.push({
+      name: `framework/${kind}/problem-cookies`,
+      before: operation(before),
+      after: operation(after),
+      expected,
+    });
+  }
+
+  const instances = Array.from({ length: 64 }, (_, i) => `/rooms/${i}`);
+  result.push({
+    name: "framework/ws-problem/rejected",
+    before: (i) =>
+      before.wsProblemResponse(
+        401,
+        "upgrade_rejected",
+        "Upgrade rejected by route handler",
+        instances[i]!,
+      ),
+    after: (i) =>
+      after.wsProblemResponse(
+        401,
+        "upgrade_rejected",
+        "Upgrade rejected by route handler",
+        instances[i]!,
+      ),
+    expected: instances.map((instance) => ({
+      text: JSON.stringify({
+        type: "https://errors.zebra.dev/upgrade_rejected",
+        status: 401,
+        title: "Upgrade rejected by route handler",
+        instance,
+      }),
+      status: 401,
+      contentType: PROBLEM_TYPE,
+      cookies: [],
+    })),
+  });
+  return result;
+}
+
+async function checkScenario(scenario: Scenario): Promise<void> {
+  for (const operation of [scenario.before, scenario.after]) {
+    for (const [i, expected] of scenario.expected.entries()) {
+      const res = await operation(i);
+      if (
+        res.status !== expected.status ||
+        res.body === null ||
+        res.headers.get("content-type") !== expected.contentType ||
+        JSON.stringify(res.headers.getSetCookie()) !== JSON.stringify(expected.cookies) ||
+        (await res.text()) !== expected.text
+      ) {
+        throw new Error(`Response mismatch: ${scenario.name}, input ${i}`);
+      }
+    }
+  }
+  console.log(
+    JSON.stringify({
+      check: scenario.name,
+      inputsPerImplementation: scenario.expected.length,
+      result: "pass",
+    }),
+  );
+}
+
+async function checkNativeBoundaries(): Promise<void> {
+  const cases: [string, () => unknown][] = [
+    ["undefined", () => undefined],
+    ["function", () => () => 1],
+    ["symbol", () => Symbol("root")],
+    ["function-toJSON", () => Object.assign(() => 1, { toJSON: () => ({ ok: true }) })],
+    ["toJSON-undefined", () => ({ toJSON: () => undefined })],
+    ["toJSON-symbol", () => ({ toJSON: () => Symbol("empty") })],
+    ["toJSON-function", () => ({ toJSON: () => () => 1 })],
+  ];
+  for (const [name, make] of cases) {
+    const outcomes = [];
+    for (const native of [false, true]) {
+      try {
+        const value = make();
+        const init = { headers: { "content-type": JSON_TYPE } };
+        const res = native ? Response.json(value, init) : new Response(JSON.stringify(value), init);
+        outcomes.push({ status: res.status, nullBody: res.body === null, text: await res.text() });
+      } catch (error) {
+        outcomes.push({ error: error instanceof Error ? error.name : String(error) });
+      }
+    }
+    console.log(
+      JSON.stringify({
+        boundary: name,
+        before: outcomes[0],
+        native: outcomes[1],
+        equivalent: JSON.stringify(outcomes[0]) === JSON.stringify(outcomes[1]),
+      }),
+    );
+  }
+}
+
+async function consume(operation: Operation, expected: Expected[], count: number): Promise<number> {
+  let checksum = 0;
+  for (let i = 0; i < count; i++) {
+    const index = i % expected.length;
+    const body = await (await operation(index)).text();
+    if (body !== expected[index]!.text) throw new Error(`Body mismatch at operation ${i}`);
+    checksum += body.length + body.charCodeAt(i % body.length);
+  }
+  return checksum;
+}
+
+async function measure(operation: Operation, expected: Expected[], count: number) {
+  const start = performance.now();
+  const checksum = await consume(operation, expected, count);
+  return { nsPerOp: ((performance.now() - start) * 1_000_000) / count, checksum };
+}
+
+function median(samples: number[]): number {
+  const sorted = [...samples].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle]! : (sorted[middle - 1]! + sorted[middle]!) / 2;
+}
+
+async function sourceHashes(root: string): Promise<Record<string, string>> {
+  const dir = join(root, "packages/core/src");
+  const files = (await readdir(dir, { recursive: true }))
+    .filter((file) => file.endsWith(".ts"))
+    .sort();
+  return Object.fromEntries(
+    await Promise.all(
+      files.map(async (file) => [
+        file,
+        new Bun.CryptoHasher("sha256")
+          .update(await Bun.file(join(dir, file)).arrayBuffer())
+          .digest("hex"),
+      ]),
+    ),
+  );
+}
+
+async function main(): Promise<void> {
+  const opts = options();
+  const baseline = git("rev-parse", "--verify", `${opts.baseline}^{commit}`);
+  const temp = await mkdtemp(join(tmpdir(), "zebra-native-json-"));
+  try {
+    const archive = Bun.spawnSync(
+      [
+        "git",
+        "archive",
+        "--format=tar",
+        baseline,
+        "packages/core/src",
+        "tsconfig.base.json",
+        "tsconfig.json",
+      ],
+      { cwd: ROOT, stdout: "pipe", stderr: "pipe" },
+    );
+    if (archive.exitCode !== 0) throw new Error(archive.stderr.toString());
+    const extract = async (dir: string) => {
+      await mkdir(dir);
+      const extracted = Bun.spawnSync(["tar", "-xf", "-", "-C", dir], {
+        stdin: archive.stdout,
+        stdout: "pipe",
+        stderr: "pipe",
+      });
+      if (extracted.exitCode !== 0) throw new Error(extracted.stderr.toString());
+      await symlink(join(ROOT, "node_modules"), join(dir, "node_modules"), "dir");
+    };
+    const beforeRoot = join(temp, "before");
+    await extract(beforeRoot);
+    let afterRoot = ROOT;
+    const candidateChanges: { file: string; before: string; after: string }[] = [];
+    if (opts.candidate === "problem-native") {
+      afterRoot = join(temp, "candidate");
+      await extract(afterRoot);
+      for (const file of ["middleware/error.ts", "ws/upgrade.ts"]) {
+        const path = join(afterRoot, "packages/core/src", file);
+        const source = await Bun.file(path).text();
+        const before = "new Response(JSON.stringify(problem), {";
+        const after = "Response.json(problem, {";
+        if (source.split(before).length !== 2) {
+          throw new Error(
+            `Expected exactly one original Problem constructor in ${file} at ${baseline}`,
+          );
+        }
+        await Bun.write(path, source.replace(before, after));
+        candidateChanges.push({ file, before, after });
+      }
+    }
+    const coreDiff = git("diff", baseline, "--", "packages/core/src");
+    const beforeSources = await sourceHashes(beforeRoot);
+    const afterSources = await sourceHashes(afterRoot);
+    console.log(
+      JSON.stringify({
+        ...opts,
+        metadata: "native-json",
+        date: new Date().toISOString(),
+        bun: Bun.version,
+        executable: process.execPath,
+        platform: process.platform,
+        arch: process.arch,
+        cpu: cpus()[0]?.model,
+        logicalCpus: cpus().length,
+        baseline,
+        current: git("rev-parse", "HEAD"),
+        coreDiff,
+        candidateChanges,
+        beforeSources,
+        afterSources,
+        scriptSha256: new Bun.CryptoHasher("sha256")
+          .update(await Bun.file(import.meta.path).arrayBuffer())
+          .digest("hex"),
+        coreStatus: git("status", "--porcelain", "--", "packages/core/src"),
+        command: [process.execPath, ...process.argv.slice(1)],
+        scope:
+          "In-process complete construction and framework dispatch with text consumption; not HTTP throughput. Unchanged paths are controls.",
+      }),
+    );
+    const before = await loadCore(beforeRoot);
+    const after = await loadCore(afterRoot);
+    const cases = scenarios(before, after);
+    await checkNativeBoundaries();
+    for (const scenario of cases) await checkScenario(scenario);
+    if (opts.check) return;
+
+    for (const [caseIndex, scenario] of cases.entries()) {
+      for (const side of caseIndex % 2
+        ? (["after", "before"] as const)
+        : (["before", "after"] as const)) {
+        await consume(scenario[side], scenario.expected, opts.warmup);
+      }
+      const samples = { before: [] as number[], after: [] as number[] };
+      for (let round = 0; round < opts.rounds; round++) {
+        const order =
+          (round + caseIndex) % 2 ? (["after", "before"] as const) : (["before", "after"] as const);
+        const data = {} as Record<"before" | "after", Awaited<ReturnType<typeof measure>>>;
+        for (const side of order) {
+          data[side] = await measure(scenario[side], scenario.expected, opts.iterations);
+          samples[side].push(data[side].nsPerOp);
+        }
+        if (data.before.checksum !== data.after.checksum)
+          throw new Error(`Checksum mismatch: ${scenario.name}`);
+        console.log(JSON.stringify({ scenario: scenario.name, round: round + 1, order, ...data }));
+      }
+      const beforeMedian = median(samples.before);
+      const afterMedian = median(samples.after);
+      console.log(
+        JSON.stringify({
+          summary: scenario.name,
+          beforeMedianNs: beforeMedian,
+          afterMedianNs: afterMedian,
+          speedup: beforeMedian / afterMedian,
+          lessTimePercent: (1 - afterMedian / beforeMedian) * 100,
+          afterWins: samples.after.filter((sample, i) => sample < samples.before[i]!).length,
+          rounds: opts.rounds,
+        }),
+      );
+    }
+  } finally {
+    await rm(temp, { recursive: true, force: true });
+  }
+}
+
+await main();

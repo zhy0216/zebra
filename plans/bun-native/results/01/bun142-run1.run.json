@@ -1,0 +1,74 @@
+{
+  "label": "bun142-run1",
+  "requestedAt": "2026-09-08T01:26:05.003478+00:00",
+  "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-bun-native-01-native-json",
+  "argv": [
+    "/home/ubuntu/.bun/bin/bun",
+    "run",
+    "bench/native-json.ts",
+    "--baseline",
+    "1418a2f3f8b3e0bae53490eb195811b34590e041",
+    "--rounds",
+    "7",
+    "--iterations",
+    "10000",
+    "--warmup",
+    "2000"
+  ],
+  "pathPrefix": "/home/ubuntu/.bun/bin",
+  "sampleSeconds": 2,
+  "guard": "3 consecutive quiet samples; other processes >=15% CPU or active build tools block start",
+  "startedAt": "2026-09-08T01:26:11.969095+00:00",
+  "exitCode": 0,
+  "endedAt": "2026-09-08T01:26:30.049886+00:00",
+  "otherBusySamples": [
+    {
+      "at": "2026-09-08T01:26:24.025896+00:00",
+      "loadavg": [2.2890625, 1.5419921875, 0.8603515625],
+      "busy": [
+        {
+          "pid": 93995,
+          "name": "bun",
+          "cpuPercent": 41.35
+        }
+      ],
+      "phase": "measuring"
+    },
+    {
+      "at": "2026-09-08T01:26:26.033547+00:00",
+      "loadavg": [2.2890625, 1.5419921875, 0.8603515625],
+      "busy": [
+        {
+          "pid": 93995,
+          "name": "bun",
+          "cpuPercent": 91.12
+        }
+      ],
+      "phase": "measuring"
+    },
+    {
+      "at": "2026-09-08T01:26:28.041935+00:00",
+      "loadavg": [2.34619140625, 1.56640625, 0.8720703125],
+      "busy": [
+        {
+          "pid": 93995,
+          "name": "bun",
+          "cpuPercent": 61.26
+        }
+      ],
+      "phase": "measuring"
+    },
+    {
+      "at": "2026-09-08T01:26:30.049661+00:00",
+      "loadavg": [2.34619140625, 1.56640625, 0.8720703125],
+      "busy": [
+        {
+          "pid": 93995,
+          "name": "bun",
+          "cpuPercent": 96.11
+        }
+      ],
+      "phase": "measuring"
+    }
+  ]
+}

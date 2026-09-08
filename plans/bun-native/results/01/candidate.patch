@@ -1,0 +1,26 @@
+diff --git a/packages/core/src/middleware/error.ts b/packages/core/src/middleware/error.ts
+index e6cd6fe..11ecd66 100644
+--- a/packages/core/src/middleware/error.ts
++++ b/packages/core/src/middleware/error.ts
+@@ -25,7 +25,7 @@ export function errorMiddleware(opts: { exposeStack: boolean }): Middleware {
+           if (typeof cookie === "string") headers.append("set-cookie", cookie);
+         }
+       }
+-      return new Response(JSON.stringify(problem), {
++      return Response.json(problem, {
+         status: problem.status,
+         headers,
+       });
+diff --git a/packages/core/src/ws/upgrade.ts b/packages/core/src/ws/upgrade.ts
+index 817f950..4e44594 100644
+--- a/packages/core/src/ws/upgrade.ts
++++ b/packages/core/src/ws/upgrade.ts
+@@ -25,7 +25,7 @@ export function wsProblemResponse(
+   instance: string,
+ ): Response {
+   const problem = toProblemJson(new HttpError(status, code, title), instance, {});
+-  return new Response(JSON.stringify(problem), {
++  return Response.json(problem, {
+     status,
+     headers: { "content-type": "application/problem+json; charset=utf-8" },
+   });

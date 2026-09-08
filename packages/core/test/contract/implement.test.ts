@@ -143,6 +143,126 @@ test("status 201 / 204 and empty body", async () => {
   expect(await removed.text()).toBe("");
 });
 
+test("contract serialization preserves root values and its own status for empty bodies", async () => {
+  const values = [
+    undefined,
+    null,
+    "你好 🦓 \ud800",
+    false,
+    2.5,
+    { list: [1, null, { ok: true }] },
+    [1, undefined, false],
+    () => 1,
+    Symbol("root"),
+    Object.assign(() => 1, { toJSON: () => ({ from: "function" }) }),
+    { toJSON: () => undefined },
+    { toJSON: () => Symbol("empty") },
+    { toJSON: () => () => 1 },
+  ];
+  const app = makeApp();
+  for (const status of [200, 201, 205, 304]) {
+    for (const [i, value] of values.entries()) {
+      app.implement(zc.get(`/value/${status}/${i}`).status(status), () => value);
+      const expected = new Response(JSON.stringify(value), {
+        status,
+        headers: { "content-type": "application/json; charset=utf-8" },
+      });
+      const actual = await app.dispatch(new Request(`http://x/value/${status}/${i}`));
+      expect(actual.status).toBe(expected.status);
+      expect(actual.body === null).toBe(expected.body === null);
+      expect([...actual.headers]).toEqual([...expected.headers]);
+      expect(await actual.text()).toBe(await expected.text());
+    }
+  }
+});
+
+test("contract 204 validates output, skips serialization and rejects a raw Response", async () => {
+  const app = makeApp();
+  let validated = 0;
+  let serialized = 0;
+  const payload = {
+    toJSON() {
+      serialized++;
+      throw new Error("must not serialize");
+    },
+  };
+  app.implement(
+    zc
+      .get("/empty")
+      .output(
+        z.unknown().transform((value) => {
+          validated++;
+          return value;
+        }),
+      )
+      .status(204),
+    () => payload as never,
+  );
+  const empty = await app.dispatch(new Request("http://x/empty"));
+  expect(empty.status).toBe(204);
+  expect(empty.body).toBeNull();
+  expect(empty.headers.has("content-type")).toBe(false);
+  expect(validated).toBe(1);
+  expect(serialized).toBe(0);
+
+  app.implement(zc.get("/raw204").status(204), () => new Response("raw") as never);
+  const invalid = await app.dispatch(new Request("http://x/raw204"));
+  expect(invalid.status).toBe(500);
+  expect((await json(invalid)).type).toBe("https://errors.zebra.dev/invalid_contract_response");
+});
+
+test("contract serializes validated output once and preserves internal error mapping", async () => {
+  const app = makeApp();
+  const calls: string[] = [];
+  app.implement(
+    zc.get("/once").output(
+      z.unknown().transform(() => ({
+        get toJSON() {
+          calls.push("get toJSON");
+          return (key: string) => {
+            calls.push(`toJSON:${key}`);
+            return {
+              get value() {
+                calls.push("get value");
+                return "validated";
+              },
+            };
+          };
+        },
+      })),
+    ),
+    () => "unvalidated",
+  );
+  expect(await (await app.dispatch(new Request("http://x/once"))).text()).toBe(
+    '{"value":"validated"}',
+  );
+  expect(calls).toEqual(["get toJSON", "toJSON:", "get value"]);
+
+  const circular: Record<string, unknown> = {};
+  circular.self = circular;
+  let throws = 0;
+  const fail = () => {
+    throws++;
+    throw new Error("serialization failed");
+  };
+  for (const [i, value] of [
+    1n,
+    circular,
+    { toJSON: fail },
+    {
+      get value() {
+        return fail();
+      },
+    },
+  ].entries()) {
+    app.implement(zc.get(`/error/${i}`), () => value);
+    const res = await app.dispatch(new Request(`http://x/error/${i}`));
+    expect(res.status).toBe(500);
+    expect((await json(res)).type).toBe("https://errors.zebra.dev/internal");
+  }
+  expect(throws).toBe(2);
+});
+
 test("output validation strips extra fields (schema strip) and leaks nothing", async () => {
   const app = makeApp();
   app.implement(blogContract.get, () => ({ id: 1, title: "t", content: "c", secret: "leak" }));

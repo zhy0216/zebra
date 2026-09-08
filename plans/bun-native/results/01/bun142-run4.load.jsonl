@@ -1,0 +1,76 @@
+{"at": "2026-09-08T01:35:47.160760+00:00", "loadavg": [1.57275390625, 1.98876953125, 1.43994140625], "busy": [{"pid": 186533, "name": "bun", "cpuPercent": 0.5, "workload": true}, {"pid": 191902, "name": "bun", "cpuPercent": 8.5, "workload": true}], "phase": "waiting"}
+{"at": "2026-09-08T01:35:49.169467+00:00", "loadavg": [1.927734375, 2.0556640625, 1.46484375], "busy": [{"pid": 186533, "name": "bun", "cpuPercent": 1.0, "workload": true}, {"pid": 192254, "name": "bun", "cpuPercent": 1.49, "workload": true}], "phase": "waiting"}
+{"at": "2026-09-08T01:35:51.177227+00:00", "loadavg": [1.927734375, 2.0556640625, 1.46484375], "busy": [{"pid": 186533, "name": "bun", "cpuPercent": 0.5, "workload": true}, {"pid": 192542, "name": "bun", "cpuPercent": 7.47, "workload": true}], "phase": "waiting"}
+{"at": "2026-09-08T01:35:53.184783+00:00", "loadavg": [1.93359375, 2.0546875, 1.4677734375], "busy": [{"pid": 186533, "name": "bun", "cpuPercent": 1.0, "workload": true}], "phase": "waiting"}
+{"at": "2026-09-08T01:35:55.192370+00:00", "loadavg": [1.93359375, 2.0546875, 1.4677734375], "busy": [{"pid": 193127, "name": "bun", "cpuPercent": 31.88, "workload": false}], "phase": "waiting"}
+{"at": "2026-09-08T01:35:57.206096+00:00", "loadavg": [1.93359375, 2.0546875, 1.4677734375], "busy": [{"pid": 193221, "name": "bun", "cpuPercent": 5.48, "workload": true}], "phase": "waiting"}
+{"at": "2026-09-08T01:35:59.214101+00:00", "loadavg": [1.8583984375, 2.037109375, 1.46484375], "busy": [{"pid": 193539, "name": "bun", "cpuPercent": 1.99, "workload": true}], "phase": "waiting"}
+{"at": "2026-09-08T01:36:01.221626+00:00", "loadavg": [1.8583984375, 2.037109375, 1.46484375], "busy": [{"pid": 193864, "name": "bun", "cpuPercent": 0.5, "workload": true}], "phase": "waiting"}
+{"at": "2026-09-08T01:36:03.229418+00:00", "loadavg": [1.78955078125, 2.01953125, 1.4619140625], "busy": [{"pid": 194166, "name": "bun", "cpuPercent": 0.0, "workload": true}, {"pid": 194167, "name": "bun", "cpuPercent": 1.49, "workload": true}, {"pid": 194180, "name": "npm pack /home/", "cpuPercent": 20.92, "workload": false}, {"pid": 194223, "name": "bun", "cpuPercent": 2.99, "workload": true}], "phase": "waiting"}
+{"at": "2026-09-08T01:36:05.239197+00:00", "loadavg": [1.78955078125, 2.01953125, 1.4619140625], "busy": [{"pid": 194407, "name": "bun", "cpuPercent": 0.0, "workload": true}, {"pid": 194408, "name": "bun", "cpuPercent": 1.49, "workload": true}, {"pid": 194518, "name": "bun", "cpuPercent": 1.0, "workload": true}, {"pid": 194674, "name": "npm pack /home/", "cpuPercent": 28.36, "workload": false}, {"pid": 194817, "name": "bun", "cpuPercent": 0.5, "workload": true}, {"pid": 194877, "name": "bun", "cpuPercent": 5.47, "workload": true}], "phase": "waiting"}
+{"at": "2026-09-08T01:36:07.247229+00:00", "loadavg": [1.78955078125, 2.01953125, 1.4619140625], "busy": [{"pid": 194947, "name": "bun", "cpuPercent": 121.51, "workload": true}, {"pid": 194966, "name": "bun", "cpuPercent": 1.49, "workload": true}], "phase": "waiting"}
+{"at": "2026-09-08T01:36:09.254810+00:00", "loadavg": [1.72607421875, 2.00244140625, 1.458984375], "busy": [{"pid": 195506, "name": "bun", "cpuPercent": 0.5, "workload": true}, {"pid": 195576, "name": "bun", "cpuPercent": 8.96, "workload": true}], "phase": "waiting"}
+{"at": "2026-09-08T01:36:11.262833+00:00", "loadavg": [1.72607421875, 2.00244140625, 1.458984375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:13.269975+00:00", "loadavg": [1.58740234375, 1.96875, 1.45068359375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:15.277205+00:00", "loadavg": [1.58740234375, 1.96875, 1.45068359375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:17.284740+00:00", "loadavg": [1.58740234375, 1.96875, 1.45068359375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:19.292365+00:00", "loadavg": [1.4599609375, 1.93603515625, 1.44287109375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:21.299450+00:00", "loadavg": [1.4599609375, 1.93603515625, 1.44287109375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:23.306929+00:00", "loadavg": [1.3427734375, 1.90380859375, 1.43505859375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:25.314408+00:00", "loadavg": [1.3427734375, 1.90380859375, 1.43505859375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:27.321999+00:00", "loadavg": [1.3427734375, 1.90380859375, 1.43505859375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:29.329051+00:00", "loadavg": [1.31494140625, 1.888671875, 1.4326171875], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:31.336328+00:00", "loadavg": [1.31494140625, 1.888671875, 1.4326171875], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:33.346060+00:00", "loadavg": [1.4501953125, 1.9072265625, 1.44140625], "busy": [{"pid": 195777, "name": "cargo", "cpuPercent": 4.48, "workload": false}, {"pid": 195964, "name": "rustc", "cpuPercent": 6.97, "workload": true}, {"pid": 195976, "name": "rustc", "cpuPercent": 5.98, "workload": false}], "phase": "waiting"}
+{"at": "2026-09-08T01:36:35.354686+00:00", "loadavg": [1.4501953125, 1.9072265625, 1.44140625], "busy": [{"pid": 195777, "name": "cargo", "cpuPercent": 1.99, "workload": false}, {"pid": 196096, "name": "rustc", "cpuPercent": 51.75, "workload": false}, {"pid": 196111, "name": "clippy-driver", "cpuPercent": 38.31, "workload": false}, {"pid": 196133, "name": "rustc", "cpuPercent": 28.86, "workload": false}], "phase": "waiting"}
+{"at": "2026-09-08T01:36:37.368063+00:00", "loadavg": [1.4501953125, 1.9072265625, 1.44140625], "busy": [{"pid": 195777, "name": "cargo", "cpuPercent": 1.99, "workload": false}, {"pid": 196167, "name": "clippy-driver", "cpuPercent": 89.11, "workload": false}, {"pid": 196193, "name": "rustc", "cpuPercent": 67.21, "workload": true}], "phase": "waiting"}
+{"at": "2026-09-08T01:36:39.375881+00:00", "loadavg": [1.57470703125, 1.92578125, 1.4501953125], "busy": [{"pid": 195777, "name": "cargo", "cpuPercent": 0.99, "workload": false}, {"pid": 196284, "name": "clippy-driver", "cpuPercent": 38.74, "workload": false}, {"pid": 196285, "name": "clippy-driver", "cpuPercent": 38.74, "workload": false}], "phase": "waiting"}
+{"at": "2026-09-08T01:36:41.387185+00:00", "loadavg": [1.57470703125, 1.92578125, 1.4501953125], "busy": [{"pid": 195777, "name": "cargo", "cpuPercent": 0.0, "workload": false}, {"pid": 196284, "name": "clippy-driver", "cpuPercent": 100.11, "workload": false}, {"pid": 196285, "name": "clippy-driver", "cpuPercent": 100.11, "workload": false}], "phase": "waiting"}
+{"at": "2026-09-08T01:36:43.395152+00:00", "loadavg": [1.4482421875, 1.8935546875, 1.4423828125], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:45.403680+00:00", "loadavg": [1.4482421875, 1.8935546875, 1.4423828125], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:47.410913+00:00", "loadavg": [1.4482421875, 1.8935546875, 1.4423828125], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:49.418181+00:00", "loadavg": [1.33203125, 1.86181640625, 1.4345703125], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:51.425467+00:00", "loadavg": [1.33203125, 1.86181640625, 1.4345703125], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:53.432627+00:00", "loadavg": [1.22509765625, 1.83056640625, 1.4267578125], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:55.439799+00:00", "loadavg": [1.22509765625, 1.83056640625, 1.4267578125], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:57.447910+00:00", "loadavg": [1.126953125, 1.7998046875, 1.4189453125], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:36:59.455219+00:00", "loadavg": [1.126953125, 1.7998046875, 1.4189453125], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:01.462421+00:00", "loadavg": [1.126953125, 1.7998046875, 1.4189453125], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:03.469663+00:00", "loadavg": [1.03662109375, 1.76953125, 1.4111328125], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:05.476707+00:00", "loadavg": [1.03662109375, 1.76953125, 1.4111328125], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:07.484634+00:00", "loadavg": [1.19384765625, 1.7900390625, 1.419921875], "busy": [{"pid": 196423, "name": "cargo", "cpuPercent": 1.99, "workload": true}], "phase": "waiting"}
+{"at": "2026-09-08T01:37:09.492763+00:00", "loadavg": [1.19384765625, 1.7900390625, 1.419921875], "busy": [{"pid": 196440, "name": "bun", "cpuPercent": 0.0, "workload": true}, {"pid": 196443, "name": "bench", "cpuPercent": 95.12, "workload": false}], "phase": "waiting"}
+{"at": "2026-09-08T01:37:11.500179+00:00", "loadavg": [1.19384765625, 1.7900390625, 1.419921875], "busy": [{"pid": 196440, "name": "bun", "cpuPercent": 0.0, "workload": true}, {"pid": 196443, "name": "bench", "cpuPercent": 100.09, "workload": false}], "phase": "waiting"}
+{"at": "2026-09-08T01:37:13.508180+00:00", "loadavg": [1.17822265625, 1.77685546875, 1.41748046875], "busy": [{"pid": 196440, "name": "bun", "cpuPercent": 0.0, "workload": true}, {"pid": 196443, "name": "bench", "cpuPercent": 100.13, "workload": false}], "phase": "waiting"}
+{"at": "2026-09-08T01:37:15.515390+00:00", "loadavg": [1.17822265625, 1.77685546875, 1.41748046875], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:17.522855+00:00", "loadavg": [1.08349609375, 1.7470703125, 1.40966796875], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:19.533190+00:00", "loadavg": [1.08349609375, 1.7470703125, 1.40966796875], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:21.540523+00:00", "loadavg": [1.08349609375, 1.7470703125, 1.40966796875], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:23.549009+00:00", "loadavg": [0.99658203125, 1.7177734375, 1.40185546875], "busy": [{"pid": 196536, "name": "bun", "cpuPercent": 1.49, "workload": true}, {"pid": 196569, "name": "bun", "cpuPercent": 1.0, "workload": true}, {"pid": 196576, "name": "npm pack /home/", "cpuPercent": 19.43, "workload": false}], "phase": "waiting"}
+{"at": "2026-09-08T01:37:25.557889+00:00", "loadavg": [0.99658203125, 1.7177734375, 1.40185546875], "busy": [{"pid": 196758, "name": "MainThread", "cpuPercent": 27.88, "workload": false}], "phase": "waiting"}
+{"at": "2026-09-08T01:37:27.566287+00:00", "loadavg": [1.0771484375, 1.72265625, 1.4052734375], "busy": [{"pid": 196758, "name": "MainThread", "cpuPercent": 157.8, "workload": false}, {"pid": 196767, "name": "esbuild", "cpuPercent": 19.41, "workload": false}], "phase": "waiting"}
+{"at": "2026-09-08T01:37:29.573752+00:00", "loadavg": [1.0771484375, 1.72265625, 1.4052734375], "busy": [{"pid": 196758, "name": "MainThread", "cpuPercent": 172.28, "workload": false}, {"pid": 196767, "name": "esbuild", "cpuPercent": 31.87, "workload": false}], "phase": "waiting"}
+{"at": "2026-09-08T01:37:31.581119+00:00", "loadavg": [1.0771484375, 1.72265625, 1.4052734375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:33.588726+00:00", "loadavg": [0.99072265625, 1.69384765625, 1.3974609375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:35.595796+00:00", "loadavg": [0.99072265625, 1.69384765625, 1.3974609375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:37.603437+00:00", "loadavg": [0.9111328125, 1.66552734375, 1.3896484375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:39.611510+00:00", "loadavg": [0.9111328125, 1.66552734375, 1.3896484375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:41.618722+00:00", "loadavg": [0.9111328125, 1.66552734375, 1.3896484375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:43.626248+00:00", "loadavg": [0.837890625, 1.6376953125, 1.3818359375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:45.633457+00:00", "loadavg": [0.837890625, 1.6376953125, 1.3818359375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:47.640779+00:00", "loadavg": [0.7705078125, 1.6103515625, 1.3740234375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:49.648064+00:00", "loadavg": [0.7705078125, 1.6103515625, 1.3740234375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:51.656123+00:00", "loadavg": [0.7705078125, 1.6103515625, 1.3740234375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:53.663263+00:00", "loadavg": [0.70849609375, 1.58349609375, 1.3662109375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:55.670592+00:00", "loadavg": [0.70849609375, 1.58349609375, 1.3662109375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:57.681289+00:00", "loadavg": [0.6513671875, 1.55712890625, 1.3583984375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:37:59.688517+00:00", "loadavg": [0.6513671875, 1.55712890625, 1.3583984375], "busy": [], "phase": "waiting"}
+{"at": "2026-09-08T01:38:01.708672+00:00", "loadavg": [0.6513671875, 1.55712890625, 1.3583984375], "busy": [], "phase": "measuring"}
+{"at": "2026-09-08T01:38:03.715975+00:00", "loadavg": [0.6796875, 1.5478515625, 1.3564453125], "busy": [], "phase": "measuring"}
+{"at": "2026-09-08T01:38:05.723803+00:00", "loadavg": [0.6796875, 1.5478515625, 1.3564453125], "busy": [], "phase": "measuring"}
+{"at": "2026-09-08T01:38:07.731071+00:00", "loadavg": [0.70556640625, 1.53857421875, 1.3544921875], "busy": [], "phase": "measuring"}
+{"at": "2026-09-08T01:38:09.738467+00:00", "loadavg": [0.70556640625, 1.53857421875, 1.3544921875], "busy": [], "phase": "measuring"}
+{"at": "2026-09-08T01:38:11.745909+00:00", "loadavg": [0.70556640625, 1.53857421875, 1.3544921875], "busy": [], "phase": "measuring"}
+{"at": "2026-09-08T01:38:13.753405+00:00", "loadavg": [0.7294921875, 1.529296875, 1.3525390625], "busy": [], "phase": "measuring"}
+{"at": "2026-09-08T01:38:15.762580+00:00", "loadavg": [0.7294921875, 1.529296875, 1.3525390625], "busy": [], "phase": "measuring"}
+{"at": "2026-09-08T01:38:17.769786+00:00", "loadavg": [0.6708984375, 1.50390625, 1.34521484375], "busy": [], "phase": "measuring"}

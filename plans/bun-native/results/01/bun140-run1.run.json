@@ -1,0 +1,27 @@
+{
+  "label": "bun140-run1",
+  "requestedAt": "2026-09-08T01:43:38.948430+00:00",
+  "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-bun-native-01-native-json",
+  "argv": [
+    "/tmp/zebra-bun-native-run/runtime/bun-linux-x64/bun",
+    "run",
+    "bench/native-json.ts",
+    "--baseline",
+    "1418a2f3f8b3e0bae53490eb195811b34590e041",
+    "--rounds",
+    "7",
+    "--iterations",
+    "10000",
+    "--warmup",
+    "2000"
+  ],
+  "pathPrefix": "/tmp/zebra-bun-native-run/runtime/bun-linux-x64",
+  "sampleSeconds": 2,
+  "driverSha256": "d1230b9ea3d200631a636fdb54f78ee67517ab6569bdb1d02aeafce2d74e3d14",
+  "quietSamples": 15,
+  "guard": "consecutive quiet samples; other processes >=15% CPU or active benchmark/build/test commands block start",
+  "startedAt": "2026-09-08T01:44:09.068992+00:00",
+  "exitCode": 0,
+  "endedAt": "2026-09-08T01:44:27.143141+00:00",
+  "otherBusySamples": []
+}

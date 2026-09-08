@@ -1,0 +1,21 @@
+bun test v1.4.0 (34cbb9a40)
+
+packages/core/test/app/dispatch.test.ts:
+(pass) registers a GET route and dispatches it [2.56ms]
+(pass) dispatch without a server leaves req.ip undefined [0.20ms]
+(pass) dispatch forwards the socket ip to handlers (trustProxy never turns it into XFF) [0.20ms]
+(pass) non-JSON-serializable handler results become a structured 500 [5.83ms]
+(pass) listen() plumbs the real peer address into req.ip [5.32ms]
+(pass) handler returning non-Response gets JSON-wrapped [0.23ms]
+(pass) dispatch retains JSON encoding and null bodies for every root value boundary [1.57ms]
+(pass) dispatch calls toJSON/getters once and keeps serialization error mapping at the caller [0.74ms]
+(pass) unmatched path returns 404 Problem+Json [0.50ms]
+(pass) request and response helpers round-trip through dispatch [0.86ms]
+(pass) redirect() and html() responses pass through dispatch [0.32ms]
+(pass) value returns stay JSON-encoded; text() is the escape hatch [0.30ms]
+(pass) request helpers honor app body limits through dispatch [7.34ms]
+
+ 13 pass
+ 0 fail
+ 89 expect() calls
+Ran 13 tests across 1 file. [67.00ms]

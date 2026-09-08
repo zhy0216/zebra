@@ -62,9 +62,10 @@ test("listen() plumbs the real peer address into req.ip", async () => {
     seen = req.ip;
     return new Response("ok");
   });
-  const { port } = await app.listen({ port: 0 });
+  // Pin both ends to IPv4 so runtime dual-stack defaults cannot change the peer address format.
+  const { port } = await app.listen({ port: 0, hostname: "127.0.0.1" });
   try {
-    await fetch(`http://localhost:${port}/`, {
+    await fetch(`http://127.0.0.1:${port}/`, {
       headers: { "x-forwarded-for": "203.0.113.66" },
     });
   } finally {
@@ -80,6 +81,84 @@ test("handler returning non-Response gets JSON-wrapped", async () => {
   const res = await app.dispatch(new Request("http://x/data"));
   expect(res.headers.get("content-type")).toContain("application/json");
   expect(await res.json()).toEqual({ a: 1 });
+});
+
+test("dispatch retains JSON encoding and null bodies for every root value boundary", async () => {
+  const values = [
+    undefined,
+    "你好 🦓 \ud800",
+    null,
+    true,
+    1.25,
+    { list: [1, null, { nested: "ok" }] },
+    [undefined, Symbol("nested"), false],
+    () => 1,
+    Symbol("root"),
+    Object.assign(() => 1, { toJSON: () => ({ from: "function" }) }),
+    { toJSON: () => undefined },
+    { toJSON: () => Symbol("empty") },
+    { toJSON: () => () => 1 },
+  ];
+  const app = new Zebra();
+  for (const [i, value] of values.entries()) app.get(`/value/${i}`, () => value);
+  for (const [i, value] of values.entries()) {
+    const expected =
+      value === undefined
+        ? new Response(null, { status: 204 })
+        : new Response(JSON.stringify(value), {
+            headers: { "content-type": "application/json; charset=utf-8" },
+          });
+    const actual = await app.dispatch(new Request(`http://x/value/${i}`));
+    expect(actual.status).toBe(expected.status);
+    expect(actual.body === null).toBe(expected.body === null);
+    expect([...actual.headers]).toEqual([...expected.headers]);
+    expect(await actual.text()).toBe(await expected.text());
+  }
+});
+
+test("dispatch calls toJSON/getters once and keeps serialization error mapping at the caller", async () => {
+  const app = new Zebra();
+  const calls: string[] = [];
+  app.get("/once", () => ({
+    get toJSON() {
+      calls.push("get toJSON");
+      return (key: string) => {
+        calls.push(`toJSON:${key}`);
+        return {
+          get value() {
+            calls.push("get value");
+            return 1;
+          },
+        };
+      };
+    },
+  }));
+  const once = await app.dispatch(new Request("http://x/once"));
+  expect(await once.text()).toBe('{"value":1}');
+  expect(calls).toEqual(["get toJSON", "toJSON:", "get value"]);
+
+  for (const source of ["toJSON", "getter", "helper"]) {
+    let attempts = 0;
+    const fail = () => {
+      attempts++;
+      throw new Error("serialization failed");
+    };
+    const value =
+      source === "getter"
+        ? {
+            get value() {
+              return fail();
+            },
+          }
+        : { toJSON: fail };
+    app.get(`/${source}`, () => (source === "helper" ? json(value) : value));
+    const res = await app.dispatch(new Request(`http://x/${source}`));
+    expect(res.status).toBe(500);
+    expect(((await res.json()) as { type: string }).type).toBe(
+      `https://errors.zebra.dev/${source === "helper" ? "internal" : "response_serialization"}`,
+    );
+    expect(attempts).toBe(1);
+  }
 });
 
 test("unmatched path returns 404 Problem+Json", async () => {

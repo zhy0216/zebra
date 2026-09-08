@@ -1,0 +1,39 @@
+{
+  "label": "bun142-run2",
+  "requestedAt": "2026-09-08T01:27:26.776224+00:00",
+  "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-bun-native-01-native-json",
+  "argv": [
+    "/home/ubuntu/.bun/bin/bun",
+    "run",
+    "bench/native-json.ts",
+    "--baseline",
+    "1418a2f3f8b3e0bae53490eb195811b34590e041",
+    "--rounds",
+    "7",
+    "--iterations",
+    "10000",
+    "--warmup",
+    "2000"
+  ],
+  "pathPrefix": "/home/ubuntu/.bun/bin",
+  "sampleSeconds": 2,
+  "quietSamples": 15,
+  "guard": "consecutive quiet samples; other processes >=15% CPU or active build tools block start",
+  "startedAt": "2026-09-08T01:27:56.894041+00:00",
+  "exitCode": 0,
+  "endedAt": "2026-09-08T01:28:14.968001+00:00",
+  "otherBusySamples": [
+    {
+      "at": "2026-09-08T01:27:58.908335+00:00",
+      "loadavg": [0.79052734375, 1.275390625, 0.83447265625],
+      "busy": [
+        {
+          "pid": 128999,
+          "name": "go",
+          "cpuPercent": 38.5
+        }
+      ],
+      "phase": "measuring"
+    }
+  ]
+}

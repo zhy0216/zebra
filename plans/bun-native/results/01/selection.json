@@ -1,0 +1,15 @@
+{
+  "valid": ["bun142-run4", "bun142-run5", "bun140-run1", "bun140-run3"],
+  "excluded": {
+    "bun142-run1": "4 other busy samples",
+    "bun142-run2": "1 other busy sample",
+    "bun142-run3": "1 other busy sample",
+    "bun140-run2": "2 other busy samples"
+  },
+  "waitOnly": "bun142-run6-wait-only.json",
+  "validatedRuns": 4,
+  "scenariosPerRun": 23,
+  "roundsPerScenario": 7,
+  "pairedRowsPerRun": 161,
+  "sourceHashesAndMeasuredScriptMatchAcrossRuns": true
+}
