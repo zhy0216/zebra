@@ -1,0 +1,4 @@
+100644 blob b94e184b14b091867bb1d7ca3fcb7b8fdbc388f0	bench/hot-path-fixtures.ts
+100644 blob 456747642fbfe079872623c37dfd8934e9620644	bench/hot-path-source.ts
+100644 blob 068eb201bf624da98fc60e7e7e38d579ea286393	bench/hot-path.ts
+100644 blob 129e4aa611fe37352b1314a440f44f2379dfdde7	bench/test/hot-path.test.ts

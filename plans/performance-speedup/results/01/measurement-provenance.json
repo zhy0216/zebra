@@ -1,0 +1,301 @@
+[
+  {
+    "run": "aa-140-1",
+    "status": {
+      "command": [
+        "python3",
+        "plans/performance-speedup/results/01/series.py",
+        "--harness",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/bench/hot-path.ts",
+        "--before",
+        "/tmp/zebra-performance-speedup-01/baseline-a856cab",
+        "--after",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+        "--suite",
+        "all"
+      ],
+      "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+      "started": "2026-09-08T05:59:32.981762+00:00",
+      "rule": {
+        "sampleSeconds": 2,
+        "quietSamples": 15,
+        "maxQuietSeconds": 300,
+        "outsideCpuPercentOfOneCore": 15,
+        "exclusion": "Any measured outside CPU >=15% or detected competing workload excludes the entire comparison; retain all rows."
+      },
+      "status": "complete",
+      "interferenceSamples": 19,
+      "quietSamples": 15,
+      "measurementStarted": "2026-09-08T06:00:03.188711+00:00",
+      "exit": 0,
+      "eligible": false,
+      "finished": "2026-09-08T06:04:33.098877+00:00"
+    },
+    "runtime": {
+      "bun": "1.4.0",
+      "revision": "34cbb9a40b4bd1bd767d134a7065e66c2432a676",
+      "executable": "/tmp/zebra-performance-speedup-01/runtime/bun-1.4.0/bun",
+      "nodeEnv": "production"
+    },
+    "sources": [
+      "{\"kind\": \"checkout\", \"lockSha256\": \"ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1\", \"paths\": {\"core\": \"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/core/src/index.ts\", \"router\": \"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/core/src/router/radix.ts\"}, \"productionDiff\": {\"sha256\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\", \"tracked\": \"\", \"untracked\": \"\"}, \"productionFileCount\": 80, \"productionSha256\": \"7a9eb1077326654812aabcad8519086ce61b28350a6160582ec01cbce90c9b73\", \"revision\": \"a1b26b79d5439e62819fdc0dad3d6419d6e00397\", \"root\": \"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline\"}",
+      "{\"kind\": \"archive\", \"lockSha256\": \"ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1\", \"paths\": {\"core\": \"/tmp/zebra-performance-speedup-01/baseline-a856cab/packages/core/src/index.ts\", \"router\": \"/tmp/zebra-performance-speedup-01/baseline-a856cab/packages/core/src/router/radix.ts\"}, \"productionDiff\": {\"changes\": [], \"sha256\": \"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945\"}, \"productionFileCount\": 80, \"productionSha256\": \"7a9eb1077326654812aabcad8519086ce61b28350a6160582ec01cbce90c9b73\", \"revision\": \"a856cab47d4fd3102e976ce7a70166837837eea2\", \"root\": \"/tmp/zebra-performance-speedup-01/baseline-a856cab\"}"
+    ],
+    "harness": {
+      "root": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+      "revision": "a1b26b79d5439e62819fdc0dad3d6419d6e00397",
+      "diff": "",
+      "sha256": "b4a3feb23f5d26c8b6121d35e1b121b2b5ab6221b45a62ae4ddf42dd8a31a976",
+      "files": {
+        "bench/fixtures/static/hello.txt": "5fabaae06f906b2c455c0a0ca2fb250df6be7d0827e17d8fbbfb273fea6b5653",
+        "bench/hot-path-fixtures.ts": "0b65c0662e10aaecb58b1a4de378f5e6378d5edb5f1e8b126d41da69d7802273",
+        "bench/hot-path-source.ts": "bffd012950cccf85c3925a372557965e86c5d8bca735ad18e303856f3f1eb336",
+        "bench/hot-path.ts": "b21c8f82c483b0ef6614c69388e1ce2517ae25e83a8ce49b50a09907397a3a30",
+        "bench/scenarios.ts": "bb8984b50983d1a384b0c23ad15b6c99dddfe9ad8925407bc8078879eaf77274"
+      },
+      "lockSha256": "ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1"
+    },
+    "processes": 10,
+    "completedProcesses": 10,
+    "roundRecords": 640
+  },
+  {
+    "run": "aa-140-2",
+    "status": {
+      "command": [
+        "python3",
+        "plans/performance-speedup/results/01/series.py",
+        "--harness",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/bench/hot-path.ts",
+        "--before",
+        "/tmp/zebra-performance-speedup-01/baseline-a856cab",
+        "--after",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+        "--suite",
+        "all"
+      ],
+      "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+      "started": "2026-09-08T06:05:34.219575+00:00",
+      "rule": {
+        "sampleSeconds": 2,
+        "quietSamples": 15,
+        "maxQuietSeconds": 300,
+        "outsideCpuPercentOfOneCore": 15,
+        "exclusion": "Any measured outside CPU >=15% or detected competing workload excludes the entire comparison; retain all rows."
+      },
+      "status": "complete",
+      "interferenceSamples": 6,
+      "quietSamples": 15,
+      "measurementStarted": "2026-09-08T06:06:04.420771+00:00",
+      "exit": 0,
+      "eligible": false,
+      "finished": "2026-09-08T06:10:34.267262+00:00"
+    },
+    "runtime": {
+      "bun": "1.4.0",
+      "revision": "34cbb9a40b4bd1bd767d134a7065e66c2432a676",
+      "executable": "/tmp/zebra-performance-speedup-01/runtime/bun-1.4.0/bun",
+      "nodeEnv": "production"
+    },
+    "sources": [
+      "{\"kind\": \"checkout\", \"lockSha256\": \"ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1\", \"paths\": {\"core\": \"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/core/src/index.ts\", \"router\": \"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/core/src/router/radix.ts\"}, \"productionDiff\": {\"sha256\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\", \"tracked\": \"\", \"untracked\": \"\"}, \"productionFileCount\": 80, \"productionSha256\": \"7a9eb1077326654812aabcad8519086ce61b28350a6160582ec01cbce90c9b73\", \"revision\": \"a1b26b79d5439e62819fdc0dad3d6419d6e00397\", \"root\": \"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline\"}",
+      "{\"kind\": \"archive\", \"lockSha256\": \"ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1\", \"paths\": {\"core\": \"/tmp/zebra-performance-speedup-01/baseline-a856cab/packages/core/src/index.ts\", \"router\": \"/tmp/zebra-performance-speedup-01/baseline-a856cab/packages/core/src/router/radix.ts\"}, \"productionDiff\": {\"changes\": [], \"sha256\": \"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945\"}, \"productionFileCount\": 80, \"productionSha256\": \"7a9eb1077326654812aabcad8519086ce61b28350a6160582ec01cbce90c9b73\", \"revision\": \"a856cab47d4fd3102e976ce7a70166837837eea2\", \"root\": \"/tmp/zebra-performance-speedup-01/baseline-a856cab\"}"
+    ],
+    "harness": {
+      "root": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+      "revision": "a1b26b79d5439e62819fdc0dad3d6419d6e00397",
+      "diff": "",
+      "sha256": "b4a3feb23f5d26c8b6121d35e1b121b2b5ab6221b45a62ae4ddf42dd8a31a976",
+      "files": {
+        "bench/fixtures/static/hello.txt": "5fabaae06f906b2c455c0a0ca2fb250df6be7d0827e17d8fbbfb273fea6b5653",
+        "bench/hot-path-fixtures.ts": "0b65c0662e10aaecb58b1a4de378f5e6378d5edb5f1e8b126d41da69d7802273",
+        "bench/hot-path-source.ts": "bffd012950cccf85c3925a372557965e86c5d8bca735ad18e303856f3f1eb336",
+        "bench/hot-path.ts": "b21c8f82c483b0ef6614c69388e1ce2517ae25e83a8ce49b50a09907397a3a30",
+        "bench/scenarios.ts": "bb8984b50983d1a384b0c23ad15b6c99dddfe9ad8925407bc8078879eaf77274"
+      },
+      "lockSha256": "ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1"
+    },
+    "processes": 10,
+    "completedProcesses": 10,
+    "roundRecords": 640
+  },
+  {
+    "run": "aa-142-1",
+    "status": {
+      "command": [
+        "python3",
+        "plans/performance-speedup/results/01/series.py",
+        "--harness",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/bench/hot-path.ts",
+        "--before",
+        "/tmp/zebra-performance-speedup-01/baseline-a856cab",
+        "--after",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+        "--suite",
+        "all"
+      ],
+      "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+      "started": "2026-09-08T05:44:20.363808+00:00",
+      "rule": {
+        "sampleSeconds": 2,
+        "quietSamples": 15,
+        "maxQuietSeconds": 300,
+        "outsideCpuPercentOfOneCore": 15,
+        "exclusion": "Any measured outside CPU >=15% or detected competing workload excludes the entire comparison; retain all rows."
+      },
+      "status": "interrupted",
+      "interferenceSamples": 2,
+      "quietSamples": 15,
+      "measurementStarted": "2026-09-08T05:44:50.558589+00:00",
+      "error": "KeyboardInterrupt('signal 15')",
+      "finished": "2026-09-08T05:47:03.943687+00:00"
+    },
+    "runtime": {
+      "bun": "1.4.2",
+      "revision": "744846f844374847c902b5e7fd59b4342a51ef99",
+      "executable": "/home/ubuntu/.bun/bin/bun",
+      "nodeEnv": "production"
+    },
+    "sources": [
+      "{\"kind\": \"checkout\", \"lockSha256\": \"ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1\", \"paths\": {\"core\": \"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/core/src/index.ts\", \"router\": \"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/core/src/router/radix.ts\"}, \"productionDiff\": {\"sha256\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\", \"tracked\": \"\", \"untracked\": \"\"}, \"productionFileCount\": 80, \"productionSha256\": \"7a9eb1077326654812aabcad8519086ce61b28350a6160582ec01cbce90c9b73\", \"revision\": \"0fee60b84692c150b185f55944f87c7e65a9e7b2\", \"root\": \"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline\"}",
+      "{\"kind\": \"archive\", \"lockSha256\": \"ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1\", \"paths\": {\"core\": \"/tmp/zebra-performance-speedup-01/baseline-a856cab/packages/core/src/index.ts\", \"router\": \"/tmp/zebra-performance-speedup-01/baseline-a856cab/packages/core/src/router/radix.ts\"}, \"productionDiff\": {\"changes\": [], \"sha256\": \"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945\"}, \"productionFileCount\": 80, \"productionSha256\": \"7a9eb1077326654812aabcad8519086ce61b28350a6160582ec01cbce90c9b73\", \"revision\": \"a856cab47d4fd3102e976ce7a70166837837eea2\", \"root\": \"/tmp/zebra-performance-speedup-01/baseline-a856cab\"}"
+    ],
+    "harness": {
+      "root": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+      "revision": "0fee60b84692c150b185f55944f87c7e65a9e7b2",
+      "diff": "",
+      "sha256": "4f96bf398b07029cf6fc801dbecca302366e6af7a273c85325fdb5a2f2e7d99e",
+      "files": {
+        "bench/fixtures/static/hello.txt": "5fabaae06f906b2c455c0a0ca2fb250df6be7d0827e17d8fbbfb273fea6b5653",
+        "bench/hot-path-fixtures.ts": "0b65c0662e10aaecb58b1a4de378f5e6378d5edb5f1e8b126d41da69d7802273",
+        "bench/hot-path-source.ts": "bffd012950cccf85c3925a372557965e86c5d8bca735ad18e303856f3f1eb336",
+        "bench/hot-path.ts": "5e22d100f4416c2723a6900ff6f558cf5186ed411bcea8b07a1301061d6ba86b",
+        "bench/scenarios.ts": "bb8984b50983d1a384b0c23ad15b6c99dddfe9ad8925407bc8078879eaf77274"
+      },
+      "lockSha256": "ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1"
+    },
+    "processes": 5,
+    "completedProcesses": 4,
+    "roundRecords": 319
+  },
+  {
+    "run": "aa-142-2",
+    "status": {
+      "command": [
+        "python3",
+        "plans/performance-speedup/results/01/series.py",
+        "--harness",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/bench/hot-path.ts",
+        "--before",
+        "/tmp/zebra-performance-speedup-01/baseline-a856cab",
+        "--after",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+        "--suite",
+        "all"
+      ],
+      "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+      "started": "2026-09-08T05:48:23.061584+00:00",
+      "rule": {
+        "sampleSeconds": 2,
+        "quietSamples": 15,
+        "maxQuietSeconds": 300,
+        "outsideCpuPercentOfOneCore": 15,
+        "exclusion": "Any measured outside CPU >=15% or detected competing workload excludes the entire comparison; retain all rows."
+      },
+      "status": "complete",
+      "interferenceSamples": 0,
+      "quietSamples": 15,
+      "measurementStarted": "2026-09-08T05:49:17.406798+00:00",
+      "exit": 0,
+      "eligible": true,
+      "finished": "2026-09-08T05:53:47.234920+00:00"
+    },
+    "runtime": {
+      "bun": "1.4.2",
+      "revision": "744846f844374847c902b5e7fd59b4342a51ef99",
+      "executable": "/home/ubuntu/.bun/bin/bun",
+      "nodeEnv": "production"
+    },
+    "sources": [
+      "{\"kind\": \"checkout\", \"lockSha256\": \"ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1\", \"paths\": {\"core\": \"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/core/src/index.ts\", \"router\": \"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/core/src/router/radix.ts\"}, \"productionDiff\": {\"sha256\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\", \"tracked\": \"\", \"untracked\": \"\"}, \"productionFileCount\": 80, \"productionSha256\": \"7a9eb1077326654812aabcad8519086ce61b28350a6160582ec01cbce90c9b73\", \"revision\": \"a1b26b79d5439e62819fdc0dad3d6419d6e00397\", \"root\": \"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline\"}",
+      "{\"kind\": \"archive\", \"lockSha256\": \"ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1\", \"paths\": {\"core\": \"/tmp/zebra-performance-speedup-01/baseline-a856cab/packages/core/src/index.ts\", \"router\": \"/tmp/zebra-performance-speedup-01/baseline-a856cab/packages/core/src/router/radix.ts\"}, \"productionDiff\": {\"changes\": [], \"sha256\": \"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945\"}, \"productionFileCount\": 80, \"productionSha256\": \"7a9eb1077326654812aabcad8519086ce61b28350a6160582ec01cbce90c9b73\", \"revision\": \"a856cab47d4fd3102e976ce7a70166837837eea2\", \"root\": \"/tmp/zebra-performance-speedup-01/baseline-a856cab\"}"
+    ],
+    "harness": {
+      "root": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+      "revision": "a1b26b79d5439e62819fdc0dad3d6419d6e00397",
+      "diff": "",
+      "sha256": "b4a3feb23f5d26c8b6121d35e1b121b2b5ab6221b45a62ae4ddf42dd8a31a976",
+      "files": {
+        "bench/fixtures/static/hello.txt": "5fabaae06f906b2c455c0a0ca2fb250df6be7d0827e17d8fbbfb273fea6b5653",
+        "bench/hot-path-fixtures.ts": "0b65c0662e10aaecb58b1a4de378f5e6378d5edb5f1e8b126d41da69d7802273",
+        "bench/hot-path-source.ts": "bffd012950cccf85c3925a372557965e86c5d8bca735ad18e303856f3f1eb336",
+        "bench/hot-path.ts": "b21c8f82c483b0ef6614c69388e1ce2517ae25e83a8ce49b50a09907397a3a30",
+        "bench/scenarios.ts": "bb8984b50983d1a384b0c23ad15b6c99dddfe9ad8925407bc8078879eaf77274"
+      },
+      "lockSha256": "ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1"
+    },
+    "processes": 10,
+    "completedProcesses": 10,
+    "roundRecords": 640
+  },
+  {
+    "run": "aa-142-3",
+    "status": {
+      "command": [
+        "python3",
+        "plans/performance-speedup/results/01/series.py",
+        "--harness",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/bench/hot-path.ts",
+        "--before",
+        "/tmp/zebra-performance-speedup-01/baseline-a856cab",
+        "--after",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+        "--suite",
+        "all"
+      ],
+      "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+      "started": "2026-09-08T05:54:07.664005+00:00",
+      "rule": {
+        "sampleSeconds": 2,
+        "quietSamples": 15,
+        "maxQuietSeconds": 300,
+        "outsideCpuPercentOfOneCore": 15,
+        "exclusion": "Any measured outside CPU >=15% or detected competing workload excludes the entire comparison; retain all rows."
+      },
+      "status": "complete",
+      "interferenceSamples": 9,
+      "quietSamples": 15,
+      "measurementStarted": "2026-09-08T05:54:37.859004+00:00",
+      "exit": 0,
+      "eligible": false,
+      "finished": "2026-09-08T05:59:07.671433+00:00"
+    },
+    "runtime": {
+      "bun": "1.4.2",
+      "revision": "744846f844374847c902b5e7fd59b4342a51ef99",
+      "executable": "/home/ubuntu/.bun/bin/bun",
+      "nodeEnv": "production"
+    },
+    "sources": [
+      "{\"kind\": \"checkout\", \"lockSha256\": \"ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1\", \"paths\": {\"core\": \"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/core/src/index.ts\", \"router\": \"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/core/src/router/radix.ts\"}, \"productionDiff\": {\"sha256\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\", \"tracked\": \"\", \"untracked\": \"\"}, \"productionFileCount\": 80, \"productionSha256\": \"7a9eb1077326654812aabcad8519086ce61b28350a6160582ec01cbce90c9b73\", \"revision\": \"a1b26b79d5439e62819fdc0dad3d6419d6e00397\", \"root\": \"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline\"}",
+      "{\"kind\": \"archive\", \"lockSha256\": \"ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1\", \"paths\": {\"core\": \"/tmp/zebra-performance-speedup-01/baseline-a856cab/packages/core/src/index.ts\", \"router\": \"/tmp/zebra-performance-speedup-01/baseline-a856cab/packages/core/src/router/radix.ts\"}, \"productionDiff\": {\"changes\": [], \"sha256\": \"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945\"}, \"productionFileCount\": 80, \"productionSha256\": \"7a9eb1077326654812aabcad8519086ce61b28350a6160582ec01cbce90c9b73\", \"revision\": \"a856cab47d4fd3102e976ce7a70166837837eea2\", \"root\": \"/tmp/zebra-performance-speedup-01/baseline-a856cab\"}"
+    ],
+    "harness": {
+      "root": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+      "revision": "a1b26b79d5439e62819fdc0dad3d6419d6e00397",
+      "diff": "",
+      "sha256": "b4a3feb23f5d26c8b6121d35e1b121b2b5ab6221b45a62ae4ddf42dd8a31a976",
+      "files": {
+        "bench/fixtures/static/hello.txt": "5fabaae06f906b2c455c0a0ca2fb250df6be7d0827e17d8fbbfb273fea6b5653",
+        "bench/hot-path-fixtures.ts": "0b65c0662e10aaecb58b1a4de378f5e6378d5edb5f1e8b126d41da69d7802273",
+        "bench/hot-path-source.ts": "bffd012950cccf85c3925a372557965e86c5d8bca735ad18e303856f3f1eb336",
+        "bench/hot-path.ts": "b21c8f82c483b0ef6614c69388e1ce2517ae25e83a8ce49b50a09907397a3a30",
+        "bench/scenarios.ts": "bb8984b50983d1a384b0c23ad15b6c99dddfe9ad8925407bc8078879eaf77274"
+      },
+      "lockSha256": "ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1"
+    },
+    "processes": 10,
+    "completedProcesses": 10,
+    "roundRecords": 640
+  }
+]

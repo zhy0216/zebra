@@ -1,0 +1,24 @@
+108 |   );
+109 |   const workers = Array.from({ length: concurrency }, async () => {
+110 |     try {
+111 |       while (running) {
+112 |         const began = performance.now();
+113 |         checksum += await consumeResponse(await fetch(fixture.url, init), fixture.scenario);
+                                                      ^
+TypeError: Unable to connect. Is the computer able to access the url?
+  path: "http://127.0.0.1:44823/middleware",
+ errno: 0,
+  code: "ConnectionRefused"
+
+      at async <anonymous> (/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/bench/hot-path.ts:113:49)
+
+Traceback (most recent call last):
+  File "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/plans/performance-speedup/results/01/series.py", line 63, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/plans/performance-speedup/results/01/series.py", line 43, in main
+    for line in child.stdout:
+                ^^^^^^^^^^^^
+  File "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/plans/performance-speedup/results/01/series.py", line 30, in interrupt
+    raise KeyboardInterrupt(f'signal {signum}')
+KeyboardInterrupt: signal 15

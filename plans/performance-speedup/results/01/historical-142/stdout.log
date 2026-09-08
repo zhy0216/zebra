@@ -1,0 +1,11 @@
+# Zebra bench:check (Bun 1.4.2)
+duration: 1000ms × concurrency 64
+
+static          40986 req/s (47%)  p95 2.13ms (176%)  FAIL
+param           36903 req/s (44%)  p95 2.67ms (216%)  FAIL
+wildcard        32395 req/s (39%)  p95 3.20ms (253%)  FAIL
+middleware      32840 req/s (42%)  p95 3.03ms (230%)  FAIL
+json            34030 req/s (42%)  p95 2.70ms (207%)  FAIL
+di              32044 req/s (41%)  p95 3.06ms (229%)  FAIL
+static-file     17120 req/s (52%)  p95 5.35ms (180%)  FAIL
+post-json        8787 req/s (33%)  p95 13.90ms (376%)  FAIL

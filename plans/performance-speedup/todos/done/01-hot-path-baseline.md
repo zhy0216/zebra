@@ -5,7 +5,7 @@ agent: inherit
 
 ## T1 · Build source-selectable behavioral and performance fixtures
 
-Read [plan.md](../plan.md), especially F1 and the measurement design, and inspect `bench/runner.ts`, `bench/scenarios.ts`, `bench/zebra-bench.ts`, `bench/bench-regression.ts` and the targeted core modules. Add a standalone harness for router, request construction, DI, dispatch, and real HTTP workloads. Its required interface is `--source-root <absolute-checkout>`, `--check`, and `--suite router|request|di|dispatch|http|all`. Validate options and document any round/duration/concurrency controls.
+Read [plan.md](../../plan.md), especially F1 and the measurement design, and inspect `bench/runner.ts`, `bench/scenarios.ts`, `bench/zebra-bench.ts`, `bench/bench-regression.ts` and the targeted core modules. Add a standalone harness for router, request construction, DI, dispatch, and real HTTP workloads. Its required interface is `--source-root <absolute-checkout>`, `--check`, and `--suite router|request|di|dispatch|http|all`. Validate options and document any round/duration/concurrency controls.
 
 Load tested modules from the requested source root and run before/after in separate processes with the same committed harness. Do not silently resolve both sides through the active checkout's workspace package aliases. Boot dispatch fixtures before measurement; include body/status/identity checks and consume response bodies. Preserve the existing eight HTTP fixtures while adding separate targeted fixtures for warmed class/factory DI, metadata access, middleware depth, and listeners. Follow the bounded matrix in the plan; avoid a combinatorial benchmark expansion.
 
@@ -42,3 +42,24 @@ Acceptance:
 - Deliver one final task commit with the harness, focused tests, baseline evidence and protocol; production remains unchanged. Notify the coordinator that 02-05 may start only after integration.
 
 Prerequisite: T1, and an exclusive timed-measurement slot from the coordinator.
+
+## Completed execution
+
+Completed in the dedicated task branch; integration remains with the coordinator.
+See [results and fixed worker protocol](../../results/01/README.md).
+
+- Source-selectable harness: 64 bounded fixtures across all five suites, original
+  eight HTTP scenarios preserved, booted dispatch, per-round units/provenance,
+  output/identity checks and failure cleanup.
+- Controlled source-probe and cleanup tests: 15 benchmark tests pass on both
+  Bun 1.4.2 and 1.4.0; the probe tolerates later router body changes.
+- Four complete five-pair A/A comparisons (2,560 timed rows), plus the retained
+  invalid initial attempt. One 1.4.2 control is eligible; outside load excludes
+  the other three. Minimum-runtime variability is explicitly inconclusive, with
+  a prospective two-attempt-per-control allowance before worker candidate timing.
+- Both runtimes pass focused 128 core tests, all-suite correctness, typecheck and
+  lint; Git diff checks pass and production/original benchmark/package files are
+  unchanged. Historical `bench:check` ran unchanged once on 1.4.2: exit 1, eight
+  FAIL, with three outside-load samples; full evidence retained.
+- One final local Conventional Commit; no rebase, merge, push or PR. Workers
+  02–05 remain gated on coordinator integration.

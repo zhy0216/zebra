@@ -1,0 +1,2 @@
+{"at": "2026-09-08T06:05:16.420851+00:00", "command": ["/home/ubuntu/.bun/bin/bun", "test", "bench/test"], "exit": 0, "log": "review-checks-142.log"}
+{"at": "2026-09-08T06:05:16.949110+00:00", "command": ["/tmp/zebra-performance-speedup-01/runtime/bun-1.4.0/bun", "test", "bench/test"], "exit": 0, "log": "review-checks-140.log"}

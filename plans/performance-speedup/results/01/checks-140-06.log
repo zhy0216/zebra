@@ -1,0 +1,180 @@
+bun test v1.4.0 (34cbb9a40)
+
+packages/core/test/http/request.test.ts:
+(pass) buildRequest exposes params, query, headers, url [0.77ms]
+(pass) body is lazy: accessing returns parsed value [1.36ms]
+(pass) concurrent body calls share one memoized parse [0.13ms]
+(pass) ip is undefined by default and carried when passed [0.07ms]
+
+packages/core/test/http/request-helpers.test.ts:
+(pass) req.json parses the body as JSON regardless of content-type [0.19ms]
+(pass) req.json is memoized: two calls share one parse [0.06ms]
+(pass) req.json on invalid JSON throws 400 invalid_json [0.26ms]
+(pass) req.json on empty body returns null [0.09ms]
+(pass) req.text returns the raw body text [0.10ms]
+(pass) req.text is memoized; empty body is an empty string [0.12ms]
+(pass) helpers are lazy: nothing reads the body until invoked [0.07ms]
+(pass) json() and text() share one buffered read [0.13ms]
+(pass) text then body and body then json preserve the JSON payload [0.44ms]
+(pass) concurrent body/json/text/form calls acquire the raw reader once [0.56ms]
+(pass) body/text/form compose for urlencoded bodies without losing repeated fields [0.60ms]
+(pass) body/text/form compose for multipart while preserving boundary case and files [0.84ms]
+(pass) a JSON parse failure preserves buffered text and is memoized [0.23ms]
+(pass) a shared size-limit failure rejects every buffering helper and cancels once [0.36ms]
+(pass) shared multipart size-limit errors do not wait for stream cancellation [0.37ms]
+(pass) multipart body maps shared read failures without changing the other helpers' errors [0.29ms]
+(pass) req.form parses multipart with File entries [0.27ms]
+(pass) req.form parses urlencoded into string entries [0.10ms]
+(pass) req.form on non-form body returns an empty FormData [0.09ms]
+(pass) req.form is memoized [0.06ms]
+(pass) req.form enforces multipart maxFiles [0.21ms]
+(pass) req.form enforces multipart maxFileSize [0.17ms]
+(pass) reading multipart text first cannot bypass file count or file size limits [0.72ms]
+(pass) helpers enforce body limits [0.18ms]
+(pass) req.json respects the json.limit for json content-type [0.21ms]
+(pass) req.stream pipes the raw body without buffering [0.48ms]
+(pass) req.stream enforces the limit while piping [2.94ms]
+(pass) req.stream on a bodyless request yields an empty stream [0.29ms]
+(pass) stream rejects buffering and repeated streaming both before and after consumption [0.38ms]
+(pass) stream rejects after buffering starts or completes [0.12ms]
+(pass) buffering an externally consumed raw request rejects instead of returning an empty body [0.13ms]
+(pass) multipart reader conflicts remain TypeErrors rather than invalid_multipart [0.39ms]
+
+packages/core/test/app/fast-path.test.ts:
+(pass) minimal GET route creates no container child scope (zero-cost fast path) [7.16ms]
+(pass) 404 path with no deps creates no container child scope [2.17ms]
+(pass) a middleware that throws still yields Problem+Json on the fast path [1.76ms]
+(pass) route deps force a child scope and resolve correctly [3.40ms]
+(pass) session resolver present forces scopes even for a no-deps route [1.73ms]
+(pass) middleware deps force a scope and resolve from the request scope [1.92ms]
+(pass) dispatch before listen (no boot) still works and resolves deps [0.34ms]
+
+packages/core/test/app/method.test.ts:
+(pass) OPTIONS and 405 include methods from static, param and wildcard branches [0.84ms]
+(pass) HEAD falls back to GET with an empty body and preserved headers [0.26ms]
+(pass) HEAD fallback on param route [0.21ms]
+(pass) HEAD fallback on wildcard route [0.24ms]
+(pass) explicit HEAD route wins over the GET fallback [0.19ms]
+(pass) HEAD fallback strips the body of error responses too [0.17ms]
+(pass) HEAD on unknown path returns 404 [0.15ms]
+(pass) HEAD on a path without GET returns 405 with Allow [0.18ms]
+(pass) OPTIONS on a known GET route returns 204 with Allow [0.18ms]
+(pass) OPTIONS on unknown path returns 404 [0.17ms]
+(pass) 405 Allow header lists the path's methods with HEAD implied by GET [0.18ms]
+(pass) 405 Allow lists explicit HEAD and OPTIONS registrations [0.19ms]
+(pass) explicit OPTIONS route takes precedence over the auto-response [0.15ms]
+(pass) app.route registers a custom method [0.20ms]
+(pass) app.route with deps resolves the declared dependencies [0.76ms]
+(pass) contract procedure with HEAD method registers and dispatches [1.66ms]
+(pass) contract procedure with OPTIONS method registers and dispatches [0.23ms]
+(pass) group supports head/options/route under its prefix [0.58ms]
+
+packages/core/test/app/route-deps.test.ts:
+(pass) handler receives resolved deps as second arg [0.35ms]
+
+packages/core/test/di/scope-transient.test.ts:
+(pass) transient: each resolve returns a new instance [0.14ms]
+
+packages/core/test/di/decorators.test.ts:
+(pass) class deps from constructor types are auto-resolved [0.19ms]
+(pass) @inject(TOKEN) overrides type-based resolution [0.09ms]
+
+packages/core/test/di/scope-request.test.ts:
+(pass) request scope: same instance within child, new on different children [0.09ms]
+(pass) singletons resolved from child come from root cache [0.10ms]
+
+packages/core/test/di/scope.test.ts:
+(pass) scope ranks order from widest to narrowest [0.03ms]
+(pass) canDependOn: narrower scope may depend on wider, not the reverse [0.02ms]
+(pass) canDependOn: any scope may depend on Transient (no-cache short-circuit) [0.02ms]
+(pass) keyOf returns symbol for token, function for class [0.03ms]
+(pass) displayName uses class name or token name [0.02ms]
+
+packages/core/test/di/errors.test.ts:
+(pass) CircularDependencyError carries the path [0.06ms]
+(pass) UnboundTokenError names the identifier and resolution path [0.04ms]
+(pass) ScopeMismatchError describes the violation [0.07ms]
+
+packages/core/test/di/disposal-errors.test.ts:
+(pass) dispose continues in reverse order after a sync failure [0.45ms]
+(pass) dispose continues in reverse order after a async failure [0.12ms]
+(pass) dispose aggregates failures and attempts aliased value resources only once [0.30ms]
+(pass) concurrent disposal waits for the same attempt and reports its failure to every caller [0.20ms]
+(pass) dependencies remain resolvable from the cache while their dependents are disposing [0.18ms]
+
+packages/core/test/di/scope-session.test.ts:
+(pass) session scope behaves like request: cached within child [0.11ms]
+(pass) dispose() on child scope runs Disposable.dispose() on cached instances [0.12ms]
+
+packages/core/test/di/rebind-snapshot.test.ts:
+(pass) rebind replaces an existing binding [0.06ms]
+(pass) snapshot/restore round-trips bindings [0.08ms]
+
+packages/core/test/di/factory-deps.test.ts:
+(pass) toFactoryWithDeps: factory receives resolved deps object, not container [0.11ms]
+(pass) toFactoryWithDeps: factory NOT called with container arg [0.08ms]
+(pass) toFactoryWithDeps singleton: factory called once across resolves [0.08ms]
+(pass) toFactoryWithDeps request scope: factory called once per request child [0.11ms]
+(pass) toFactoryWithDeps: resolves a class dep alongside a value dep [0.14ms]
+
+packages/core/test/di/circular.test.ts:
+(pass) self-referential resolution throws CircularDependencyError [0.12ms]
+(pass) distinct tokens with the same display name do not look circular [0.06ms]
+(pass) lazy factories resolve through the calling stack and detect cycles [0.17ms]
+(pass) a lazy factory resolving its own token detects the self-cycle [0.05ms]
+(pass) a lazy factory can still resolve non-cyclic deps through the container [0.05ms]
+
+packages/core/test/di/container-class.test.ts:
+(pass) toSelf on a no-arg class instantiates it [0.07ms]
+(pass) singleton class: same instance [0.03ms]
+(pass) .to(OtherClass) replaces target [0.09ms]
+
+packages/core/test/di/token.test.ts:
+(pass) token() creates a token with a unique symbol id and name [0.02ms]
+(pass) two tokens with the same name are distinct [0.04ms]
+(pass) isToken distinguishes tokens from classes [0.03ms]
+
+packages/core/test/di/container-value.test.ts:
+(pass) bind().toValue resolves to the literal [0.03ms]
+(pass) singleton resolve returns the same value reference [0.02ms]
+(pass) resolve unbound throws UnboundTokenError [0.05ms]
+
+packages/core/test/di/container-factory.test.ts:
+(pass) factory binding gets container, can resolve other deps [0.06ms]
+(pass) factory singleton: called once, result cached [0.04ms]
+
+packages/core/test/router/path.test.ts:
+(pass) parsePath splits a static path [0.04ms]
+(pass) parsePath extracts :param segments [0.04ms]
+(pass) parsePath extracts *splat at the end [0.02ms]
+(pass) parsePath rejects *splat in middle [0.05ms]
+(pass) parsePath rejects empty parameter and wildcard names [0.09ms]
+
+packages/core/test/router/radix.test.ts:
+(pass) allowed methods union every matching branch without changing route precedence [0.18ms]
+(pass) allowed methods include terminal routes and empty wildcards [0.11ms]
+(pass) static route match [0.03ms]
+(pass) param route extracts variables [0.04ms]
+(pass) multiple params [0.04ms]
+(pass) static beats param when both match [0.05ms]
+(pass) method mismatch returns null [0.02ms]
+(pass) wildcard captures rest [0.04ms]
+(pass) unknown route returns null [0.02ms]
+(pass) parameter names belong to each method's registered route [0.05ms]
+(pass) param values are percent-decoded [0.06ms]
+(pass) malformed percent-encoding keeps the raw value [0.06ms]
+(pass) wildcard captures are not percent-decoded [0.04ms]
+(pass) duplicate registration with the same parameter layout throws [0.06ms]
+(pass) a param segment wins over a wildcard for a single-segment path [0.06ms]
+(pass) trailing slashes are ignored by the matcher [0.02ms]
+
+packages/core/test/fuzz/path.test.ts:
+(pass) fuzz: serveStatic on random attack-shaped paths (never 500, never escapes root) [31.55ms]
+
+packages/core/test/fuzz/router.test.ts:
+(pass) fuzz: router precedence and param capture invariants [19.63ms]
+
+ 128 pass
+ 0 fail
+ 4795 expect() calls
+Ran 128 tests across 23 files. [168.00ms]

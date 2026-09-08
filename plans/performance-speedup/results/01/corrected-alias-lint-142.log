@@ -1,0 +1,5 @@
+Formatted 2 files in 1928µs. Fixed 2 files.
+$ biome check .
+Checked 286 files in 209ms. No fixes applied.
+{"bun":"1.4.2","root":"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline","facade":"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/zebra/src/index.ts","core":"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/core/src/index.ts"}
+{"bun":"1.4.2","root":"/tmp/zebra-performance-speedup-01/baseline-a856cab","facade":"/tmp/zebra-performance-speedup-01/baseline-a856cab/packages/zebra/src/index.ts","core":"/tmp/zebra-performance-speedup-01/baseline-a856cab/packages/core/src/index.ts"}

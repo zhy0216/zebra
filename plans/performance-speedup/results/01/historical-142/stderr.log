@@ -1,0 +1,3 @@
+$ bun run bench/bench-regression.ts
+FAIL: regression detected in static, param, wildcard, middleware, json, di, static-file, post-json
+error: script "bench:check" exited with code 1

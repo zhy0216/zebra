@@ -14,7 +14,7 @@ Resolved difficulty mapping: hard = `codex / gpt-6-astra / max`; medium = `codex
 
 | File | Priority | Difficulty | Agent | Model / Codex reasoning effort | Purpose |
 | --- | --- | --- | --- | --- | --- |
-| [01-hot-path-baseline.md](01-hot-path-baseline.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Build identical-source comparison fixtures and record baseline/variability |
+| [01-hot-path-baseline.md](done/01-hot-path-baseline.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Completed harness/baseline; awaiting coordinator integration |
 | [02-router-lookup.md](02-router-lookup.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Reduce static-route lookup and path allocation costs |
 | [03-request-metadata.md](03-request-metadata.md) | P2 | medium | codex (inherits default) | gpt-6-astra / xhigh | Defer unused request metadata work with snapshot/identity compatibility |
 | [04-di-cache-hits.md](04-di-cache-hits.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Avoid diagnostic stack allocation on valid DI cache hits |
@@ -23,7 +23,7 @@ Resolved difficulty mapping: hard = `codex / gpt-6-astra / max`; medium = `codex
 
 ## 文件
 
-1. [01-hot-path-baseline.md](01-hot-path-baseline.md) — no dependency; implement and integrate first.
+1. [01-hot-path-baseline.md](done/01-hot-path-baseline.md) — completed; coordinator must integrate before 02–05 start.
 2. [02-router-lookup.md](02-router-lookup.md) — 依赖 01-hot-path-baseline.md.
 3. [03-request-metadata.md](03-request-metadata.md) — 依赖 01-hot-path-baseline.md.
 4. [04-di-cache-hits.md](04-di-cache-hits.md) — 依赖 01-hot-path-baseline.md.
@@ -47,6 +47,13 @@ Use task 01's same-machine A/A and paired before/after protocol. Adoption requir
 
 Run each todo's focused checks plus typecheck/lint/diff checks. Run the plan's full integrated gates after final code changes; do not repeat passing gates without new changes, failures, or unresolved concerns. No deployment, publication, dependency upgrade, or remote push is part of this queue.
 
-## Initial state
+## Task 01 status
 
-Queue newly created; no tasks executed. Auto-dev must commit only this plan directory before starting the new Herdr coordinator. If unrelated user edits appear, leave them untouched and follow auto-dev's clean-worktree rule. Default and task preferences above persist across session changes.
+01 is complete in its dedicated branch and archived under `done/`; coordinator
+integration is pending. [Results/01](../results/01/README.md) records the committed
+harness, all raw controls/checks, observed variability and the explicit missing
+minimum-runtime envelope. A bounded prospective minimum-runtime A/A allowance
+applies before candidate timing; noisy samples are never adopted as an envelope.
+The unchanged historical gate failed all eight scenarios and remains unchanged.
+02–05 may start only after 01 is integrated. Default and task preferences above
+persist across session changes; other task statuses are unchanged.

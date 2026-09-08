@@ -1,0 +1,4 @@
+Checked 4 files in 33ms. Fixed 1 file.
+$ tsgo --noEmit -p tsconfig.json
+$ biome check .
+Checked 284 files in 193ms. No fixes applied.

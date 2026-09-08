@@ -1,0 +1,7 @@
+commit a1b26b79d5439e62819fdc0dad3d6419d6e00397
+tree f28e3b548492ddbf2809d2929878abb32c90304c
+parent f3263289dd02131ed92751e72fb914df7d8f62ac
+author Yang <zhy0216@gmail.com> 1788846155 -0700
+committer Yang <zhy0216@gmail.com> 1788846487 -0700
+
+    test(bench): add reproducible source-selectable hot-path harness

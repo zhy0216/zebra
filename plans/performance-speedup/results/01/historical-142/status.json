@@ -1,0 +1,19 @@
+{
+  "command": ["bun", "run", "bench:check"],
+  "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+  "started": "2026-09-08T06:12:07.757720+00:00",
+  "rule": {
+    "sampleSeconds": 2,
+    "quietSamples": 15,
+    "maxQuietSeconds": 300,
+    "outsideCpuPercentOfOneCore": 15,
+    "exclusion": "Any measured outside CPU >=15% or detected competing workload excludes the entire comparison; retain all rows."
+  },
+  "status": "failed",
+  "interferenceSamples": 3,
+  "quietSamples": 15,
+  "measurementStarted": "2026-09-08T06:13:26.430306+00:00",
+  "exit": 1,
+  "eligible": false,
+  "finished": "2026-09-08T06:14:04.873484+00:00"
+}

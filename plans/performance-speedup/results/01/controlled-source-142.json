@@ -1,0 +1,263 @@
+{
+  "evidence": {
+    "before": {
+      "type": "environment",
+      "schema": 1,
+      "at": "2026-09-08T05:43:22.583Z",
+      "pid": 904900,
+      "command": [
+        "/home/ubuntu/.bun/bin/bun",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/bench/hot-path.ts",
+        "--source-root",
+        "/tmp/zebra-hot-path-source-baw0wK",
+        "--suite",
+        "router",
+        "--check"
+      ],
+      "options": {
+        "sourceRoot": "/tmp/zebra-hot-path-source-baw0wK",
+        "suite": "router",
+        "check": true,
+        "rounds": 5,
+        "iterations": 100000,
+        "warmup": 20000,
+        "durationMs": 1000,
+        "warmupMs": 500,
+        "concurrency": 32
+      },
+      "inputPayloadBytes": 46,
+      "source": {
+        "root": "/tmp/zebra-hot-path-source-baw0wK",
+        "paths": {
+          "core": "/tmp/zebra-hot-path-source-baw0wK/packages/core/src/index.ts",
+          "router": "/tmp/zebra-hot-path-source-baw0wK/packages/core/src/router/radix.ts"
+        },
+        "kind": "archive",
+        "revision": "0fee60b84692c150b185f55944f87c7e65a9e7b2",
+        "productionSha256": "2aa90008f465f79118c3cee0557b30c63e371781814bb0c1edd3c0b510e89cdb",
+        "productionFileCount": 79,
+        "productionDiff": {
+          "changes": [],
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "lockSha256": "ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1"
+      },
+      "harness": {
+        "root": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+        "revision": "0fee60b84692c150b185f55944f87c7e65a9e7b2",
+        "diff": "",
+        "sha256": "4f96bf398b07029cf6fc801dbecca302366e6af7a273c85325fdb5a2f2e7d99e",
+        "files": {
+          "bench/fixtures/static/hello.txt": "5fabaae06f906b2c455c0a0ca2fb250df6be7d0827e17d8fbbfb273fea6b5653",
+          "bench/hot-path-fixtures.ts": "0b65c0662e10aaecb58b1a4de378f5e6378d5edb5f1e8b126d41da69d7802273",
+          "bench/hot-path-source.ts": "bffd012950cccf85c3925a372557965e86c5d8bca735ad18e303856f3f1eb336",
+          "bench/hot-path.ts": "5e22d100f4416c2723a6900ff6f558cf5186ed411bcea8b07a1301061d6ba86b",
+          "bench/scenarios.ts": "bb8984b50983d1a384b0c23ad15b6c99dddfe9ad8925407bc8078879eaf77274"
+        },
+        "lockSha256": "ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1"
+      },
+      "runtime": {
+        "bun": "1.4.2",
+        "revision": "744846f844374847c902b5e7fd59b4342a51ef99",
+        "executable": "/home/ubuntu/.bun/bin/bun",
+        "nodeEnv": "production"
+      },
+      "hardware": {
+        "hostname": "10-11-71-42",
+        "platform": "linux",
+        "arch": "x64",
+        "release": "6.8.0-31-generic",
+        "cpus": [
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor"
+        ],
+        "totalmem": 16760184832,
+        "freemem": 15482789888,
+        "loadavg": [0.16, 0.2, 0.34]
+      },
+      "measurement": "Sequential components; HTTP same-process loopback fetch, full text validation/consumption inside timing. Setup/boot/probes/preparation excluded. No explicit GC; memory deltas are observations, not allocation counts."
+    },
+    "altered": {
+      "type": "environment",
+      "schema": 1,
+      "at": "2026-09-08T05:43:22.639Z",
+      "pid": 904920,
+      "command": [
+        "/home/ubuntu/.bun/bin/bun",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/bench/hot-path.ts",
+        "--source-root",
+        "/tmp/zebra-hot-path-source-baw0wK",
+        "--suite",
+        "router",
+        "--check"
+      ],
+      "options": {
+        "sourceRoot": "/tmp/zebra-hot-path-source-baw0wK",
+        "suite": "router",
+        "check": true,
+        "rounds": 5,
+        "iterations": 100000,
+        "warmup": 20000,
+        "durationMs": 1000,
+        "warmupMs": 500,
+        "concurrency": 32
+      },
+      "inputPayloadBytes": 46,
+      "source": {
+        "root": "/tmp/zebra-hot-path-source-baw0wK",
+        "paths": {
+          "core": "/tmp/zebra-hot-path-source-baw0wK/packages/core/src/index.ts",
+          "router": "/tmp/zebra-hot-path-source-baw0wK/packages/core/src/router/radix.ts"
+        },
+        "kind": "archive",
+        "revision": "0fee60b84692c150b185f55944f87c7e65a9e7b2",
+        "productionSha256": "2a7fd7285e0c09c97e5d4ebb3f12a7be2d255aa9660436620d0e58cdc55275db",
+        "productionFileCount": 79,
+        "productionDiff": {
+          "changes": [
+            {
+              "file": "packages/core/src/router/radix.ts",
+              "before": "586f68db8245c575289e8bdaa577ab2780f6037df3196f15cae44cf866220644",
+              "after": "060e2c8ca3b470b245ec9f26db2db2a722dedeb4f45274f9ba8baa30013ca011"
+            }
+          ],
+          "sha256": "ee0a13fb63436eb7ca55f3a77eadecf7628476ec8ef18cba6243fec8c5360954"
+        },
+        "lockSha256": "ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1"
+      },
+      "harness": {
+        "root": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+        "revision": "0fee60b84692c150b185f55944f87c7e65a9e7b2",
+        "diff": "",
+        "sha256": "4f96bf398b07029cf6fc801dbecca302366e6af7a273c85325fdb5a2f2e7d99e",
+        "files": {
+          "bench/fixtures/static/hello.txt": "5fabaae06f906b2c455c0a0ca2fb250df6be7d0827e17d8fbbfb273fea6b5653",
+          "bench/hot-path-fixtures.ts": "0b65c0662e10aaecb58b1a4de378f5e6378d5edb5f1e8b126d41da69d7802273",
+          "bench/hot-path-source.ts": "bffd012950cccf85c3925a372557965e86c5d8bca735ad18e303856f3f1eb336",
+          "bench/hot-path.ts": "5e22d100f4416c2723a6900ff6f558cf5186ed411bcea8b07a1301061d6ba86b",
+          "bench/scenarios.ts": "bb8984b50983d1a384b0c23ad15b6c99dddfe9ad8925407bc8078879eaf77274"
+        },
+        "lockSha256": "ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1"
+      },
+      "runtime": {
+        "bun": "1.4.2",
+        "revision": "744846f844374847c902b5e7fd59b4342a51ef99",
+        "executable": "/home/ubuntu/.bun/bin/bun",
+        "nodeEnv": "production"
+      },
+      "hardware": {
+        "hostname": "10-11-71-42",
+        "platform": "linux",
+        "arch": "x64",
+        "release": "6.8.0-31-generic",
+        "cpus": [
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor"
+        ],
+        "totalmem": 16760184832,
+        "freemem": 15484936192,
+        "loadavg": [0.16, 0.2, 0.34]
+      },
+      "measurement": "Sequential components; HTTP same-process loopback fetch, full text validation/consumption inside timing. Setup/boot/probes/preparation excluded. No explicit GC; memory deltas are observations, not allocation counts."
+    },
+    "current": {
+      "type": "environment",
+      "schema": 1,
+      "at": "2026-09-08T05:43:22.691Z",
+      "pid": 904937,
+      "command": [
+        "/home/ubuntu/.bun/bin/bun",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/bench/hot-path.ts",
+        "--source-root",
+        "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+        "--suite",
+        "router",
+        "--check"
+      ],
+      "options": {
+        "sourceRoot": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+        "suite": "router",
+        "check": true,
+        "rounds": 5,
+        "iterations": 100000,
+        "warmup": 20000,
+        "durationMs": 1000,
+        "warmupMs": 500,
+        "concurrency": 32
+      },
+      "inputPayloadBytes": 46,
+      "source": {
+        "root": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+        "paths": {
+          "core": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/core/src/index.ts",
+          "router": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/core/src/router/radix.ts"
+        },
+        "kind": "checkout",
+        "revision": "0fee60b84692c150b185f55944f87c7e65a9e7b2",
+        "productionSha256": "7a9eb1077326654812aabcad8519086ce61b28350a6160582ec01cbce90c9b73",
+        "productionFileCount": 80,
+        "productionDiff": {
+          "tracked": "",
+          "untracked": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "lockSha256": "ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1"
+      },
+      "harness": {
+        "root": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+        "revision": "0fee60b84692c150b185f55944f87c7e65a9e7b2",
+        "diff": "",
+        "sha256": "4f96bf398b07029cf6fc801dbecca302366e6af7a273c85325fdb5a2f2e7d99e",
+        "files": {
+          "bench/fixtures/static/hello.txt": "5fabaae06f906b2c455c0a0ca2fb250df6be7d0827e17d8fbbfb273fea6b5653",
+          "bench/hot-path-fixtures.ts": "0b65c0662e10aaecb58b1a4de378f5e6378d5edb5f1e8b126d41da69d7802273",
+          "bench/hot-path-source.ts": "bffd012950cccf85c3925a372557965e86c5d8bca735ad18e303856f3f1eb336",
+          "bench/hot-path.ts": "5e22d100f4416c2723a6900ff6f558cf5186ed411bcea8b07a1301061d6ba86b",
+          "bench/scenarios.ts": "bb8984b50983d1a384b0c23ad15b6c99dddfe9ad8925407bc8078879eaf77274"
+        },
+        "lockSha256": "ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1"
+      },
+      "runtime": {
+        "bun": "1.4.2",
+        "revision": "744846f844374847c902b5e7fd59b4342a51ef99",
+        "executable": "/home/ubuntu/.bun/bin/bun",
+        "nodeEnv": "production"
+      },
+      "hardware": {
+        "hostname": "10-11-71-42",
+        "platform": "linux",
+        "arch": "x64",
+        "release": "6.8.0-31-generic",
+        "cpus": [
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor",
+          "AMD EPYC Processor"
+        ],
+        "totalmem": 16760184832,
+        "freemem": 15484219392,
+        "loadavg": [0.16, 0.2, 0.34]
+      },
+      "measurement": "Sequential components; HTTP same-process loopback fetch, full text validation/consumption inside timing. Setup/boot/probes/preparation excluded. No explicit GC; memory deltas are observations, not allocation counts."
+    },
+    "exits": [0, 1, 0],
+    "failure": "56 |     if (lastSeg?.kind === \"wildcard\") entry.wildcardName = lastSeg.name;\n57 |     node.handlers.set(upperMethod, entry);\n58 |   }\n59 | \n60 |   find(method: string, path: string): MatchResult<T> | null {\n61 |     throw new Error(\"controlled alternate router executed\");\n                   ^\nerror: controlled alternate router executed\n      at find (/tmp/zebra-hot-path-source-baw0wK/packages/core/src/router/radix.ts:61:15)\n      at routerFixtures (/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/bench/hot-path-fixtures.ts:112:20)\n      at withFixtures (/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/bench/hot-path-fixtures.ts:556:29)\n      at run (/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/bench/hot-path.ts:189:11)\n\n"
+  },
+  "temporaryArchiveRemoved": true
+}

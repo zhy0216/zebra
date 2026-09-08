@@ -1,0 +1,30 @@
+{
+  "command": [
+    "python3",
+    "plans/performance-speedup/results/01/series.py",
+    "--harness",
+    "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/bench/hot-path.ts",
+    "--before",
+    "/tmp/zebra-performance-speedup-01/baseline-a856cab",
+    "--after",
+    "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+    "--suite",
+    "all"
+  ],
+  "cwd": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline",
+  "started": "2026-09-08T05:54:07.664005+00:00",
+  "rule": {
+    "sampleSeconds": 2,
+    "quietSamples": 15,
+    "maxQuietSeconds": 300,
+    "outsideCpuPercentOfOneCore": 15,
+    "exclusion": "Any measured outside CPU >=15% or detected competing workload excludes the entire comparison; retain all rows."
+  },
+  "status": "complete",
+  "interferenceSamples": 9,
+  "quietSamples": 15,
+  "measurementStarted": "2026-09-08T05:54:37.859004+00:00",
+  "exit": 0,
+  "eligible": false,
+  "finished": "2026-09-08T05:59:07.671433+00:00"
+}

@@ -1,0 +1,96 @@
+bun test v1.4.0 (34cbb9a40)
+
+bench/test/bench-regression.test.ts:
+(pass) benchmark options reject non-finite, non-positive and fractional concurrency [0.33ms]
+(pass) comparison preserves exact threshold boundaries and rejects invalid data [0.25ms]
+(pass) invalid or missing baselines fail before starting a server and are never rewritten [1.95ms]
+(pass) check reads without writing; update writes measured results only to the supplied path [0.74ms]
+(pass) measurement errors and regressions close the server without updating baseline [0.63ms]
+
+bench/test/hot-path.test.ts:
+(pass) strict options reject missing, unknown, duplicate and invalid numeric controls [0.53ms]
+(pass) bad source roots fail with useful CLI diagnostics [70.26ms]
+(pass) all suites check workload correctness without emitting timed rounds [124.94ms]
+(pass) an altered archived source executes in a distinct process and records the production diff [241.88ms]
+(pass) source and output errors propagate while booted fixtures release servers and listeners [49.40ms]
+(pass) a setup probe failure closes the partially prepared app [20.42ms]
+(pass) HTTP failure cancels competing body readers and settles its workers [12.36ms]
+(pass) concurrent HTTP output accounting includes every consumed body [11.66ms]
+(pass) status/body mismatch is never accepted and operation checks consume outputs [0.42ms]
+(pass) exceptions from a result consumer still close fixture servers [31.72ms]
+
+ 15 pass
+ 0 fail
+ 152 expect() calls
+Ran 15 tests across 2 files. [620.00ms]
+{"type":"environment","schema":1,"at":"2026-09-08T05:47:37.065Z","pid":907375,"command":["/tmp/zebra-performance-speedup-01/runtime/bun-1.4.0/bun","/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/bench/hot-path.ts","--source-root","/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline","--check"],"options":{"sourceRoot":"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline","suite":"all","check":true,"rounds":5,"iterations":100000,"warmup":20000,"durationMs":1000,"warmupMs":500,"concurrency":32},"inputPayloadBytes":46,"source":{"root":"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline","paths":{"core":"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/core/src/index.ts","router":"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/packages/core/src/router/radix.ts"},"kind":"checkout","revision":"0fee60b84692c150b185f55944f87c7e65a9e7b2","productionSha256":"7a9eb1077326654812aabcad8519086ce61b28350a6160582ec01cbce90c9b73","productionFileCount":80,"productionDiff":{"tracked":"","untracked":"","sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},"lockSha256":"ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1"},"harness":{"root":"/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline","revision":"0fee60b84692c150b185f55944f87c7e65a9e7b2","diff":"M bench/hot-path.ts","sha256":"b4a3feb23f5d26c8b6121d35e1b121b2b5ab6221b45a62ae4ddf42dd8a31a976","files":{"bench/fixtures/static/hello.txt":"5fabaae06f906b2c455c0a0ca2fb250df6be7d0827e17d8fbbfb273fea6b5653","bench/hot-path-fixtures.ts":"0b65c0662e10aaecb58b1a4de378f5e6378d5edb5f1e8b126d41da69d7802273","bench/hot-path-source.ts":"bffd012950cccf85c3925a372557965e86c5d8bca735ad18e303856f3f1eb336","bench/hot-path.ts":"b21c8f82c483b0ef6614c69388e1ce2517ae25e83a8ce49b50a09907397a3a30","bench/scenarios.ts":"bb8984b50983d1a384b0c23ad15b6c99dddfe9ad8925407bc8078879eaf77274"},"lockSha256":"ece1a7458ab75446feadd1a013f9d6b8ca7b9d539ca39bc1384119591c2e31f1"},"runtime":{"bun":"1.4.0","revision":"34cbb9a40b4bd1bd767d134a7065e66c2432a676","executable":"/tmp/zebra-performance-speedup-01/runtime/bun-1.4.0/bun","nodeEnv":"production"},"hardware":{"hostname":"10-11-71-42","platform":"linux","arch":"x64","release":"6.8.0-31-generic","cpus":["AMD EPYC Processor","AMD EPYC Processor","AMD EPYC Processor","AMD EPYC Processor","AMD EPYC Processor","AMD EPYC Processor","AMD EPYC Processor","AMD EPYC Processor"],"totalmem":16760184832,"freemem":15300169728,"loadavg":[0.94,0.63,0.47]},"measurement":"Sequential components; HTTP same-process loopback fetch, full text validation/consumption inside timing. Setup/boot/probes/preparation excluded. No explicit GC; memory deltas are observations, not allocation counts."}
+{"type":"controls","suite":"router","checks":["router: precedence, method fallback/union, slashes, malformed/encoded captures"]}
+{"type":"check","suite":"router","name":"10/static-shallow","ok":true}
+{"type":"check","suite":"router","name":"10/static-deep","ok":true}
+{"type":"check","suite":"router","name":"10/param","ok":true}
+{"type":"check","suite":"router","name":"10/param-encoded","ok":true}
+{"type":"check","suite":"router","name":"10/wildcard","ok":true}
+{"type":"check","suite":"router","name":"10/miss","ok":true}
+{"type":"check","suite":"router","name":"10/method-miss","ok":true}
+{"type":"check","suite":"router","name":"10/registration","ok":true}
+{"type":"check","suite":"router","name":"100/static-shallow","ok":true}
+{"type":"check","suite":"router","name":"100/static-deep","ok":true}
+{"type":"check","suite":"router","name":"100/param","ok":true}
+{"type":"check","suite":"router","name":"100/param-encoded","ok":true}
+{"type":"check","suite":"router","name":"100/wildcard","ok":true}
+{"type":"check","suite":"router","name":"100/miss","ok":true}
+{"type":"check","suite":"router","name":"100/method-miss","ok":true}
+{"type":"check","suite":"router","name":"100/registration","ok":true}
+{"type":"check","suite":"router","name":"1000/static-shallow","ok":true}
+{"type":"check","suite":"router","name":"1000/static-deep","ok":true}
+{"type":"check","suite":"router","name":"1000/param","ok":true}
+{"type":"check","suite":"router","name":"1000/param-encoded","ok":true}
+{"type":"check","suite":"router","name":"1000/wildcard","ok":true}
+{"type":"check","suite":"router","name":"1000/miss","ok":true}
+{"type":"check","suite":"router","name":"1000/method-miss","ok":true}
+{"type":"check","suite":"router","name":"1000/registration","ok":true}
+{"type":"controls","suite":"request","checks":["request: fresh raw/params, supplied metadata, header snapshot, abort, shared body identity"]}
+{"type":"check","suite":"request","name":"constructor-supplied-url","ok":true}
+{"type":"check","suite":"request","name":"constructor-parse-url","ok":true}
+{"type":"check","suite":"request","name":"metadata","ok":true}
+{"type":"check","suite":"request","name":"body-json","ok":true}
+{"type":"check","suite":"request","name":"body-shared","ok":true}
+{"type":"controls","suite":"di","checks":["DI: identity/counts, falsy cache hits, nearest request/session ownership; cold rows include binding"]}
+{"type":"check","suite":"di","name":"value","ok":true}
+{"type":"check","suite":"di","name":"singleton-class-warm","ok":true}
+{"type":"check","suite":"di","name":"singleton-factory-warm","ok":true}
+{"type":"check","suite":"di","name":"request-warm","ok":true}
+{"type":"check","suite":"di","name":"session-warm","ok":true}
+{"type":"check","suite":"di","name":"class-cold-bind-resolve","ok":true}
+{"type":"check","suite":"di","name":"factory-cold-bind-resolve","ok":true}
+{"type":"check","suite":"di","name":"transient-class","ok":true}
+{"type":"check","suite":"di","name":"transient-chain-3","ok":true}
+{"type":"controls","suite":"dispatch","checks":["dispatch: booted apps, original response semantics, warmed DI, late listeners, error/HEAD/OPTIONS/405/404, HEAD cancellation"]}
+{"type":"check","suite":"dispatch","name":"static","ok":true}
+{"type":"check","suite":"dispatch","name":"middleware","ok":true}
+{"type":"check","suite":"dispatch","name":"async","ok":true}
+{"type":"check","suite":"dispatch","name":"query","ok":true}
+{"type":"check","suite":"dispatch","name":"metadata","ok":true}
+{"type":"check","suite":"dispatch","name":"class-warm","ok":true}
+{"type":"check","suite":"dispatch","name":"factory-warm","ok":true}
+{"type":"check","suite":"dispatch","name":"middleware-20","ok":true}
+{"type":"check","suite":"dispatch","name":"static-listeners","ok":true}
+{"type":"check","suite":"dispatch","name":"middleware-listeners","ok":true}
+{"type":"controls","suite":"http","checks":["http: booted apps, original response semantics, warmed DI, late listeners, error/HEAD/OPTIONS/405/404, HEAD cancellation"]}
+{"type":"check","suite":"http","name":"static","ok":true}
+{"type":"check","suite":"http","name":"param","ok":true}
+{"type":"check","suite":"http","name":"wildcard","ok":true}
+{"type":"check","suite":"http","name":"middleware","ok":true}
+{"type":"check","suite":"http","name":"json","ok":true}
+{"type":"check","suite":"http","name":"di","ok":true}
+{"type":"check","suite":"http","name":"static-file","ok":true}
+{"type":"check","suite":"http","name":"post-json","ok":true}
+{"type":"check","suite":"http","name":"async","ok":true}
+{"type":"check","suite":"http","name":"query","ok":true}
+{"type":"check","suite":"http","name":"metadata","ok":true}
+{"type":"check","suite":"http","name":"class-warm","ok":true}
+{"type":"check","suite":"http","name":"factory-warm","ok":true}
+{"type":"check","suite":"http","name":"middleware-20","ok":true}
+{"type":"check","suite":"http","name":"static-listeners","ok":true}
+{"type":"check","suite":"http","name":"middleware-listeners","ok":true}
+{"type":"complete","ok":true,"check":true}

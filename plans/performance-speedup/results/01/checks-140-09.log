@@ -1,0 +1,3 @@
+error: Cannot find module '@zebra-web/core' from '/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-performance-speedup-01-baseline/bench'
+
+Bun v1.4.0 (Linux x64)

@@ -1,0 +1,24 @@
+bun test v1.4.2 (744846f84)
+
+bench/test/bench-regression.test.ts:
+(pass) benchmark options reject non-finite, non-positive and fractional concurrency [0.27ms]
+(pass) comparison preserves exact threshold boundaries and rejects invalid data [0.22ms]
+(pass) invalid or missing baselines fail before starting a server and are never rewritten [2.23ms]
+(pass) check reads without writing; update writes measured results only to the supplied path [0.67ms]
+(pass) measurement errors and regressions close the server without updating baseline [0.64ms]
+
+bench/test/hot-path.test.ts:
+(pass) strict options reject missing, unknown, duplicate and invalid numeric controls [0.67ms]
+(pass) bad source roots fail with useful CLI diagnostics [59.12ms]
+(pass) all suites check workload correctness without emitting timed rounds [108.33ms]
+(pass) an altered archived source executes in a distinct process and records the production diff [207.72ms]
+(pass) source and output errors propagate while booted fixtures release servers and listeners [38.85ms]
+(pass) a setup probe failure closes the partially prepared app [17.41ms]
+(pass) HTTP failure cancels competing body readers and settles its workers [11.90ms]
+(pass) status/body mismatch is never accepted and operation checks consume outputs [0.39ms]
+(pass) exceptions from a result consumer still close fixture servers [26.57ms]
+
+ 14 pass
+ 0 fail
+ 151 expect() calls
+Ran 14 tests across 2 files. [498.00ms]

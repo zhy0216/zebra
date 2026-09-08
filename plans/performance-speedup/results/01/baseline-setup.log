@@ -1,0 +1,10 @@
+bun install v1.4.2 (744846f84)
+
++ @biomejs/biome@1.9.4
++ @types/bun@1.4.1
++ @typescript/native-preview@7.0.0-dev.20260707.2
++ reflect-metadata@0.2.2
++ vitepress@1.6.4
++ zod@4.5.4
+
+264 packages installed [7.34s]
