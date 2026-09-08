@@ -150,7 +150,7 @@ z.post("/logout", async (req) => {
 
 ## WebSocket 会话
 
-`sessionMiddleware` 返回的 `.wsSession` 钩子会在 ws 升级时把连接级会话句柄挂到 `ws.data.session`（匿名连接为 `undefined`，升级响应无法回发 Set-Cookie，所以不伪造新会话）。ws 里没有 HTTP 响应路径的自动持久化，写入需显式 `await session.flush()`。详见 [WebSocket 章节](10-websockets.md)。
+`sessionMiddleware` 返回的 `.wsSession` 钩子会在 ws 升级时把连接级会话句柄挂到 `ws.data.session`（匿名连接为 `undefined`，钩子不创建或签发新 cookie）。`wsUpgrade(data, { headers })` 可返回自定义握手响应头，但不改变这一策略。ws 里没有 HTTP 响应路径的自动持久化，写入需显式 `await session.flush()`。详见 [WebSocket 章节](10-websockets.md)。
 
 ## 下一步
 

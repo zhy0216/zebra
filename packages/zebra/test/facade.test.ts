@@ -40,6 +40,45 @@ test("event system exports are re-exported by the facade", () => {
   // the value exports above are checked at runtime, the rest are type-checked.
 });
 
+test("WebSocket control and transport types are public through core and facade", () => {
+  expect(facade.wsUpgrade).toBe(core.wsUpgrade);
+  expectTypeOf<facade.WsUpgrade<{ id: number }>>().toEqualTypeOf<core.WsUpgrade<{ id: number }>>();
+  expectTypeOf<facade.WsUpgradeOptions>().toEqualTypeOf<core.WsUpgradeOptions>();
+  expectTypeOf<facade.WsTransportOptions>().toEqualTypeOf<core.WsTransportOptions>();
+  const app = new facade.Zebra();
+  app.ws("/typed", {
+    upgrade: (req) =>
+      req.headers.has("reject")
+        ? new Response("no", { status: 403 })
+        : facade.wsUpgrade({ userId: "u1" }, { headers: { "x-accepted": "yes" } }),
+    message(_ws, data) {
+      expectTypeOf(data.userId).toEqualTypeOf<string>();
+    },
+  });
+  expectTypeOf<facade.ListenOptions["websocket"]>().toEqualTypeOf<
+    core.WsTransportOptions | undefined
+  >();
+});
+
+test("facade exposes prepare for in-process HTTP dispatch", async () => {
+  const app = new facade.Zebra();
+  let boots = 0;
+  app.on("boot", () => {
+    boots++;
+  });
+  app.get("/hello/:id", (req) => req.params.id);
+  try {
+    expectTypeOf(app.prepare).returns.toEqualTypeOf<Promise<void>>();
+    await app.prepare();
+    await app.prepare();
+    const response = await app.dispatch(new Request("http://local/hello/42"));
+    expect(await response.json()).toBe("42");
+    expect(boots).toBe(1);
+  } finally {
+    await app.stop();
+  }
+});
+
 test("contract / client / testing / observability / redis are not re-exported", () => {
   // Kept out of the facade on purpose (tree-shakeable facade, see the freeze
   // doc); import them from their own packages.

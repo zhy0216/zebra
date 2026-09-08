@@ -179,7 +179,7 @@ function main(): void {
     const install = run("bun", ["install"], projectDir);
     if (!install.ok) fail(`bun install of tarballs failed:\n${install.stderr}`);
 
-    const verifySource = `import { Zebra } from "@zebra-web/core";
+    const verifySource = `import { Zebra, wsUpgrade, type ListenOptions, type WsUpgrade, type WsUpgradeOptions, type WsTransportOptions } from "@zebra-web/core";
 import { sessionMiddleware } from "@zebra-web/session";
 import { rateLimit } from "@zebra-web/rate-limit";
 import { cors } from "@zebra-web/cors";
@@ -188,7 +188,7 @@ import { createClient } from "@zebra-web/client";
 import { createTestApp } from "@zebra-web/testing";
 import { accessLog, errorReporter, health, metrics, requestId } from "@zebra-web/observability";
 import { RedisRateLimitStore, RedisSessionStore } from "@zebra-web/redis";
-import { Zebra as FacadeZebra } from "@zebra-web/zebra";
+import { Zebra as FacadeZebra, wsUpgrade as facadeWsUpgrade, type WsUpgrade as FacadeWsUpgrade, type WsTransportOptions as FacadeWsTransportOptions } from "@zebra-web/zebra";
 import { createMcpServer } from "@zebra-web/mcp";
 import { zodSchemaAdapter } from "@zebra-web/schema-zod";
 
@@ -218,6 +218,26 @@ expectType(RedisSessionStore, "RedisSessionStore");
 expectType(RedisRateLimitStore, "RedisRateLimitStore");
 expectType(FacadeZebra, "facade Zebra");
 expectType(new FacadeZebra().get, "facade Zebra().get");
+expectType(wsUpgrade, "wsUpgrade");
+if (facadeWsUpgrade !== wsUpgrade) throw new Error("facade wsUpgrade mismatch");
+const upgradeOptions: WsUpgradeOptions = { headers: { "x-smoke": "yes" } };
+const accepted: WsUpgrade<{ id: number }> = wsUpgrade({ id: 1 }, upgradeOptions);
+const facadeAccepted: FacadeWsUpgrade<{ id: number }> = accepted;
+const transport: WsTransportOptions = { maxPayloadLength: 1024, idleTimeout: 0, backpressureLimit: 2048, closeOnBackpressureLimit: true };
+const facadeTransport: FacadeWsTransportOptions = transport;
+const listenOptions: ListenOptions = { port: 0, websocket: facadeTransport };
+const prepared = new FacadeZebra();
+prepared.ws("/smoke", {
+  upgrade: (req) => req.headers.has("reject") ? new Response("no", { status: 403 }) : facadeAccepted,
+  message(_ws, data) { const id: number = data.id; void id; },
+});
+prepared.get("/smoke", () => "prepared");
+await prepared.prepare();
+await prepared.prepare();
+const response = await prepared.dispatch(new Request("http://local/smoke"));
+if (await response.json() !== "prepared") throw new Error("prepare/dispatch failed");
+await prepared.stop();
+void listenOptions;
 expectType(createMcpServer, "createMcpServer");
 expectObject(zodSchemaAdapter(), "zodSchemaAdapter()");
 

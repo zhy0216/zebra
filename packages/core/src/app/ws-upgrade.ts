@@ -2,13 +2,14 @@ import type { Server } from "bun";
 import { buildRequest } from "../http/request.ts";
 import { buildWsData, buildWsDataWithUpgrade } from "../ws/handler.ts";
 import type { WsData } from "../ws/types.ts";
+import { isWsUpgrade, upgradeHeaders } from "../ws/upgrade-result.ts";
 import { hasValidHandshakeHeaders, wsProblemResponse } from "../ws/upgrade.ts";
 import type { AppInternals } from "./internals.ts";
 
 /**
  * The WebSocket upgrade branch of the fetch wrapper, extracted from the app
  * class. Assumes the request is an upgrade with a matched ws route; returns
- * the 101/404/401/500 response. The expensive upgrade decision (session
+ * the handshake response (including a route's custom rejection). The expensive decision (session
  * resolution, DI, the auth hook) runs only for well-formed handshakes —
  * Bun's `server.upgrade()` remains the authoritative full validation.
  */
@@ -39,6 +40,7 @@ export async function handleWsUpgrade(
   // 401 upgrade_rejected（区别于传输层失败 401 upgrade_failed）。
   const handler = matched.handler;
   let data = buildWsData(handler, matched.params);
+  let headers: Headers | undefined;
   try {
     const scopes = await internals.sessions.createRequestScopes(req);
     try {
@@ -54,6 +56,7 @@ export async function handleWsUpgrade(
           getIp,
         );
         const result = await handler.upgrade(zebraReq, deps as never, matched.params);
+        if (result instanceof Response) return result;
         if (result === false) {
           return wsProblemResponse(
             401,
@@ -63,7 +66,12 @@ export async function handleWsUpgrade(
           );
         }
         if (result) {
-          data = buildWsDataWithUpgrade(handler, matched.params, result);
+          if (isWsUpgrade(result)) {
+            data = buildWsDataWithUpgrade(handler, matched.params, result.data);
+            if (result.headers !== undefined) headers = upgradeHeaders(req, result.headers);
+          } else {
+            data = buildWsDataWithUpgrade(handler, matched.params, result);
+          }
         }
       }
       // sessionId 复用 createRequestScopes 的解析结果；最后写入，upgrade()
@@ -78,7 +86,7 @@ export async function handleWsUpgrade(
   } catch {
     return wsProblemResponse(500, "upgrade_error", "WebSocket upgrade hook failed", url.pathname);
   }
-  if (!server.upgrade(req, { data })) {
+  if (!server.upgrade(req, { data, ...(headers !== undefined ? { headers } : {}) })) {
     return wsProblemResponse(401, "upgrade_failed", "WebSocket upgrade failed", url.pathname);
   }
   return new Response(null, { status: 101 });

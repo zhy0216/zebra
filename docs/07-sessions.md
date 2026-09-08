@@ -161,7 +161,7 @@ z.post("/logout", async (req) => {
 
 ## WebSocket sessions
 
-The `.wsSession` hook returned by `sessionMiddleware` attaches a connection-level session handle to `ws.data.session` at upgrade time (`undefined` for anonymous connections — an upgrade response cannot send Set-Cookie, so no orphan sessions are fabricated). WebSockets have no HTTP response path for automatic persistence: write explicitly with `await session.flush()`. See [WebSocket](10-websockets.md).
+The `.wsSession` hook returned by `sessionMiddleware` attaches a connection-level session handle to `ws.data.session` at upgrade time (`undefined` for anonymous connections; this hook does not create or issue a new cookie). Custom handshake headers can be returned with `wsUpgrade(data, { headers })`, but do not change this policy. WebSockets have no HTTP response path for automatic persistence: write explicitly with `await session.flush()`. See [WebSocket](10-websockets.md).
 
 ## Next steps
 

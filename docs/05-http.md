@@ -2,6 +2,18 @@
 
 This guide covers `ZebraRequest` (the request object), request body parsing, response helpers, structured errors (RFC 9457 Problem+Json), static files, and request timeouts.
 
+For in-process requests, register the app, `await app.prepare()`, then call
+`app.dispatch(new Request(url))` and eventually `await app.stop()`. Preparation
+runs boot and DI validation without opening a listener; see
+[Lifecycle](06-lifecycle.md#preparing-without-a-listener).
+
+WebSocket handshakes use `listen()` and bypass the HTTP middleware/dispatch
+pipeline. An `upgrade` hook can return a `Response` to reject with its own status,
+body and headers, or `wsUpgrade(data, { headers })` for successful handshake
+headers. This does not change HTTP error handling or body limits; see
+[WebSocket](10-websockets.md). Incoming WS messages have a separate
+`listen({ websocket: { maxPayloadLength } })` transport limit.
+
 ## ZebraRequest
 
 The `req` passed to route handlers and middleware is a `ZebraRequest` wrapping the Web Standard `Request`:

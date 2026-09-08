@@ -1,6 +1,40 @@
 # 生命周期
 
-Zebra 的生命周期分为三个事件钩子与一个显式的优雅停机过程。所有钩子在 `listen()` / `stop()` 的固定时点触发。钩子本身是统一、类型安全、异步事件总线上的事件，该总线同样承载请求级与中间件级事件。
+Zebra 的生命周期分为三个事件钩子与一个显式的优雅停机过程。钩子在 `prepare()` / `listen()` / `stop()` 的固定时点触发。钩子本身是统一、类型安全、异步事件总线上的事件，该总线同样承载请求级与中间件级事件。
+
+## 不创建监听器的准备阶段
+
+`await app.prepare()` 是公开方法，供进程内 HTTP dispatch 使用。它运行 `boot`、校验
+DI、编译路由计划并冻结注册，不打开端口、不安装信号处理器，也不触发 `ready`：
+
+```ts
+import { Zebra } from "@zebra-web/core"; // 也可从 @zebra-web/zebra 导入
+
+const app = new Zebra();
+app.get("/hello/:name", (req) => `hello, ${req.params.name}`);
+await app.prepare();
+try {
+  const response = await app.dispatch(new Request("http://local/hello/zebra"));
+  console.log(await response.json());
+} finally {
+  await app.stop();
+}
+```
+
+`prepare(): Promise<void>` 在成功后幂等，并发调用等待同一次 boot。boot 或依赖图校验
+失败会 reject；修正配置后可重试。请在准备前注册路由、依赖、中间件及生命周期钩子。
+`listen()` 内含相同的准备过程；先成功 `prepare()` 再 listen 不会重复 boot，监听器
+启动后才触发 `ready`。未创建 listener 也应调用 `stop()` 释放资源。此方法不提供
+Node listener，也不让 `dispatch()` 处理 WebSocket 握手。
+
+## 监听选项
+
+`listen(options: ListenOptions)` 接受 `port`、`hostname`、HTTP `idleTimeout`（秒）、
+`maxRequestBodySize`、`reusePort`、`tls` 及可选的 `websocket`。
+`websocket: WsTransportOptions` 控制消息大小、WebSocket 空闲超时与发送背压，Zebra
+仍管理回调与 data 分发。未设置的 transport 字段保持 Bun 默认值，详见
+[WebSocket transport 选项](10-websockets.md#监听器-transport-选项) 和
+[HTTP 大小限制](05-http.md)。
 
 ## 事件钩子
 
@@ -18,7 +52,7 @@ z.on("shutdown", async () => {
 });
 ```
 
-`LifecycleEvent = "boot" | "ready" | "shutdown"`，`on()` 返回 `this` 可链式调用，`listen()` 之后注册生命周期钩子会抛错——请求、中间件和自定义事件在运行时仍可注册。
+`LifecycleEvent = "boot" | "ready" | "shutdown"`，`on()` 返回 `this` 可链式调用，`prepare()` 或 `listen()` 之后注册生命周期钩子会抛错——请求、中间件和自定义事件在运行时仍可注册。
 
 ### 顺序
 

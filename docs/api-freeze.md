@@ -116,9 +116,10 @@ packages.
 
 - App: `Zebra`, type `ZebraOptions`, `RouteHandler`, `DepsSpec`, `ResolvedDeps`,
   `RegisteredRoute`, `GroupApi`, `LifecycleEvent`, `LifecycleHandler`,
-  `PathParams`, `JoinPath`, `SessionOptions`, `validateGraph`, `VERSION`.
+  `PathParams`, `JoinPath`, `SessionOptions`, `ListenOptions`, `WsTransportOptions`,
+  `validateGraph`, `VERSION`.
   `Zebra` instance members: `use`, `on`, `once`, `off`, `emit`, `events`,
-  `listen`, `stop`, `disposeSession`,
+  `prepare`, `listen`, `stop`, `disposeSession`,
   `injectValue`, `injectSingleton`, `injectRequest`, `injectTransient`,
   `injectSession`, `injectFactorySingleton`, `injectFactoryRequest`,
   `injectFactoryTransient`, `injectFactorySession`, `implement`, `get`, `post`,
@@ -151,8 +152,8 @@ packages.
   `toProblemJson`, `json`, `text`, `html`, `redirect`, `stream`, types
   `ProblemJson`, `ValidationIssue`.
 - Middleware: `middleware`, `getMiddlewareDeps`, type `Middleware`.
-- WebSocket: types `WsHandler`, `WsData`, `WsRoute` (upgrade/handler surface
-  wired to `app.ws`).
+- WebSocket: `wsUpgrade`, types `WsHandler`, `WsData`, `WsRoute`,
+  `WsUpgrade<Up>`, `WsUpgradeOptions` (upgrade/handler surface wired to `app.ws`).
 
 > Note: `head` / `options` / `route` are listed as stable `Zebra` members —
 > they have been part of the routing surface since the freeze audit (C1).
@@ -254,3 +255,26 @@ dependency-package names (rate-limit `MemoryStore` collision, §3 `@zebra-web/ze
 - `head` / `options` / `route` and the response helpers (`json` / `text` /
   `html` / `redirect` / `stream`) recorded explicitly in the `@zebra-web/core`
   frozen surface.
+
+### Additive preparation and WebSocket APIs (2026-09-08)
+
+- Public `Zebra.prepare(): Promise<void>` retains the existing idempotent and
+  concurrent boot, DI validation and registration freeze. It opens no listener
+  and emits no ready event; `listen()` reuses this same preparation.
+- `WsHandler.upgrade` additionally accepts a rejection `Response` (preserving
+  status/body/headers) or a successful `wsUpgrade(data, { headers })` control
+  result. A symbol discriminator avoids collisions with ordinary `data` /
+  `headers` keys in legacy Up objects. Existing object inference, false=401,
+  throw=500, reserved fields and request-scope disposal remain unchanged. An
+  explicit subprotocol must be a single valid client-offered token or the
+  upgrade is rejected with 500; omission retains Bun's existing negotiation.
+- `ListenOptions.websocket?: WsTransportOptions` forwards only
+  `maxPayloadLength`, `idleTimeout`, `backpressureLimit`, and
+  `closeOnBackpressureLimit`. Callbacks/data cannot be overridden and omission
+  retains Bun defaults. Oversize closure is owned by the Bun transport: current
+  stable Bun 1.4.2 (2026-09-08) closes with 1006 before the oversized message
+  reaches the route handler, without increasing or disabling the configured cap. See
+  [WebSocket](10-websockets.md) for observed behavior.
+- All additions are public through core and facade and follow the additive
+  policy. Package versions remain at the development baseline 1.0.0; release
+  versioning is handled by the later release process.

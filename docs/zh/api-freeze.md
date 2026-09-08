@@ -116,8 +116,9 @@ packages.
 
 - App: `Zebra`, type `ZebraOptions`, `RouteHandler`, `DepsSpec`, `ResolvedDeps`,
   `RegisteredRoute`, `GroupApi`, `LifecycleEvent`, `LifecycleHandler`,
-  `PathParams`, `JoinPath`, `SessionOptions`, `validateGraph`, `VERSION`.
-  `Zebra` instance members: `use`, `on`, `listen`, `stop`, `disposeSession`,
+  `PathParams`, `JoinPath`, `SessionOptions`, `ListenOptions`, `WsTransportOptions`,
+  `validateGraph`, `VERSION`.
+  `Zebra` instance members: `use`, `on`, `prepare`, `listen`, `stop`, `disposeSession`,
   `injectValue`, `injectSingleton`, `injectRequest`, `injectTransient`,
   `injectSession`, `injectFactorySingleton`, `injectFactoryRequest`,
   `injectFactoryTransient`, `injectFactorySession`, `implement`, `get`, `post`,
@@ -137,8 +138,8 @@ packages.
   `toProblemJson`, `json`, `text`, `html`, `redirect`, `stream`, types
   `ProblemJson`, `ValidationIssue`.
 - Middleware: `middleware`, `getMiddlewareDeps`, type `Middleware`.
-- WebSocket: types `WsHandler`, `WsData`, `WsRoute` (upgrade/handler surface
-  wired to `app.ws`).
+- WebSocket: `wsUpgrade`, types `WsHandler`, `WsData`, `WsRoute`,
+  `WsUpgrade<Up>`, `WsUpgradeOptions` (upgrade/handler surface wired to `app.ws`).
 
 > Note: `head` / `options` / `route` are listed as stable `Zebra` members —
 > they have been part of the routing surface since the freeze audit (C1).
@@ -234,3 +235,21 @@ dependency-package names (rate-limit `MemoryStore` collision, §3 `@zebra-web/ze
 - `head` / `options` / `route` and the response helpers (`json` / `text` /
   `html` / `redirect` / `stream`) recorded explicitly in the `@zebra-web/core`
   frozen surface.
+
+### 兼容性新增能力（2026-09-08）
+
+- 公开 `Zebra.prepare(): Promise<void>`：沿用原有幂等、并发 boot 合并、DI 校验与
+  注册冻结行为，不启动 listener 或触发 ready。`listen()` 继续复用相同流程。
+- `WsHandler.upgrade` 新增接受 `Response` 拒绝（保留 status/body/headers）或
+  `wsUpgrade(data, { headers })` 成功控制返回值。symbol 标记避免与旧 Up 数据的
+  `data` / `headers` 字段冲突；旧对象类型推断、false=401、throw=500、保留字段和
+  request scope 释放规则不变。显式子协议必须是客户端提供的单个合法 token，
+  不合法则在 upgrade 前返回 500；省略该头保留 Bun 原有协商行为。
+- `ListenOptions.websocket?: WsTransportOptions` 只透传 `maxPayloadLength`、
+  `idleTimeout`、`backpressureLimit`、`closeOnBackpressureLimit`。不允许覆盖回调
+  或 data，省略值保持 Bun 默认。超限关闭行为由 Bun transport 决定：当前稳定版
+  Bun 1.4.2（2026-09-08）在超限消息进入 handler 前以 1006 关闭，配置的硬上限不
+  提高也不禁用。详见
+  [WebSocket 文档](10-websockets.md)。
+- 以上能力均从 core 与 facade 公开导出，属于兼容性新增；包版本保持本次开发起点
+  的 1.0.0，发布版本由后续 release 流程决定。

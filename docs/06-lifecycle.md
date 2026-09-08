@@ -1,6 +1,44 @@
 # Lifecycle
 
-Zebra's lifecycle consists of three event hooks and an explicit graceful-shutdown process. All hooks fire at fixed points in `listen()` / `stop()`. The hooks are events on a unified, type-safe async event bus that also carries request- and middleware-level events.
+Zebra's lifecycle consists of three event hooks and an explicit graceful-shutdown process. Hooks fire at fixed points in `prepare()` / `listen()` / `stop()`. The hooks are events on a unified, type-safe async event bus that also carries request- and middleware-level events.
+
+## Preparing without a listener
+
+`await app.prepare()` is a public method for in-process HTTP dispatch. It runs
+`boot`, validates DI, compiles route plans and freezes registration, without
+opening a port, installing signal handlers or emitting `ready`:
+
+```ts
+import { Zebra } from "@zebra-web/core"; // also available from @zebra-web/zebra
+
+const app = new Zebra();
+app.get("/hello/:name", (req) => `hello, ${req.params.name}`);
+await app.prepare();
+try {
+  const response = await app.dispatch(new Request("http://local/hello/zebra"));
+  console.log(await response.json());
+} finally {
+  await app.stop();
+}
+```
+
+`prepare(): Promise<void>` is idempotent after success; concurrent calls await
+the same boot. Boot or graph-validation errors reject, and a corrected setup
+may retry. Register routes, dependencies, middleware and lifecycle hooks before
+preparing. `listen()` includes this same preparation; listening after a successful
+`prepare()` does not run `boot` again and emits `ready` after starting the listener.
+Call `stop()` to release resources even when no listener was created. Preparing
+does not add a Node listener or support WebSocket handshakes through `dispatch()`.
+
+## Listener options
+
+`listen(options: ListenOptions)` accepts `port`, `hostname`, HTTP `idleTimeout`
+(seconds), `maxRequestBodySize`, `reusePort`, `tls`, and optional `websocket`.
+`websocket: WsTransportOptions` configures the listener's message size, WebSocket
+idle timeout and sending backpressure while retaining Zebra's callbacks and data
+dispatch. Unset transport fields retain Bun's defaults. See
+[WebSocket transport options](10-websockets.md#listener-transport-options) and
+[HTTP size limits](05-http.md#size-limits).
 
 ## Event hooks
 
@@ -18,7 +56,7 @@ z.on("shutdown", async () => {
 });
 ```
 
-`LifecycleEvent = "boot" | "ready" | "shutdown"`; `on()` returns `this` for chaining. Registering lifecycle hooks after `listen()` throws — request, middleware and user-defined events stay open at runtime.
+`LifecycleEvent = "boot" | "ready" | "shutdown"`; `on()` returns `this` for chaining. Registering lifecycle hooks after `prepare()` or `listen()` throws — request, middleware and user-defined events stay open at runtime.
 
 ### Order
 

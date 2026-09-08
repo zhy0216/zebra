@@ -1,6 +1,7 @@
 import type { ServerWebSocket } from "bun";
 import type { DepsSpec, ResolvedDeps } from "../app/types.ts";
 import type { ZebraRequest } from "../http/request.ts";
+import type { WsUpgrade } from "./upgrade-result.ts";
 
 export const WS_HANDLER = Symbol.for("zebra.ws.handler");
 
@@ -55,7 +56,7 @@ export interface WsHandler<
 > {
   /** C2: 命名对象依赖声明，语义同 middleware()；随 upgrade 钩子在 request scope 中解析。 */
   onUpgrade?: D;
-  /** C2: 升级决策钩子。返回对象 → 展开进 ws.data（其类型即 Up）；返回 false → 401 拒绝；抛错 → 500。 */
+  /** 对象 → ws.data；wsUpgrade(data, { headers }) → 带响应头升级；Response → 原样拒绝；false → 401；抛错 → 500。 */
   upgrade?: (
     /**
      * 升级请求。为 `ZebraRequest`（`req.raw` 即原始 `Request`，与设计文档 §8.6
@@ -65,7 +66,7 @@ export interface WsHandler<
     req: ZebraRequest,
     deps: D extends never ? undefined : ResolvedDeps<D>,
     params: Record<string, string>,
-  ) => Up | false | Promise<Up | false>;
+  ) => Up | WsUpgrade<Up> | Response | false | Promise<Up | WsUpgrade<Up> | Response | false>;
   /** C3: 连接建立后触发（Bun `open(ws)`）。data 为 `WsData & Up`，upgrade 返回的字段可类型化访问。 */
   open?: (ws: ServerWebSocket<WsData & Up>, data: WsData & Up) => void | Promise<void>;
   /** C3: 收到消息（Bun `message(ws, message)`；message 为 string 或 Buffer，取决于 binaryType）。 */

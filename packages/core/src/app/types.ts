@@ -1,10 +1,16 @@
-import type { TLSOptions } from "bun";
+import type { TLSOptions, WebSocketHandler } from "bun";
 import type { ContractProcedureDef } from "../contract/protocol.ts";
 import type { Container } from "../di/container.ts";
 import type { Identifier } from "../di/token.ts";
 import type { BodyOptions } from "../http/body.ts";
 import type { ZebraRequest } from "../http/request.ts";
 import type { Middleware } from "../middleware/types.ts";
+
+/** Bun transport settings only; callbacks and connection data remain owned by Zebra. */
+export type WsTransportOptions = Pick<
+  WebSocketHandler<unknown>,
+  "maxPayloadLength" | "idleTimeout" | "backpressureLimit" | "closeOnBackpressureLimit"
+>;
 
 /**
  * Options for `Zebra.listen`, passed through to `Bun.serve` as-is.
@@ -32,6 +38,8 @@ export interface ListenOptions {
   reusePort?: boolean;
   /** TLS options (key/cert chains) for serving HTTPS. */
   tls?: TLSOptions | TLSOptions[];
+  /** Server-wide WebSocket limits. Unset fields retain Bun's defaults; idleTimeout is in seconds. */
+  websocket?: WsTransportOptions;
 }
 
 type SegmentParam<S extends string> = S extends `:${infer Name}`

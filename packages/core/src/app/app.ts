@@ -210,7 +210,7 @@ export class Zebra {
     } = {
       port: opts.port,
       fetch: (req, server) => this.internals.handleFetch(req, server),
-      websocket: buildBunWebSocketHandler(),
+      websocket: buildBunWebSocketHandler(opts.websocket),
     };
     if (opts.hostname !== undefined) serveOpts.hostname = opts.hostname;
     if (opts.idleTimeout !== undefined) serveOpts.idleTimeout = opts.idleTimeout;
@@ -246,7 +246,8 @@ export class Zebra {
     await this.internals.sessions.disposeSession(id);
   }
 
-  protected async prepare(): Promise<void> {
+  /** Boot and freeze registration for in-process dispatch without opening a listener. */
+  async prepare(): Promise<void> {
     await this.internals.prepare();
   }
 

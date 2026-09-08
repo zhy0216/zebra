@@ -1,4 +1,5 @@
 import type { WebSocketHandler as BunWebSocketHandler, ServerWebSocket } from "bun";
+import type { WsTransportOptions } from "../app/types.ts";
 import { WS_HANDLER, type WsData, type WsHandler } from "./types.ts";
 
 /** 组装连接数据：C1 携带路径参数与所属路由，C2 在此合并 upgrade() 返回。 */
@@ -29,8 +30,10 @@ function wsHandlerOf(ws: ServerWebSocket<WsData>): WsHandler<any, any> | undefin
  * 分发对齐 Bun 语义：`message(ws, message)`、`close(ws, code, reason)` 的原始参数
  * 顺序不变，`ws.data`（升级结果 + params，见 WsHandler 注释）作为第二个参数注入。
  */
-export function buildBunWebSocketHandler(): BunWebSocketHandler<WsData> {
-  return {
+export function buildBunWebSocketHandler(
+  options: WsTransportOptions = {},
+): BunWebSocketHandler<WsData> {
+  const handler: BunWebSocketHandler<WsData> = {
     open(ws) {
       invokeWsCallback(ws, wsHandlerOf(ws)?.open, [ws, ws.data]);
     },
@@ -50,6 +53,15 @@ export function buildBunWebSocketHandler(): BunWebSocketHandler<WsData> {
       invokeWsCallback(ws, wsHandlerOf(ws)?.pong, [ws, ws.data, payload]);
     },
   };
+  // Copy only the public transport allowlist, even for untyped JS callers.
+  if (options.maxPayloadLength !== undefined) handler.maxPayloadLength = options.maxPayloadLength;
+  if (options.idleTimeout !== undefined) handler.idleTimeout = options.idleTimeout;
+  if (options.backpressureLimit !== undefined)
+    handler.backpressureLimit = options.backpressureLimit;
+  if (options.closeOnBackpressureLimit !== undefined) {
+    handler.closeOnBackpressureLimit = options.closeOnBackpressureLimit;
+  }
+  return handler;
 }
 
 /**

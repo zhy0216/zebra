@@ -65,6 +65,7 @@ export type {
   JoinPath,
   ZebraOptions,
   ListenOptions,
+  WsTransportOptions,
   SessionOptions,
   RegisteredRoute,
 } from "./app/types.ts";
@@ -82,4 +83,5 @@ export type {
 } from "./app/lifecycle.ts";
 export { validateGraph } from "./app/boot-validation.ts";
 export type { WsHandler, WsData, WsRoute } from "./ws/types.ts";
+export { wsUpgrade, type WsUpgrade, type WsUpgradeOptions } from "./ws/upgrade-result.ts";
 export const VERSION = "1.0.0";

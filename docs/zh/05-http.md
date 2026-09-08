@@ -1,5 +1,15 @@
 # HTTP
 
+进程内请求可在注册后执行 `await app.prepare()`，再调用
+`app.dispatch(new Request(url))`，最后 `await app.stop()`。准备阶段运行 boot 与 DI
+校验，不打开 listener，详见 [生命周期](06-lifecycle.md#不创建监听器的准备阶段)。
+
+WebSocket 握手通过 `listen()` 处理，绕过 HTTP 中间件和 dispatch pipeline。
+`upgrade` 钩子可返回 `Response`，以自定义 status、body 和 headers 拒绝升级；或返回
+`wsUpgrade(data, { headers })` 设置成功握手响应头。它们不改变 HTTP 错误处理或 body
+限制，详见 [WebSocket](10-websockets.md)。WS 接收消息的 transport 上限单独通过
+`listen({ websocket: { maxPayloadLength } })` 配置。
+
 本章覆盖 `ZebraRequest`（请求对象）、请求体解析、响应 helpers、结构化错误（RFC 9457 Problem+Json）、静态文件与请求超时。
 
 ## ZebraRequest
