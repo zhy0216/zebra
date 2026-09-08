@@ -1,0 +1,1 @@
+{"at": "2026-09-08T07:52:50.841606+00:00", "branch": "herdr/plan-performance-speedup-02-router", "command": ["git", "diff", "--cached", "609c1d298393c49b49e6c11537e55437c5f6a89f", "--check"], "exit": 0, "output": "", "ownedScopeOnly": true, "allEvidenceTracked": true, "verifiedGzipArtifacts": 60, "harnessBytesMatchTask01": true, "productionDiffIncluded": false}

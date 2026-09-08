@@ -130,3 +130,88 @@ function randomGarbage(rnd: () => number): string {
   for (let i = 0; i < length; i++) out += pick(rnd, [...alphabet]);
   return out;
 }
+
+test("fuzz: method-aware matches and method order agree with a route-list model", () => {
+  for (const seed of [0x2a11, 0x2a12, 0x2a13, 0x2a14]) {
+    const rnd = mulberry32(seed);
+    const router = new Router<number>();
+    const routes: Array<{ method: string; parts: string[]; handler: number }> = [];
+    const layouts = new Set<string>();
+    const paths = ["/", "/a/fixed", "/a/:id", "/a/*rest", "/a//b", "/a/%2F", "/%GG"];
+    for (let i = 0; i < 70; i++) paths.push(randomPath(rnd));
+    for (const path of paths) {
+      const method = pick(rnd, METHODS);
+      const key = `${method} ${canonical(path)}`;
+      if (layouts.has(key)) continue;
+      layouts.add(key);
+      const handler = routes.length;
+      router.add(method, path, handler);
+      routes.push({ method, parts: modelParts(path), handler });
+    }
+    for (let i = 0; i < 350; i++) {
+      const path = pick(rnd, [
+        ...paths,
+        concretePath(pick(rnd, paths), rnd),
+        "/a/a%2Fb",
+        "/a/%GG",
+        "/a//b",
+        "/a/%2F/%zz",
+        randomGarbage(rnd),
+      ]);
+      const query = `${"/".repeat(int(rnd, 0, 3))}${path}${"/".repeat(int(rnd, 0, 3))}`;
+      const method = pick(rnd, [...METHODS, "HEAD", "BREW"]);
+      const parts = modelParts(query);
+      const matches = routes
+        .map((route) => ({ ...route, match: modelMatch(route.parts, parts) }))
+        .filter((route) => route.match !== null)
+        .sort((a, b) => {
+          for (let idx = 0; idx < Math.max(a.parts.length, b.parts.length); idx++) {
+            const difference = modelPriority(b.parts[idx]) - modelPriority(a.parts[idx]);
+            if (difference) return difference;
+          }
+          return a.handler - b.handler;
+        });
+      const expected = matches.find((route) => route.method === method);
+      const label = `seed ${seed} ${method} ${query}`;
+      expect(router.find(method.toLowerCase(), query), label).toEqual(
+        expected ? { handler: expected.handler, params: expected.match! } : null,
+      );
+      const methods = [...new Set(matches.map((route) => route.method))];
+      expect(router.allowedMethods(query), label).toEqual(methods.length ? methods : null);
+    }
+  }
+});
+
+function modelParts(path: string): string[] {
+  const parts = path.split("/");
+  while (parts[0] === "") parts.shift();
+  while (parts.at(-1) === "") parts.pop();
+  return parts;
+}
+
+function modelPriority(part: string | undefined): number {
+  if (part === undefined) return 3;
+  if (part.startsWith("*")) return 0;
+  return part.startsWith(":") ? 1 : 2;
+}
+
+function modelMatch(pattern: string[], query: string[]): Record<string, string> | null {
+  const params: Record<string, string> = Object.create(null);
+  for (let i = 0; i < pattern.length; i++) {
+    const segment = pattern[i]!;
+    if (segment.startsWith("*")) {
+      params[segment.slice(1)] = query.slice(i).join("/");
+      return params;
+    }
+    const value = query[i];
+    if (value === undefined) return null;
+    if (segment.startsWith(":")) {
+      try {
+        params[segment.slice(1)] = decodeURIComponent(value);
+      } catch {
+        params[segment.slice(1)] = value;
+      }
+    } else if (segment !== value) return null;
+  }
+  return pattern.length === query.length ? params : null;
+}

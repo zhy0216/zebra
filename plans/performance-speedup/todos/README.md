@@ -15,7 +15,7 @@ Resolved difficulty mapping: hard = `codex / gpt-6-astra / max`; medium = `codex
 | File | Priority | Difficulty | Agent | Model / Codex reasoning effort | Purpose |
 | --- | --- | --- | --- | --- | --- |
 | [01-hot-path-baseline.md](done/01-hot-path-baseline.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Completed harness/baseline; awaiting coordinator integration |
-| [02-router-lookup.md](02-router-lookup.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Reduce static-route lookup and path allocation costs |
+| [02-router-lookup.md](done/02-router-lookup.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Evaluated; static index excluded because minimum-runtime performance evidence is inconclusive |
 | [03-request-metadata.md](03-request-metadata.md) | P2 | medium | codex (inherits default) | gpt-6-astra / xhigh | Defer unused request metadata work with snapshot/identity compatibility |
 | [04-di-cache-hits.md](04-di-cache-hits.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Avoid diagnostic stack allocation on valid DI cache hits |
 | [05-dispatch-pipeline.md](05-dispatch-pipeline.md) | P1 | hard | codex (inherits default) | gpt-6-astra / max | Reduce forwarding promises and closures in dispatch/middleware |
@@ -24,7 +24,7 @@ Resolved difficulty mapping: hard = `codex / gpt-6-astra / max`; medium = `codex
 ## 文件
 
 1. [01-hot-path-baseline.md](done/01-hot-path-baseline.md) — completed; coordinator must integrate before 02–05 start.
-2. [02-router-lookup.md](02-router-lookup.md) — 依赖 01-hot-path-baseline.md.
+2. [02-router-lookup.md](done/02-router-lookup.md) — completed evaluation; production candidate excluded, compatibility tests and evidence retained.
 3. [03-request-metadata.md](03-request-metadata.md) — 依赖 01-hot-path-baseline.md.
 4. [04-di-cache-hits.md](04-di-cache-hits.md) — 依赖 01-hot-path-baseline.md.
 5. [05-dispatch-pipeline.md](05-dispatch-pipeline.md) — 依赖 01-hot-path-baseline.md.
@@ -57,3 +57,14 @@ applies before candidate timing; noisy samples are never adopted as an envelope.
 The unchanged historical gate failed all eight scenarios and remains unchanged.
 02–05 may start only after 01 is integrated. Default and task preferences above
 persist across session changes; other task statuses are unchanged.
+
+## Task 02 status
+
+02 is evaluated and archived under `done/`; the static index is **excluded**.
+Both bounded Bun 1.4.0 router controls timed out without any timed rounds, so
+minimum-runtime adoption remains unsupported. Production is restored to the
+planning baseline. Five compatibility/fuzz tests and all check/load/patch evidence
+are retained in [results/02](../results/02/README.md). Both-runtime candidate full
+gates and final-source focused/harness/type/lint checks passed. No speedup is
+claimed. Coordinator integration is pending; all other task states and saved
+agent/model preferences are unchanged.

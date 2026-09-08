@@ -125,3 +125,88 @@ test("trailing slashes are ignored by the matcher", () => {
   expect(r.find("GET", "/a/")?.handler).toBe("h");
   expect(r.find("GET", "///a///")?.handler).toBe("h");
 });
+
+test("static routes keep encoded spelling and interior empty segments", () => {
+  const router = new Router<string>();
+  router.add("get", "///a%2Fb///", "encoded");
+  router.add("GET", "/a/b", "separated");
+  router.add("GET", "/a//b", "empty-segment");
+  router.add("GET", "/%GG", "malformed-static");
+  router.add("GET", "/:value", "parameter");
+  for (const edges of ["", "/", "///"]) {
+    expect(router.find("gEt", `${edges}a%2Fb${edges}`)).toEqual({
+      handler: "encoded",
+      params: {},
+    });
+    expect(router.find("GET", `${edges}a/b${edges}`)?.handler).toBe("separated");
+    expect(router.find("GET", `${edges}a//b${edges}`)?.handler).toBe("empty-segment");
+    expect(router.find("GET", `${edges}%GG${edges}`)?.handler).toBe("malformed-static");
+  }
+  expect(router.find("GET", "/a%2fb")).toEqual({
+    handler: "parameter",
+    params: { value: "a/b" },
+  });
+  expect(router.find("GET", "/%zz")?.params).toEqual({ value: "%zz" });
+});
+
+test("static method misses retain branch precedence, method names and Allow order", () => {
+  const router = new Router<string>();
+  router.add("PATCH", "/a/*rest", "wildcard");
+  router.add("POST", "/a/:postId", "post-param");
+  router.add("BREW", "/a/:brewId", "custom-param");
+  router.add("GET", "/a/fixed", "static");
+  router.add("PUT", "/a/fixed", "static-put");
+  router.add("POST", "/a/*rest", "post-wildcard");
+  expect(router.find("post", "///a/fixed///")).toEqual({
+    handler: "post-param",
+    params: { postId: "fixed" },
+  });
+  expect(router.find("brew", "/a/fixed")?.params).toEqual({ brewId: "fixed" });
+  expect(router.find("PATCH", "/a/fixed")?.params).toEqual({ rest: "fixed" });
+  expect(router.find("POST", "/a")).toEqual({
+    handler: "post-wildcard",
+    params: { rest: "" },
+  });
+  expect(router.find("POST", "/a/%2F/%GG")?.params).toEqual({ rest: "%2F/%GG" });
+  expect(router.find("HEAD", "/a/fixed")).toBeNull();
+  expect(router.allowedMethods("///a/fixed///")).toEqual(["GET", "PUT", "POST", "BREW", "PATCH"]);
+});
+
+test("root routes and normalized duplicates retain successful registrations", () => {
+  const router = new Router<string>();
+  router.add("GET", "///", "root");
+  router.add("POST", "/*rest", "wildcard");
+  router.add("PUT", "", "put-root");
+  expect(() => router.add("get", "/", "duplicate")).toThrow(/Duplicate route/);
+  router.add("GET", "a//b/", "interior");
+  expect(() => router.add("get", "///a//b///", "duplicate")).toThrow(/Duplicate route/);
+  for (const path of ["", "/", "////"]) {
+    expect(router.find("GET", path)).toEqual({ handler: "root", params: {} });
+    expect(router.find("POST", path)).toEqual({ handler: "wildcard", params: { rest: "" } });
+    expect(router.allowedMethods(path)).toEqual(["GET", "PUT", "POST"]);
+  }
+  expect(router.find("GET", "/a//b")?.handler).toBe("interior");
+});
+
+test("static and captured matches return independently mutable null-prototype params", () => {
+  const router = new Router<unknown>();
+  router.add("GET", "/fixed", undefined);
+  router.add("POST", "/:__proto__", false);
+  router.add("PUT", "/*rest", 0);
+  for (const method of ["GET", "POST", "PUT"]) {
+    const first = router.find(method, "/fixed")!;
+    const second = router.find(method, "/fixed")!;
+    expect(first).not.toBe(second);
+    expect(first.params).not.toBe(second.params);
+    expect(Object.getPrototypeOf(first.params)).toBeNull();
+    const original = { ...second.params };
+    first.params.extra = "changed";
+    first.params.__proto__ = "own value";
+    expect(Reflect.deleteProperty(first.params, "rest")).toBe(true);
+    expect(second.params).toEqual(original);
+    expect(router.find(method, "/fixed")).toEqual(second);
+  }
+  expect(router.find("GET", "/fixed")?.handler).toBeUndefined();
+  expect(router.find("POST", "/fixed")?.handler).toBe(false);
+  expect(router.find("PUT", "/fixed")?.handler).toBe(0);
+});
