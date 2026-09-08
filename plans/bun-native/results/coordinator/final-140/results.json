@@ -1,0 +1,82 @@
+[
+  {
+    "command": ["bun", "install", "--frozen-lockfile"],
+    "head": "5c63074d5b90056724d5588755fdb39c4332153d",
+    "bun": "1.4.0",
+    "exit": 0,
+    "seconds": 0.01,
+    "started": "2026-09-08T03:24:26.442475+00:00"
+  },
+  {
+    "command": ["bun", "run", "typecheck"],
+    "head": "5c63074d5b90056724d5588755fdb39c4332153d",
+    "bun": "1.4.0",
+    "exit": 0,
+    "seconds": 0.97,
+    "started": "2026-09-08T03:24:26.457383+00:00"
+  },
+  {
+    "command": ["bun", "run", "lint"],
+    "head": "5c63074d5b90056724d5588755fdb39c4332153d",
+    "bun": "1.4.0",
+    "exit": 0,
+    "seconds": 0.29,
+    "started": "2026-09-08T03:24:27.426787+00:00"
+  },
+  {
+    "command": ["bun", "run", "build"],
+    "head": "5c63074d5b90056724d5588755fdb39c4332153d",
+    "bun": "1.4.0",
+    "exit": 0,
+    "seconds": 0.04,
+    "started": "2026-09-08T03:24:27.717456+00:00"
+  },
+  {
+    "command": ["bun", "run", "test"],
+    "head": "5c63074d5b90056724d5588755fdb39c4332153d",
+    "bun": "1.4.0",
+    "exit": 0,
+    "seconds": 17.4,
+    "started": "2026-09-08T03:24:27.759220+00:00"
+  },
+  {
+    "command": ["bun", "run", "verify:packages"],
+    "head": "5c63074d5b90056724d5588755fdb39c4332153d",
+    "bun": "1.4.0",
+    "exit": 0,
+    "seconds": 1.14,
+    "started": "2026-09-08T03:24:45.155364+00:00"
+  },
+  {
+    "command": ["bun", "test", "--coverage", "--coverage-reporter=lcov", "packages/core"],
+    "head": "5c63074d5b90056724d5588755fdb39c4332153d",
+    "bun": "1.4.0",
+    "exit": 0,
+    "seconds": 2.5,
+    "started": "2026-09-08T03:24:46.297861+00:00"
+  },
+  {
+    "command": ["bun", "run", "check:coverage"],
+    "head": "5c63074d5b90056724d5588755fdb39c4332153d",
+    "bun": "1.4.0",
+    "exit": 0,
+    "seconds": 0.03,
+    "started": "2026-09-08T03:24:48.796550+00:00"
+  },
+  {
+    "command": ["bun", "run", "docs:build"],
+    "head": "5c63074d5b90056724d5588755fdb39c4332153d",
+    "bun": "1.4.0",
+    "exit": 0,
+    "seconds": 7.96,
+    "started": "2026-09-08T03:24:48.822377+00:00"
+  },
+  {
+    "command": ["git", "diff", "--check"],
+    "head": "5c63074d5b90056724d5588755fdb39c4332153d",
+    "bun": "1.4.0",
+    "exit": 0,
+    "seconds": 0.01,
+    "started": "2026-09-08T03:24:56.777961+00:00"
+  }
+]

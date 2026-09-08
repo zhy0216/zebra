@@ -169,3 +169,31 @@ git diff --check
 4. 原生 API 可能更慢，或只在部分输入受益。接受不采用的证据，避免为了名称增加复杂度。
 5. Response 构造可能改变序列化异常、getter 调用次数和 Headers；请求体合并可能泄漏视图外数据、改变复制语义或错误时序。测试针对这些结果。
 6. 本轮仅编排计划；现有 session 内容依用户明确指示提交，计划另行提交。新的业务实现交给 herdr-finish-plan session，不在当前 session 开始。
+
+
+## 执行结果
+
+2026-09-07（America/Los_Angeles）按已提交计划从 `master@1418a2f` 执行完毕。初始六个文件的授权提交 `4466df7` 完整保留，未再次作为阻塞。01、02 在独立 Herdr worktree 并行实现，性能测量串行；按完成顺序先集成 02、再集成 01，二者清理后执行 03。协调器为 Codex / gpt-6-astra / high，所有任务启动显式使用 YOLO。
+
+| todo / 归档文件 | 合入 master 的最终提交 | 实际 agent / 模型 / 推理强度 | 结果 |
+| --- | --- | --- | --- |
+| [01-native-json.md](todos/done/01-native-json.md) | `12e6b88e41198bae922a1d6ca9c6a68cc4f40a8f` | Codex / gpt-6-astra / max | 五个 JSON 入口评估完成，均保留原实现；交付回归测试、可复现 benchmark 与未采用证据 |
+| [02-native-body.md](todos/done/02-native-body.md) | `0c0d78ebe4329214d358a9b4428e8dcf1451d215` | Codex / gpt-6-astra / xhigh | 原生字节合并评估完成，因代表性退化未采用；交付行为测试与两阶段 benchmark |
+| [03-docs-and-validation.md](todos/done/03-docs-and-validation.md) | `5c63074d5b90056724d5588755fdb39c4332153d` | Codex / gpt-6-astra / xhigh | 九份中英文文档同步、两版整体验收与性能记录完成 |
+
+采用决定与证据：
+
+- [01 报告](results/01/REPORT.md)：普通 JSON 入口存在根值、序列化和副作用次序差异；两个 Problem+Json 候选没有稳定收益。两版各两次有效测量，全部场景与受干扰排除记录保留。
+- [02 报告](results/02/report.md)：大正文和部分多块输入虽有收益，常见小 JSON 等场景仍复现退化；两版各两次完整数据全部保留。
+- [03 报告](results/03/REPORT.md) 与 [bench README](../../bench/README.md)：最终复跑和同机 HTTP 原始基线对照完整保存。已有 session HMAC 来自本计划之前的 `4466df7`，两版复核没有被写成本轮 JSON/body 的收益。
+- 最终 80 个 `packages/*/src/` 文件与 `1418a2f` 字节相同；未改变 API、包版本、锁文件、最低 Bun、CI、90% coverage gate 或 HTTP 基线/门槛。01 修正 peer-IP 测试夹具为显式 IPv4 监听/请求，保留原断言及 XFF 测试，两版通过。
+
+协调器在每个任务 rebase 后亲自执行 typecheck、lint、build、全量 test 和 diff；03 最终提交另外在隔离 Bun 1.4.0 与当前 1.4.2 分别完成冻结安装、上述检查、12 包 verify:packages、core coverage/check:coverage、`DOCS_BASE=/zebra/` docs 构建。两版均 1306 pass / 0 fail，core 2389/2417 行 = 98.84%；两版构建后的本地文档链接/六份产物检查通过。每条命令的 HEAD、版本、退出码与完整日志见[协调器独立验收](results/coordinator/README.md)。两版 client/contract browser target 打包与 Web-only VM 冒烟通过，证据见 03；不声称真实浏览器 E2E。
+
+失败与保留限制：
+
+- **原 HTTP `bench:check` 在两版均 8/8 FAIL、exit 1；同机导出的 `1418a2f` 原始源码也均 8/8 FAIL。** 原门槛来自另一台 Apple Silicon 机器，本 VM 未通过；依计划完整报告并进行同机分析，没有重录基线或降低阈值。此项是已完成验收的失败结果，不是性能门禁通过。
+- 文档既有 `/favicon.svg` 根路径配置不带 `/zebra/` base；已记录在链接检查的 baseExceptions。图标文件存在，但只暴露子路径的站点仍可能无法加载该图标。本轮未修改此范围外配置，不声称已修复。
+- JSON/body 候选依计划的采用条件被拒绝，评估任务全部完成。没有 blocked 或尚未执行的 todo；上述性能门槛与 favicon 限制保留。受外部负载干扰的测量原始日志全部保留并明确排除，未按结果快慢选择样本。
+
+01 rebase 仅发生队列 README 冲突，保留两任务归档/状态后解决；02/03 无冲突。每个任务最终只有一个 commit，均通过 fast-forward 合入 master，恢复次数均为 0。三个 todo 已归档到 `todos/done/`；本轮三个 agent 均正常退出，Herdr workspace、Git worktree 与任务分支全部清理，没有本轮资源残留，其他任务资源未动。最终收尾提交仅保存本节、队列状态和协调器验收日志。未 push、创建 PR、发布或部署。

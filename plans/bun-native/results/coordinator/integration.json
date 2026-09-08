@@ -1,0 +1,60 @@
+{
+  "checkedAt": "2026-09-08T03:27:25.276522+00:00",
+  "baseBranch": "master",
+  "startCommit": "1418a2f3f8b3e0bae53490eb195811b34590e041",
+  "integratedHead": "5c63074d5b90056724d5588755fdb39c4332153d",
+  "coordinator": {
+    "agent": "codex",
+    "model": "gpt-6-astra",
+    "reasoningEffort": "high",
+    "yolo": true
+  },
+  "tasks": [
+    {
+      "branch": "herdr/plan-bun-native-01-native-json",
+      "name": "plan-bun-native-01",
+      "effort": "max",
+      "agent": "codex",
+      "model": "gpt-6-astra",
+      "todo": "01-native-json.md",
+      "recoveries": 0,
+      "status": "complete-cleaned",
+      "commit": "12e6b88e41198bae922a1d6ca9c6a68cc4f40a8f",
+      "yolo": true,
+      "workspace": "w7",
+      "worktree": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-bun-native-01-native-json"
+    },
+    {
+      "branch": "herdr/plan-bun-native-02-native-body",
+      "name": "plan-bun-native-02",
+      "effort": "xhigh",
+      "agent": "codex",
+      "model": "gpt-6-astra",
+      "todo": "02-native-body.md",
+      "recoveries": 0,
+      "status": "complete-cleaned",
+      "commit": "0c0d78ebe4329214d358a9b4428e8dcf1451d215",
+      "yolo": true,
+      "workspace": "w8",
+      "worktree": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-bun-native-02-native-body"
+    },
+    {
+      "branch": "herdr/plan-bun-native-03-docs-and-validation",
+      "name": "plan-bun-native-03",
+      "effort": "xhigh",
+      "agent": "codex",
+      "model": "gpt-6-astra",
+      "todo": "03-docs-and-validation.md",
+      "recoveries": 0,
+      "status": "complete-cleaned",
+      "commit": "5c63074d5b90056724d5588755fdb39c4332153d",
+      "yolo": true,
+      "workspace": "wC",
+      "worktree": "/home/ubuntu/.herdr/worktrees/zebra/herdr-plan-bun-native-03-docs-and-validation"
+    }
+  ],
+  "remainingTaskResources": [],
+  "push": false,
+  "publish": false,
+  "deploy": false
+}
