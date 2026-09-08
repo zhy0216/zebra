@@ -105,6 +105,12 @@ export interface ZebraOptions {
   /** Shutdown drain time in milliseconds; finite and nonnegative. Default: 10,000. */
   gracePeriod?: number;
   /**
+   * Install automatic SIGINT/SIGTERM handlers on listen(). Default: true.
+   * With false, the application owns signals and must await stop() and any
+   * additional cleanup before exiting. User signal listeners are never removed.
+   */
+  signalHandlers?: boolean;
+  /**
    * Per-request deadline in milliseconds; finite and greater than zero.
    * Invalid values throw RangeError at construction. When the dispatch pipeline
    * (middleware + handler, including body parsing and session resolution)

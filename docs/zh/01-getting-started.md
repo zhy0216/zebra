@@ -127,6 +127,7 @@ const z = new Zebra({ container });
 | `errors.exposeStack` | 出错时是否在 Problem+Json 里暴露 `stack`（默认 `false`） |
 | `session` / `sessionResolver` / `sessionTtl` | 会话作用域 DI 的解析器与 TTL（见 [会话作用域 DI](03-di.md#session-作用域)） |
 | `gracePeriod` | 优雅停机的等待时长（毫秒，默认 `10_000`） |
+| `signalHandlers` | `listen()` 时安装自动 SIGINT/SIGTERM 处理器（默认 `true`）；`false` 让应用拥有信号并负责等待 `stop()` 和自身清理（见 [生命周期](06-lifecycle.md#应用拥有信号)） |
 | `requestTimeout` | 单请求超时（毫秒），超时返回 504 `request_timeout`（见 [HTTP](05-http.md#请求超时)） |
 | `trustProxy` | 应用级声明：允许信任 `x-forwarded-for`（默认 `false`） |
 

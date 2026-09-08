@@ -125,6 +125,10 @@ packages.
   `injectFactoryTransient`, `injectFactorySession`, `implement`, `get`, `post`,
   `put`, `patch`, `delete`, `head`, `options`, `route`, `group`, `static`, `ws`,
   `dispatch`, `routeTable`.
+- `ZebraOptions.signalHandlers?: boolean`: defaults to `true`. `listen()`
+  installs automatic SIGINT/SIGTERM handlers unless explicitly disabled;
+  `false` leaves signal ownership to the application, which must await `stop()`
+  and its own cleanup. User signal listeners are never removed by Zebra.
 - Events: `EventBus`, `EventEmitter` (compat alias of `EventBus`), types
   `EventHandler`, `EventPayload`, `EventArgs`, `Awaitable`, `EventPublisher`,
   `ZebraEventMap`, `BeforeRequestEvent`, `AfterRequestEvent`,
@@ -278,3 +282,15 @@ dependency-package names (rate-limit `MemoryStore` collision, §3 `@zebra-web/ze
 - All additions are public through core and facade and follow the additive
   policy. Package versions remain at the development baseline 1.0.0; release
   versioning is handled by the later release process.
+
+### Additive signal ownership option (2026-09-08)
+
+- `ZebraOptions.signalHandlers?: boolean` is public through core and facade.
+  Omission and `true` preserve automatic SIGINT/SIGTERM handling and its existing
+  failure logging; `false` installs no framework signal handlers on `listen()`.
+- `prepare()` still installs no signal handlers. `stop()` retains its lifecycle
+  ordering, concurrent/idempotent behavior and cached rejection on failure; it
+  never removes user signal listeners. Application retry, flush, resource-close
+  ordering and exit codes remain application policy. See [Lifecycle](06-lifecycle.md#application-owned-signals).
+- This is an additive option; package versions stay at the development baseline
+  pending the release process.

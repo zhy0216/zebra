@@ -23,7 +23,7 @@ CMD ["bun", "run", "src/main.ts"]
 
 - **`NODE_ENV=production`**: the benchmark scenarios also run in production mode.
 - **Health checks**: mount `@zebra-web/observability`'s `health()` (`/healthz` liveness + `/readyz` readiness) so load balancers get a decision (see [Observability](13-observability.md)).
-- **Graceful shutdown**: `SIGTERM` / `SIGINT` trigger `z.stop()` automatically — in-flight requests drain (within `gracePeriod`, default 10s), then the container is disposed and `shutdown` hooks run (see [Lifecycle](06-lifecycle.md)).
+- **Graceful shutdown**: by default, `SIGTERM` / `SIGINT` trigger `z.stop()` automatically — in-flight requests drain (within `gracePeriod`, default 10s), then the container is disposed and `shutdown` hooks run. Set `signalHandlers: false` when the application owns signals, awaits additional flush/retry work, or chooses a failure exit code (see [Lifecycle](06-lifecycle.md#application-owned-signals)).
 - **Request timeout**: `requestTimeout` sets a per-request deadline; a timeout answers 504 `request_timeout` (see [HTTP](05-http.md#request-timeout)).
 - **Behind a proxy**: if your reverse proxy **overwrites** `x-forwarded-for`, enable `trustProxy: true` so rate limiting keys on the real client IP (otherwise clients can spoof their own budget). `req.ip` always comes from the socket peer, independent of `trustProxy`.
 - **Multi-instance**: in-process `MemoryStore` sessions and rate-limit counters don't share across instances — use `@zebra-web/redis`'s `RedisSessionStore` / `RedisRateLimitStore` for multi-replica deployments (see [Redis](14-redis.md)).

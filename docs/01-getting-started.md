@@ -129,6 +129,7 @@ const z = new Zebra({ container });
 | `errors.exposeStack` | include `stack` in Problem+Json responses (default `false`) |
 | `session` / `sessionResolver` / `sessionTtl` | session-scoped DI resolver and TTL (see [Session scope](03-di.md#session-scope)) |
 | `gracePeriod` | graceful shutdown wait (ms, default `10_000`) |
+| `signalHandlers` | install automatic SIGINT/SIGTERM handlers on `listen()` (default `true`); `false` gives the application signal ownership and responsibility for awaiting `stop()` and cleanup (see [Lifecycle](06-lifecycle.md#application-owned-signals)) |
 | `requestTimeout` | per-request deadline (ms); a timeout answers 504 `request_timeout` (see [HTTP](05-http.md#request-timeout)) |
 | `trustProxy` | app-level statement that `x-forwarded-for` may be trusted (default `false`) |
 

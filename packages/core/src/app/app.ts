@@ -52,6 +52,7 @@ const DEFAULT_GRACE_PERIOD = 10_000;
 export class Zebra {
   /** Internal state + dispatch pipeline; see AppInternals. */
   private readonly internals: AppInternals;
+  private readonly signalHandlers: boolean;
   /** App-level trust statement for `x-forwarded-for` (see `ZebraOptions.trustProxy`). */
   readonly trustProxy: boolean;
   /** Registration sink shared by every verb method (see verbs.ts). */
@@ -91,6 +92,7 @@ export class Zebra {
       if (!Number.isFinite(value)) throw new RangeError(`${name} must be finite`);
     }
     this.trustProxy = opts.trustProxy ?? false;
+    this.signalHandlers = opts.signalHandlers ?? true;
     const container = opts.container ?? new Container();
     this.internals = new AppInternals({
       container,
@@ -221,7 +223,7 @@ export class Zebra {
     if (opts.tls !== undefined) serveOpts.tls = opts.tls;
     const server = Bun.serve(serveOpts);
     this.internals.server = server;
-    this.internals.installSignalHandlers();
+    if (this.signalHandlers) this.internals.installSignalHandlers();
     try {
       await this.internals.events.emit("ready");
     } catch (error) {

@@ -124,6 +124,9 @@ packages.
   `injectFactoryTransient`, `injectFactorySession`, `implement`, `get`, `post`,
   `put`, `patch`, `delete`, `head`, `options`, `route`, `group`, `static`, `ws`,
   `dispatch`, `routeTable`.
+- `ZebraOptions.signalHandlers?: boolean`：默认 `true`。`listen()` 安装自动
+  SIGINT/SIGTERM 处理器；显式 `false` 将信号所有权交给应用，由应用等待 `stop()`
+  与自身清理。Zebra 始终不会移除用户信号监听器。
 - Contract (implement): `isContractProcedure`, types `ContractProcedureDef`,
   `ContractHandler`, `ContractRequest`, `ContractParams`, `ContractQuery`,
   `ContractBody`, `ContractReturn`, `ContractProcedure`, `ContractRouter`,
@@ -253,3 +256,13 @@ dependency-package names (rate-limit `MemoryStore` collision, §3 `@zebra-web/ze
   [WebSocket 文档](10-websockets.md)。
 - 以上能力均从 core 与 facade 公开导出，属于兼容性新增；包版本保持本次开发起点
   的 1.0.0，发布版本由后续 release 流程决定。
+
+### 新增信号所有权选项（2026-09-08）
+
+- `ZebraOptions.signalHandlers?: boolean` 从 core 与 facade 公开。省略或 `true`
+  保留自动 SIGINT/SIGTERM 处理及现有失败日志；`false` 时 `listen()` 不安装框架
+  信号处理器。
+- `prepare()` 仍不安装信号处理器。`stop()` 的生命周期顺序、并发/幂等及失败缓存
+  语义不变，不移除用户信号监听器。重试、flush、资源关闭顺序与退出码仍由应用
+  决定，详见 [生命周期](06-lifecycle.md#应用拥有信号)。
+- 此选项属于兼容性新增；包版本保持开发起点，等待后续发布流程。

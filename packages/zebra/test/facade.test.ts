@@ -79,6 +79,31 @@ test("facade exposes prepare for in-process HTTP dispatch", async () => {
   }
 });
 
+test.each([{}, { signalHandlers: true }, { signalHandlers: false }])(
+  "facade exposes optional signal ownership: %j",
+  async (options: facade.ZebraOptions) => {
+    expectTypeOf<facade.ZebraOptions>().toEqualTypeOf<core.ZebraOptions>();
+    expectTypeOf<facade.ZebraOptions["signalHandlers"]>().toEqualTypeOf<boolean | undefined>();
+    const app = new facade.Zebra(options);
+    const signals = ["SIGINT", "SIGTERM"] as const;
+    const before = signals.map((signal) => process.rawListeners(signal));
+    try {
+      await app.prepare();
+      expect(signals.map((signal) => process.rawListeners(signal))).toEqual(before);
+      await app.listen({ port: 0 });
+      signals.forEach((signal, index) => {
+        expect(process.listenerCount(signal)).toBe(
+          before[index]!.length + (options.signalHandlers === false ? 0 : 1),
+        );
+      });
+      await app.stop();
+      expect(signals.map((signal) => process.rawListeners(signal))).toEqual(before);
+    } finally {
+      await app.stop();
+    }
+  },
+);
+
 test("contract / client / testing / observability / redis are not re-exported", () => {
   // Kept out of the facade on purpose (tree-shakeable facade, see the freeze
   // doc); import them from their own packages.

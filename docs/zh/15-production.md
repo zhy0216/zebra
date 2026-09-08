@@ -23,7 +23,7 @@ CMD ["bun", "run", "src/main.ts"]
 
 - **`NODE_ENV=production`**：benchmark 场景也在 production 模式下跑。
 - **健康检查**：挂 `@zebra-web/observability` 的 `health()`（`/healthz` 存活 + `/readyz` 就绪），让负载均衡器拿到决策（见 [可观测性](13-observability.md)）。
-- **优雅停机**：`SIGTERM` / `SIGINT` 自动触发 `z.stop()` —— 排空在途请求（`gracePeriod` 内，默认 10s），再释放容器、跑 `shutdown` 钩子（见 [生命周期](06-lifecycle.md)）。
+- **优雅停机**：默认由 `SIGTERM` / `SIGINT` 自动触发 `z.stop()` —— 排空在途请求（`gracePeriod` 内，默认 10s），再释放容器、跑 `shutdown` 钩子。应用需要拥有信号、等待额外 flush/retry 或决定失败退出码时，设置 `signalHandlers: false`（见 [生命周期](06-lifecycle.md#应用拥有信号)）。
 - **请求超时**：`requestTimeout` 为单请求设置截止时间，超时返回 504 `request_timeout`（见 [HTTP](05-http.md#请求超时)）。
 - **代理部署**：若你的反向代理会**覆盖** `x-forwarded-for`，开 `trustProxy: true` 让限流按真实客户端 IP 计（否则客户端可伪造自己的额度）。`req.ip` 永远来自 socket 对端，与 `trustProxy` 无关。
 - **多实例**：会话与限流的进程内 `MemoryStore` 不跨实例共享——多副本部署用 `@zebra-web/redis` 的 `RedisSessionStore` / `RedisRateLimitStore`（见 [Redis](14-redis.md)）。

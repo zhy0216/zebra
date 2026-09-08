@@ -64,7 +64,7 @@ z.listen()
   ├─ Bun.serve() 开始监听
   └─ [ready 钩子]（按注册顺序，全部 await；任一个失败 → stop() 并抛出）
 
-进程收到 SIGTERM / SIGINT（或调用 z.stop()）
+进程收到 SIGTERM / SIGINT（默认信号处理开启），或调用 z.stop()
   └─ [优雅停机]（见下）
       └─ [shutdown 钩子]（容器与所有实例释放之后）
 ```
@@ -149,14 +149,17 @@ z.on("middleware.error", ({ middleware, index, error, duration }) => {});
 
 `z.stop()` 是幂等的（并发调用只执行一次），过程如下：
 
-1. 标记 `stopped`，移除信号处理器，停止接受新连接（`Bun.serve.stop(false)`）。
+1. 标记 `stopped`，仅移除 Zebra 自己安装的信号处理器（若有），停止接受新连接（`Bun.serve.stop(false)`）。用户的信号监听器保持不变。
 2. **等待在途请求排空**（`waitForDrain`），与 `gracePeriod`（默认 10 秒）赛跑：
    - 超时后强制 `server.stop(true)` 终止剩余连接。
 3. 回收所有会话作用域容器（`disposeSession`，逐个）。
 4. 释放根容器（所有 singleton 实例的 `dispose()`，LIFO 顺序）。
 5. 运行 `shutdown` 钩子。
 
-进程信号（SIGTERM / SIGINT）自动触发 `stop()`——部署平台（如 Railway / Fly / K8s）发 SIGTERM 时应用会优雅排空，而不是立即被杀。
+`ZebraOptions.signalHandlers?: boolean` 默认 `true`。省略或设为 `true` 时，
+`listen()` 安装 SIGTERM / SIGINT 处理器，自动触发 `stop()`。无论如何配置，
+`prepare()` 都不安装信号处理器。boot 或端口绑定失败时不安装；ready 钩子失败
+仍会调用 `stop()`，清理 listener 和已安装的框架信号处理器，再抛出原 ready 错误。
 
 ```ts
 await z.listen({ port: 3000 });
@@ -166,11 +169,71 @@ await z.listen({ port: 3000 });
 也可以手动调用：
 
 ```ts
-const server = await z.listen({ port: 3000 });
-process.on("SIGUSR2", () => void z.stop());
+await z.stop();
 ```
 
 停止后应用不可再次 `listen()`（抛错 `Zebra has been stopped and cannot listen again`）。
+即使清理出错，`stop()` 仍尝试会话释放、根容器释放和 shutdown 钩子，最后以原错误或
+`AggregateError` reject。并发及后续调用观察同一份缓存结果，再次调用 `stop()` 不会
+重试失败的清理。默认自动信号处理以 `[zebra] shutdown failed:` 打印失败，不设置退出码。
+框架处理器在 `stop()` 开始时就被移除，因此清理期间的另一次信号可能触发运行时默认终止。
+
+### 应用拥有信号
+
+嵌入 Zebra、由应用协调关机时，使用 `new Zebra({ signalHandlers: false })`。
+这个构造选项从 `@zebra-web/core` 与 `@zebra-web/zebra` 公开；此时 `listen()` 不安装
+框架信号处理器，`stop()` 也不添加或移除应用的信号监听器。无需访问私有属性或删除
+框架 listener。
+
+应用负责注册自己的处理器、等待 `stop()` 和额外工作，并决定何时及如何退出。
+使用 `process.on`，在整个关机期间保留处理器，把重复信号合并到同一个关机 Promise。
+使用 `process.once` 或一开始就移除处理器，可能让下一次 SIGTERM 在异步清理完成前
+终止进程。多个 Zebra 实例共享同一个应用关机所有者时，应逐个禁用框架信号处理。
+
+```ts
+import { Zebra } from "@zebra-web/core";
+import { closePool, flushWithRetry } from "./resources.ts"; // 应用提供的函数
+
+const app = new Zebra({ signalHandlers: false });
+app.get("/", () => "ok");
+
+async function shutdown() {
+  const errors: unknown[] = [];
+  try {
+    await app.stop();
+  } catch (error) {
+    errors.push(error);
+  }
+  try {
+    await flushWithRetry();
+    await closePool();
+  } catch (error) {
+    errors.push(error);
+  }
+  if (errors.length) throw new AggregateError(errors, "Shutdown failed");
+}
+
+let stopping: Promise<void> | undefined;
+function onSignal() {
+  if (stopping) return;
+  stopping = Promise.resolve().then(shutdown).then(
+    () => { process.exit(0); },
+    (error) => {
+      console.error(error);
+      process.exit(1);
+    },
+  );
+}
+process.on("SIGINT", onSignal);
+process.on("SIGTERM", onSignal);
+await app.listen({ port: 3000 });
+```
+
+示例记录 stop 失败后仍尝试应用 flush，只有 flush 成功才关闭 pool；stop、flush 或
+pool 关闭失败都会导致非零退出。flush 重试、截止时间和失败策略由应用定义。
+`stop()` *之后*仍需要的资源应放在 Zebra 会释放的 DI scope 之外。
+`gracePeriod` 只限制 Zebra 的 drain，不限制额外的应用工作；后台任务需由应用按需
+另行跟踪与等待。
 
 ## 会话作用域回收
 

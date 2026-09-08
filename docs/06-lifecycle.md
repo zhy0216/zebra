@@ -68,7 +68,7 @@ z.listen()
   ├─ Bun.serve() starts listening
   └─ [ready hooks] (in registration order, all awaited; any failure → stop() and rethrow)
 
-process receives SIGTERM / SIGINT (or you call z.stop())
+process receives SIGTERM / SIGINT (default signal handling), or you call z.stop()
   └─ [graceful shutdown] (below)
       └─ [shutdown hooks] (after the container and all instances are disposed)
 ```
@@ -153,14 +153,19 @@ They fire per middleware, in the precompiled route-plan order (`index`), and `mi
 
 `z.stop()` is idempotent (concurrent calls run once), and runs:
 
-1. Marks `stopped`, removes signal handlers, stops accepting new connections (`Bun.serve.stop(false)`).
+1. Marks `stopped`, removes only Zebra's own signal handlers (if installed), stops accepting new connections (`Bun.serve.stop(false)`). User signal listeners remain untouched.
 2. **Waits for in-flight requests to drain** (`waitForDrain`), racing against `gracePeriod` (default 10 seconds):
    - on timeout, force-terminates remaining connections (`server.stop(true)`).
 3. Reclaims all session-scope containers (`disposeSession`, one by one).
 4. Disposes the root container (every singleton's `dispose()`, LIFO).
 5. Runs `shutdown` hooks.
 
-Process signals (SIGTERM / SIGINT) trigger `stop()` automatically — when a platform (Railway / Fly / K8s) sends SIGTERM, the app drains gracefully instead of being killed immediately.
+`ZebraOptions.signalHandlers?: boolean` defaults to `true`. With the option
+omitted or set to `true`, `listen()` installs SIGTERM / SIGINT handlers that
+trigger `stop()` automatically. `prepare()` never installs signal handlers,
+regardless of this option. A failed boot or listener bind installs none; a
+failing ready hook still calls `stop()` to clean up the listener and any framework
+signal handlers before rethrowing the original ready error.
 
 ```ts
 await z.listen({ port: 3000 });
@@ -170,11 +175,79 @@ await z.listen({ port: 3000 });
 Or call it manually:
 
 ```ts
-const server = await z.listen({ port: 3000 });
-process.on("SIGUSR2", () => void z.stop());
+await z.stop();
 ```
 
-A stopped app cannot `listen()` again (throws `Zebra has been stopped and cannot listen again`).
+A stopped app cannot `listen()` again (throws `Zebra has been stopped and cannot
+listen again`). `stop()` attempts session disposal, root disposal and shutdown
+hooks even after cleanup errors, then rejects with the error or an
+`AggregateError`. Concurrent and later calls observe the same cached outcome;
+calling `stop()` again does not retry failed cleanup. Default automatic signal
+handling logs failures as `[zebra] shutdown failed:` and does not set an exit
+code. Its handlers are removed at the start of `stop()`; another signal during
+cleanup may therefore invoke the runtime's default termination behavior.
+
+### Application-owned signals
+
+Use `new Zebra({ signalHandlers: false })` when embedding Zebra in an application
+that coordinates shutdown. This constructor option is public through both
+`@zebra-web/core` and `@zebra-web/zebra`. `listen()` then installs no framework
+signal handlers, and `stop()` never adds or removes application signal listeners.
+No private properties or framework-listener removal are needed.
+
+The application must register its own handlers, await `stop()` and any additional
+work, and decide when and how to exit. Use `process.on`, keep the handler installed
+throughout shutdown, and coalesce repeated signals into one shutdown promise.
+Using `process.once` or removing the handler when shutdown starts can leave the
+next SIGTERM to terminate the process before asynchronous cleanup completes.
+When sharing a process across Zebra instances, disable framework handlers on each
+instance that the same application owner coordinates.
+
+```ts
+import { Zebra } from "@zebra-web/core";
+import { closePool, flushWithRetry } from "./resources.ts"; // application functions
+
+const app = new Zebra({ signalHandlers: false });
+app.get("/", () => "ok");
+
+async function shutdown() {
+  const errors: unknown[] = [];
+  try {
+    await app.stop();
+  } catch (error) {
+    errors.push(error);
+  }
+  try {
+    await flushWithRetry();
+    await closePool();
+  } catch (error) {
+    errors.push(error);
+  }
+  if (errors.length) throw new AggregateError(errors, "Shutdown failed");
+}
+
+let stopping: Promise<void> | undefined;
+function onSignal() {
+  if (stopping) return;
+  stopping = Promise.resolve().then(shutdown).then(
+    () => { process.exit(0); },
+    (error) => {
+      console.error(error);
+      process.exit(1);
+    },
+  );
+}
+process.on("SIGINT", onSignal);
+process.on("SIGTERM", onSignal);
+await app.listen({ port: 3000 });
+```
+
+In this example, a stop failure is recorded while the application still attempts
+its flush. The pool closes only after that flush succeeds; a failed stop, flush
+or pool close produces a nonzero exit. The application defines flush retries,
+deadlines and failure policy. Keep resources needed *after* `stop()` outside
+Zebra's disposed DI scopes. `gracePeriod` bounds Zebra's drain, not the additional
+application work; track and await background work separately as needed.
 
 ## Session scope reclamation
 
