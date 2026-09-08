@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { timingSafeEqual } from "node:crypto";
 
 const encoder = new TextEncoder();
 
@@ -9,7 +9,7 @@ function requireSecret(secret: string): void {
 }
 
 function hmac(value: string, secret: string): string {
-  return createHmac("sha256", secret).update(value).digest("base64url");
+  return new Bun.CryptoHasher("sha256", secret).update(value).digest("base64url");
 }
 
 /**

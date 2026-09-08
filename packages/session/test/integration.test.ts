@@ -10,6 +10,7 @@
 
 import "reflect-metadata";
 import { expect, test } from "bun:test";
+import { createHmac } from "node:crypto";
 import type { ZebraRequest } from "@zebra-web/core";
 import { type TestApp, createTestApp } from "@zebra-web/testing";
 
@@ -69,12 +70,32 @@ test("req.ctx.session read/write: Set-Cookie carries the sid and the next reques
   expect(cookie.startsWith("sid=")).toBe(true);
   const sid = sidOf(cookie);
   expect(sid).not.toBeNull();
+  expect(cookie).toBe(`sid=${sid}.${createHmac("sha256", SECRET).update(sid).digest("base64url")}`);
 
   const body = (await (await app.request("/me", { headers: { cookie } })).json()) as MeBody;
   expect(body.sid).toBe(sid);
   expect(body.isNew).toBe(false);
   expect(body.user).toEqual({ id: 42 });
 });
+
+test.each(["8f3a1c9e-2b4d-4a0f-9c6e-1d2b3c4d5e6f", "用户.🦓/with spaces?=%"])(
+  "existing node:crypto cookie preserves the session: %s",
+  async (sid) => {
+    const store = new MemoryStore({ ttl: 30_000 });
+    await store.set(sid, { user: { id: 42 } });
+    const { app, mw } = makeApp(store);
+    registerSessionRoutes(app);
+    const token = `${sid}.${createHmac("sha256", SECRET).update(sid).digest("base64url")}`;
+    const headers = { cookie: `sid=${encodeURIComponent(token)}` };
+
+    expect(await mw.resolver(new Request("http://localhost/me", { headers }))).toBe(sid);
+    const res = await app.request("/me", { headers });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ sid, isNew: false, user: { id: 42 } });
+    expect(res.headers.get("set-cookie")).toBeNull();
+    expect(await store.get(sid)).toEqual({ user: { id: 42 } });
+  },
+);
 
 test("HMAC-SHA256 signed cookie: a tampered signature is rejected (treated as a new visitor)", async () => {
   const { app } = makeApp(new MemoryStore({ ttl: 30_000 }));

@@ -10,6 +10,11 @@ Requires Bun ≥ 1.4.0 to develop (see [README](README.md#requirements)).
 Typechecking uses `tsgo` (the native TypeScript compiler via
 `@typescript/native-preview`) rather than `tsc`.
 
+Server packages target Bun directly. Prefer Bun-native APIs when representative
+benchmarks show a performance benefit, preserving public behavior and security
+properties. Compare on the same machine and Bun version, and keep a reproducible
+benchmark for the changed path. The client package must remain browser-safe.
+
 ## Before a PR
 
 All of these must pass from the repo root:

@@ -109,3 +109,24 @@ BENCH_DURATION_MS=3000 bun run bench/bench-regression.ts --update
 - `bench-regression.ts` + `baseline.json`：zebra-only 回归门槛，CI 可用；`--update` 重录基线。
 - `zebra-bench.ts` / `hono-bench.ts` / `elysia-bench.ts`：各自注册同一组路由；zebra 的中间件链用空前缀 `group` 挂 5 层 `use()`，hono 用 `app.use("/middleware", …)` × 5，elysia 用 5 个 `onRequest` 插件。
 - 结果表格数字会随机器/Bun 版本浮动，更新方式：跑 `bun run bench`，把「Summary (req/s)」与延迟行贴回本文件。
+
+## Session 签名微基准
+
+`session-sign.ts` 对比原先的 `node:crypto.createHmac` 实现和当前导出的 `sign` / `verify`（使用 `Bun.CryptoHasher`）。两者均使用 HMAC-SHA256、base64url；验签均保留 `timingSafeEqual`。Bun 原生 HMAC API 见 [Bun Hashing 文档](https://bun.com/docs/runtime/hashing#hmac-in-bun-cryptohasher)。
+
+```bash
+bun run bench/session-sign.ts
+```
+
+脚本先校验签名兼容性；预生成 256 个 UUID 长度的输入，每种实现预热 20,000 次，然后交替执行顺序测量 7 轮 × 100,000 次并取中位数。验签输入是预先生成的有效 cookie，不包含签名生成时间。输出还包含 Bun 版本、平台与 CPU 型号。
+
+2026-09-07 本机结果：Linux x64、AMD EPYC Processor、Bun **1.4.2**。
+
+| helper | 原实现 ns/op | Bun.CryptoHasher ns/op | 耗时减少 |
+| --- | ---: | ---: | ---: |
+| `sign` | 1,301.4 | 704.1 | 45.9% |
+| `verify`（有效 cookie） | 1,573.3 | 971.3 | 38.3% |
+
+这里测量的是同步 helper 的耗时，包含字符串和编码处理，不代表 HTTP 吞吐提升。结果会随 Bun 版本、CPU、输入长度与运行负载变化；不用于替换 HTTP 基线或设置跨机器性能门槛。
+
+`bun test packages/session` 覆盖旧 `node:crypto` 签名、Unicode 与长密钥、篡改拒绝，以及旧 cookie 经过 resolver 和 HTTP middleware 后保留原会话的集成行为。新签发的 cookie 也与原签名格式逐字节比对。
