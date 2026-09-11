@@ -34,6 +34,32 @@ Decorator support is required in your `tsconfig.json`:
 
 Import `reflect-metadata` once at your entry point, before anything else.
 
+### Install from Git
+
+To consume the repository directly, pin a full commit SHA as a git dependency:
+
+```json
+{
+  "dependencies": {
+    "@zebra-web/source": "github:zhy0216/zebra#<full-commit-sha>"
+  }
+}
+```
+
+The git dependency exposes the same sources through three entry points:
+
+```ts
+import { Zebra } from "@zebra-web/source/core"; // server (Bun)
+import { zc } from "@zebra-web/source/contract"; // browser-safe
+import { createClient } from "@zebra-web/source/client"; // browser-safe
+```
+
+`reflect-metadata` is declared as a runtime dependency of the root package, so a
+plain `bun install` provides it transitively. `contract` and `client` do not
+import `core` or any Bun server code. No install scripts or prebuilt `dist/`
+artifacts are involved, and npm subpackage publishing is unchanged; update the
+pinned SHA explicitly to move to a newer revision.
+
 ## Requirements
 
 - **Bun ≥ 1.4.0** for server packages (`packageManager` is `bun@1.4.0`;
