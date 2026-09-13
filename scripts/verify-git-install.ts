@@ -212,7 +212,7 @@ console.log("git entry imports + contract round-trip: OK");
     const mcpVerify = run("bun", ["mcp-verify.ts"], consumer);
     if (!mcpVerify.ok) fail(`MCP consumer checks failed:\n${mcpVerify.stderr}`);
     process.stdout.write(mcpVerify.stdout);
-    const typecheck = run(join(ROOT, "node_modules", ".bin", "tsgo"), ["--noEmit", "--target", "ESNext", "--module", "ESNext", "--moduleResolution", "bundler", "--allowImportingTsExtensions", "--skipLibCheck", "--lib", "ESNext,DOM", "--types", "bun", "mcp-verify.ts"], consumer);
+    const typecheck = run(join(ROOT, "node_modules", ".bin", "tsgo"), ["--noEmit", "--target", "ESNext", "--module", "ESNext", "--moduleResolution", "bundler", "--allowImportingTsExtensions", "--skipLibCheck", "--lib", "ESNext", "--types", "bun", "mcp-verify.ts"], consumer);
     if (!typecheck.ok) fail(`MCP consumer typecheck failed:\n${typecheck.stdout}\n${typecheck.stderr}`);
 
     // --- contract/client stay browser-safe (no core / reflect-metadata) -------
