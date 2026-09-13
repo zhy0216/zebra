@@ -34,6 +34,8 @@ const ENTRY_POINTS: Record<string, string> = {
   "./core": "./packages/core/src/index.ts",
   "./contract": "./packages/contract/src/index.ts",
   "./client": "./packages/client/src/index.ts",
+  "./mcp": "./packages/mcp/src/index.ts",
+  "./schema-zod": "./packages/schema-zod/src/index.ts",
 };
 const LIFECYCLE_SCRIPTS = ["preinstall", "install", "postinstall", "prepare"];
 
@@ -205,13 +207,18 @@ console.log("git entry imports + contract round-trip: OK");
     if (!verify.ok) fail(`runtime entry checks failed:\n${verify.stderr}`);
     process.stdout.write(verify.stdout);
 
+    writeFileSync(join(consumer, "mcp-verify.ts"), "import { Zebra, HttpError } from '@zebra-web/source/core';\nimport { zc } from '@zebra-web/source/contract';\nimport { createMcpServer } from '@zebra-web/source/mcp';\nimport { zodSchemaAdapter } from '@zebra-web/source/schema-zod';\nimport { Client } from '@modelcontextprotocol/sdk/client/index.js';\nimport { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';\nimport { LATEST_PROTOCOL_VERSION } from '@modelcontextprotocol/sdk/types.js';\nimport { z } from 'zod';\nimport { strict as assert } from 'node:assert';\nconst contract = {\n  read: zc.get('/value').output(z.object({ value: z.string() })).mcp('read_value', 'Read value', { readOnly: true }),\n  write: zc.post('/value').body(z.object({ value: z.string().min(1) })).output(z.object({ value: z.string() })).mcp('write_value', 'Write value'),\n  internal: zc.get('/internal'),\n};\nlet value = 'initial';\nconst app = new Zebra();\nlet calls = 0;\napp.use(async (req, next) => {\n  calls++;\n  if (req.headers.get('authorization') !== 'Bearer test') throw new HttpError(401, 'unauthorized', 'Authentication required');\n  return next();\n});\napp.implement(contract, {\n  read: async () => value === 'bad-output' ? ({ value: 1 } as any) : ({ value }),\n  write: async req => { value = (await req.body()).value; return { value }; },\n  internal: async () => ({ secret: true }),\n});\nconst mcp = createMcpServer({ app, contract, schema: zodSchemaAdapter(), headers: { authorization: 'Bearer test' } });\nconst client = new Client({ name: 'git-consumer', version: '1.0.0' });\nconst [ct, st] = InMemoryTransport.createLinkedPair();\nawait mcp.connect(st);\nawait client.connect(ct);\ntry {\n  assert.deepEqual((await client.listTools()).tools.map(t => t.name), ['read_value', 'write_value']);\n  assert.deepEqual((await client.callTool({ name: 'read_value' })).structuredContent, { value: 'initial' });\n  assert.deepEqual((await client.callTool({ name: 'write_value', arguments: { body: { value: 'changed' } } })).structuredContent, { value: 'changed' });\n  assert.equal((await client.callTool({ name: 'write_value', arguments: { body: { value: '' } } })).isError, true);\n  await client.callTool({ name: 'write_value', arguments: { body: { value: 'bad-output' } } });\n  assert.equal((await client.callTool({ name: 'read_value' })).isError, true);\n  const denied = createMcpServer({ app, contract, schema: zodSchemaAdapter() });\n  assert.equal((await denied.callTool({ name: 'read_value' })).isError, true);\n  await denied.close();\n  assert.ok(calls >= 6);\n  console.log('Native MCP SDK transport discovery/read/write/auth/input/output validation: OK; protocol ' + LATEST_PROTOCOL_VERSION);\n} finally { await client.close(); await mcp.close(); }\n");
+    const mcpVerify = run("bun", ["mcp-verify.ts"], consumer);
+    if (!mcpVerify.ok) fail(`MCP consumer checks failed:\n${mcpVerify.stderr}`);
+    process.stdout.write(mcpVerify.stdout);
+
     // --- contract/client stay browser-safe (no core / reflect-metadata) -------
 
     const browserEntries: Record<string, string> = {
       contract: `import { zc } from "@zebra-web/source/contract";\nif (typeof zc.get !== "function") throw new Error("zc missing");\n`,
       client: `import { createClient } from "@zebra-web/source/client";\nimport { zc } from "@zebra-web/source/contract";\nif (typeof createClient !== "function" || typeof zc.get !== "function") throw new Error("client surface missing");\n`,
     };
-    const forbidden = ["Bun.serve", "Reflect.defineMetadata", "bun:sqlite"];
+    const forbidden = ["Bun.serve", "Reflect.defineMetadata", "bun:sqlite", "McpError", "createMcpServer"];
     for (const [name, source] of Object.entries(browserEntries)) {
       const entryFile = join(consumer, `browser-${name}.ts`);
       const outDir = join(consumer, "browser-bundles", name);
@@ -233,7 +240,7 @@ console.log("git entry imports + contract round-trip: OK");
       console.log(`  browser bundle ${name}: no core/Bun server references`);
     }
 
-    console.log("[verify:git-install] git dependency install + all three entry points verified");
+    console.log("[verify:git-install] git dependency install + all five entry points verified");
   } finally {
     try {
       rmSync(tempBase, { recursive: true, force: true });

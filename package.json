@@ -6,11 +6,17 @@
   "engines": {
     "bun": ">=1.4.0"
   },
-  "workspaces": ["packages/*", "examples/*", "bench"],
+  "workspaces": [
+    "packages/*",
+    "examples/*",
+    "bench"
+  ],
   "exports": {
     "./core": "./packages/core/src/index.ts",
     "./contract": "./packages/contract/src/index.ts",
-    "./client": "./packages/client/src/index.ts"
+    "./client": "./packages/client/src/index.ts",
+    "./mcp": "./packages/mcp/src/index.ts",
+    "./schema-zod": "./packages/schema-zod/src/index.ts"
   },
   "scripts": {
     "test": "bun test",
@@ -29,13 +35,14 @@
     "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
-    "reflect-metadata": "^0.2.2"
+    "reflect-metadata": "^0.2.2",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
     "@types/bun": "^1.4.0",
     "@typescript/native-preview": "7.0.0-dev.20260707.2",
-    "vitepress": "1.6.4",
-    "zod": "^4"
+    "vitepress": "1.6.4"
   }
 }
