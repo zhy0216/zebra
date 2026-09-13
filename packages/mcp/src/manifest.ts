@@ -4,7 +4,7 @@ import type {
   ContractProcedureDef,
   ContractRouter,
   StandardSchemaV1,
-} from "@zebra-web/contract";
+} from "./protocol.ts";
 
 /** Converts a Standard Schema into a JSON Schema document (for MCP inputSchema). */
 export interface SchemaAdapter {

@@ -1,4 +1,4 @@
-import type { StandardSchemaV1 } from "@zebra-web/contract";
+import type { StandardSchemaV1 } from "./standard-schema.ts";
 import { type ZodType, toJSONSchema } from "zod";
 
 /** A JSON Schema document (draft 7 shape emitted by the zod adapter). */

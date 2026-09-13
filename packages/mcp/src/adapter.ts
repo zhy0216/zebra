@@ -9,8 +9,8 @@ import {
   McpError,
   type Tool,
 } from "@modelcontextprotocol/sdk/types.js";
-import type { ContractRouter } from "@zebra-web/contract";
-import type { Zebra } from "@zebra-web/core";
+import type { ContractRouter } from "./protocol.ts";
+
 import { argumentsToRequest, responseToResult } from "./bridge.ts";
 import { type SchemaAdapter, collectTools, toTool } from "./manifest.ts";
 
@@ -36,7 +36,7 @@ function createRequestId(): string {
 
 export interface McpServerOptions {
   /** The Zebra app that implements the contract. */
-  app: Zebra;
+  app: { dispatch(request: Request): Promise<Response> };
   /** The same contract passed to `app.implement`. */
   contract: ContractRouter;
   /** Schema adapter (e.g. `zodSchemaAdapter()` from `@zebra-web/schema-zod`). */
