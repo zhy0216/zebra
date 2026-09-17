@@ -41,7 +41,8 @@ export interface ContractProcedureDef {
   readonly mcp: McpDeclaration | undefined;
 }
 
-
 export type ContractProcedure = { readonly def: ContractProcedureDef };
-export interface ContractRouter { readonly [key: string]: ContractProcedure | ContractRouter }
+export interface ContractRouter {
+  readonly [key: string]: ContractProcedure | ContractRouter;
+}
 export type { StandardSchemaV1 };

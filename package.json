@@ -6,11 +6,7 @@
   "engines": {
     "bun": ">=1.4.0"
   },
-  "workspaces": [
-    "packages/*",
-    "examples/*",
-    "bench"
-  ],
+  "workspaces": ["packages/*", "examples/*", "bench"],
   "exports": {
     "./core": "./packages/core/src/index.ts",
     "./contract": "./packages/contract/src/index.ts",

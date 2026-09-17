@@ -7,9 +7,9 @@ import type { ContractProcedure, ContractProcedureDef } from "./types.ts";
 type ProcedureShape = { readonly def: ContractProcedureDef };
 type RouterShape = { [key: string]: ProcedureShape | RouterShape };
 
-type PrefixedProcedure<P extends string, Proc extends ProcedureShape> = ContractProcedure<
-  { [K in keyof Proc["def"]]: K extends "path" ? JoinPath<P, Proc["def"]["path"]> : Proc["def"][K] }
->;
+type PrefixedProcedure<P extends string, Proc extends ProcedureShape> = ContractProcedure<{
+  [K in keyof Proc["def"]]: K extends "path" ? JoinPath<P, Proc["def"]["path"]> : Proc["def"][K];
+}>;
 
 type PrefixedRouter<P extends string, R extends RouterShape> = {
   [K in keyof R]: R[K] extends ProcedureShape

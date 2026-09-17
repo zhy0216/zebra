@@ -1,11 +1,7 @@
 [
   {
     "check": "lint",
-    "command": [
-      "bun",
-      "run",
-      "lint"
-    ],
+    "command": ["bun", "run", "lint"],
     "started": "2026-09-08T09:01:46.012793+00:00",
     "exit": 0,
     "log": "closeout-lint.log.gz",
@@ -13,13 +9,7 @@
   },
   {
     "check": "docs",
-    "command": [
-      "env",
-      "DOCS_BASE=/zebra/",
-      "bun",
-      "run",
-      "docs:build"
-    ],
+    "command": ["env", "DOCS_BASE=/zebra/", "bun", "run", "docs:build"],
     "started": "2026-09-08T09:01:46.393885+00:00",
     "exit": 0,
     "log": "closeout-docs.log.gz",
@@ -27,11 +17,7 @@
   },
   {
     "check": "diff",
-    "command": [
-      "git",
-      "diff",
-      "--check"
-    ],
+    "command": ["git", "diff", "--check"],
     "started": "2026-09-08T09:01:54.596950+00:00",
     "exit": 0,
     "log": "closeout-diff.log.gz",
@@ -48,12 +34,7 @@
   },
   {
     "check": "staged-diff",
-    "command": [
-      "git",
-      "diff",
-      "--cached",
-      "--check"
-    ],
+    "command": ["git", "diff", "--cached", "--check"],
     "exit": 0,
     "wrapper": "run-load.py check before coordinator temporary cleanup"
   }

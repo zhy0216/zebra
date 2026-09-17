@@ -1,5 +1,5 @@
-import type { StandardSchemaV1 } from "./standard-schema.ts";
 import { type ZodType, toJSONSchema } from "zod";
+import type { StandardSchemaV1 } from "./standard-schema.ts";
 
 /** A JSON Schema document (draft 7 shape emitted by the zod adapter). */
 export interface JsonSchemaObject extends Record<string, unknown> {}

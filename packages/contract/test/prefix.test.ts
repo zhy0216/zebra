@@ -45,8 +45,13 @@ test("prefixed paths keep literal types", () => {
 test("prefix accepts procedure definitions without comparing recursive builders", () => {
   const body = z.object({ title: z.string() });
   const output = z.object({ id: z.number() });
-  const create = zc.post("/blogs").body(body).output(output).status(201)
-    .errors({ conflict: { status: 409 } }).meta({ summary: "Create blog" });
+  const create = zc
+    .post("/blogs")
+    .body(body)
+    .output(output)
+    .status(201)
+    .errors({ conflict: { status: 409 } })
+    .meta({ summary: "Create blog" });
   // Other package copies only need to share the data protocol. Prefix rebuilds
   // its own chainable procedure without requiring the incoming builder methods.
   const api = prefix("/api", { nested: { create: { def: create.def } } });
