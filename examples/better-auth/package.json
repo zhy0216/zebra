@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "dependencies": {
     "@better-auth/kysely-adapter": "1.6.26",
-    "better-auth": "1.6.26",
+    "better-auth": "1.7.7",
     "@zebra-web/zebra": "workspace:*"
   },
   "private": true,
