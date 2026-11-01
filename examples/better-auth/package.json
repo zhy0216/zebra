@@ -2,7 +2,7 @@
   "name": "example-better-auth",
   "version": "0.0.0",
   "dependencies": {
-    "@better-auth/kysely-adapter": "1.6.26",
+    "@better-auth/kysely-adapter": "1.7.0",
     "better-auth": "1.6.26",
     "@zebra-web/zebra": "workspace:*"
   },
